@@ -10,7 +10,7 @@
 #include <MP_Constraint.h>
 #include <Domain.h>
 #include <StandardStream.h>
-#include <LinearCrdTransf3d.h>
+//#include <LinearCrdTransf3d.h>
 #include <Steel01.h>
 #include <ZeroLength.h>
 #include <LegendreBeamIntegration.h>
@@ -340,5 +340,6 @@ void MainWindow::on_run_pressed()
     currentTime = 0;
     for (int i=0; i<1560; i++) {
         ui->myGL->repaint();
+        QCoreApplication::processEvents();
     }
 }

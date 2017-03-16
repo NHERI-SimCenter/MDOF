@@ -1,5 +1,3 @@
-// myglwidget.h
-
 #ifndef MYGLWIDGET_H
 #define MYGLWIDGET_H
 
@@ -9,26 +7,18 @@
 
 class MainWindow;
 
-class MyGlWidget : public QGLWidget
-{
-  Q_OBJECT
+class MyGlWidget : public QGLWidget {
+
+    Q_OBJECT // must include this if you use Qt signals/slots
+
+public:
+    MyGlWidget(QWidget *parent = NULL);
+    ~MyGlWidget();
+    void setModel(MainWindow *);
     
-    public:
-  
-  MyGlWidget(QWidget *parent = 0);
-  ~MyGlWidget();
-  void setModel(MainWindow *);
-
-  void drawLine(int tag, float x1, float y1, float x2, float y2, float thick, float r, float g, float b);
-  void drawNode(int tag, float x1, float y1, int numPixels, float r, float g, float b);
-
- protected:
-  void initializeGL();
-  void paintGL();
-  void resizeGL(int width, int height);
-  
-  QSize minimumSizeHint() const;
-  QSize sizeHint() const;
+    void update();
+    void drawLine(int tag, float x1, float y1, float x2, float y2, float thick, float r, float g, float b);
+    void drawNode(int tag, float x1, float y1, int numPixels, float r, float g, float b);
 
   public slots:
   void mousePressEvent(QMouseEvent *event);
@@ -36,25 +26,29 @@ class MyGlWidget : public QGLWidget
   void mouseMoveEvent(QMouseEvent *event);
   void mouseDoubleClickEvent(QMouseEvent *);
   void mouseSingleClickEvent(void);
-  
- private:
-  void draw();
-  QPoint lastPos;
+    
+protected:
+    void initializeGL();
+    void resizeGL(int w, int h);
+    void paintGL();
 
-  GLfloat *verts;
-  GLuint vertexBufferID;
+    /*
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+    */
+    void keyPressEvent(QKeyEvent *event);
 
-  GLshort *indices;
-  GLuint eleBufferID;
+    int selectMode;
+    MainWindow *theModel; // pointer to class that has the draw command
 
-  MainWindow *theModel; // pointer to class that has the draw command
-  int selectMode;
-
-  QPointF mousePressPosition;
-  QPointF mouseReleasePosition;
-  int doubleClicked;
-  QTimer timer;
-  bool clickedLeft;
+    QPointF mousePressPosition;
+    QPointF mouseReleasePosition;
+    int doubleClicked;
+    QTimer timer;
+    bool clickedLeft;
 };
+
+
+
 
 #endif // MYGLWIDGET_H

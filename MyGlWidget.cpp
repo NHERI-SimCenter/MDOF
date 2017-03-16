@@ -1,19 +1,22 @@
-#include <QtWidgets>
-#include <QtOpenGL>
-
-#include "myglwidget.h"
+#include "MyGlWidget.h"
 #include "MainWindow.h"
-#include <QVector3D>
+
+
+#include <QtGui/QMouseEvent>
+//#include "My\GLWidget.h"
+#include <QDebug>
 #include <Matrix.h>
 #include <Vector.h>
 
 MyGlWidget::MyGlWidget(QWidget *parent)
-  : QGLWidget(QGLFormat(QGL::SampleBuffers), parent), selectMode(0)
+  : QGLWidget(parent), selectMode(0)
 {
+    setMouseTracking(true);
+
   timer.setInterval(200);
   timer.setSingleShot(true);
   connect(&timer, SIGNAL(timeout()), this, SLOT(mouseSingleClickEvent()));
-  doubleClicked = 0;
+  doubleClicked = 0;    
 }
 
 MyGlWidget::~MyGlWidget()
@@ -25,80 +28,178 @@ void MyGlWidget::setModel(MainWindow *theM)
     theModel = theM;
 }
 
-QSize MyGlWidget::minimumSizeHint() const
+
+void
+MyGlWidget::drawNode(int tag, float x1, float y1, int numPixels, float r, float g, float b)
 {
-  return QSize(50, 50);
+
+    if (selectMode == 0) {
+        glPointSize(numPixels);
+        glColor3f(r, g, b);
+        glBegin(GL_POINTS);
+        glVertex2f(x1, y1);
+        glEnd();
+    } else {
+        if (tag != 0) {
+            glPointSize(numPixels);
+            int r1 = (tag & 0x000000FF) >>  0;
+            int g1 = (tag & 0x0000FF00) >>  8;
+            int b1 = (tag & 0x00FF0000) >> 16;
+                   glColor3f(r1/255.0,g1/255.0,b1/255.0);
+    glPointSize(numPixels);
+        glBegin(GL_POINTS);
+        glVertex3f(x1, y1, 0.0);
+        glEnd();
+        }
+    }
 }
 
-QSize MyGlWidget::sizeHint() const
+void
+MyGlWidget::drawLine(int tag, float x1, float y1, float x2, float y2, float thick, float r, float g, float b)
 {
-  return QSize(400, 400);
+    if (selectMode == 0) {
+        glLineWidth(thick);
+        glColor3f(r, g, b);
+        glBegin(GL_LINES);
+        glVertex2f(x1, y1);
+        glVertex2f(x2, y2);
+        glEnd();
+    } else {
+        if (tag != 0) {
+            int r1 = (tag & 0x000000FF) >>  0;
+            int g1 = (tag & 0x0000FF00) >>  8;
+            int b1 = (tag & 0x00FF0000) >> 16;
+                   glColor3f(r1/255.0,g1/255.0,b1/255.0);
+        glLineWidth(thick);
+        glBegin(GL_LINES);
+        glVertex3f(x1, y1, 0.0);
+        glVertex3f(x2, y2, 0.0);
+        glEnd();
+        }
+    }
 }
 
 
-void MyGlWidget::initializeGL()
-{
-  qglClearColor(Qt::white);
-
-  glEnable(GL_MULTISAMPLE);
-
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_CULL_FACE);
-  glShadeModel(GL_SMOOTH);
-  //glEnable(GL_LIGHTING);
-  //glEnable(GL_LIGHT0);
-
-  //static GLfloat lightPosition[4] = { 0, 0, 10, 1.0 };
-  //glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+void MyGlWidget::initializeGL() {
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_COLOR_MATERIAL);
+    glEnable(GL_BLEND);
+    glEnable(GL_POLYGON_SMOOTH);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glClearColor(1, 1, 1, 0);
 }
 
-void MyGlWidget::paintGL()
-{
-  double xRot = 0;
-  double yRot = 0;
-  double zRot = 0;
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-  glLoadIdentity();
- // glTranslatef(0.0, 0.0, -10.0);
- // glRotatef(xRot / 16.0, 1.0, 0.0, 0.0);
- // glRotatef(yRot / 16.0, 0.0, 1.0, 0.0);
- // glRotatef(zRot / 16.0, 0.0, 0.0, 1.0);
+void MyGlWidget::resizeGL(int w, int h) {
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
 
-  if (theModel != 0) {
+    if (theModel != 0) {
       float heightB = theModel->getHeight();
-      //heightB = 10;
       float maxDisp = theModel->getMaxDisp();
       float bounH = heightB/20;
       if (maxDisp == 0)
-              maxDisp = 10.0;
+	maxDisp = 10.0;
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-    #ifdef QT_OPENGL_ES_1
+#ifdef QT_OPENGL_ES_1
       glOrthof(-maxDisp, +maxDisp, -bounH, bounH+heightB, -15, 15.0);
-    #else
-       glOrtho(-maxDisp, +maxDisp, -bounH, heightB+bounH, -15, 15.0);
-    #endif
-//qDebug() << maxDisp << " " << bounH << " " << heightB;
-  }
+#else
+      glOrtho(-maxDisp, +maxDisp, -bounH, heightB+bounH, -15, 15.0);
+#endif
+      //qDebug() << maxDisp << " " << bounH << " " << heightB;
+    } else
+      glOrtho(0, 6, 0, 6, -15, 15); // set origin to bottom left corner
 
-  glMatrixMode(GL_MODELVIEW);
-
-  draw();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 }
 
-void MyGlWidget::resizeGL(int width, int height)
-{
-   height = this->height();
-   width = this->width();
-  int side = qMin(width, height);
- // glViewport((width - side) / 2, (height - side) / 2, side, side);
+void MyGlWidget::update() {
 
-  glViewport(0, 0, side, side);
-  qDebug() << "side: " << side << " " << width << " " << height;
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    if (theModel != 0) {
+      float heightB = theModel->getHeight();
+      float maxDisp = theModel->getMaxDisp();
+      float bounH = heightB/20;
+      if (maxDisp == 0)
+        maxDisp = 10.0;
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+#ifdef QT_OPENGL_ES_1
+      glOrthof(-maxDisp, +maxDisp, -bounH, bounH+heightB, -15, 15.0);
+#else
+      glOrtho(-maxDisp, +maxDisp, -bounH, heightB+bounH, -15, 15.0);
+#endif
+      //qDebug() << maxDisp << " " << bounH << " " << heightB;
+    } else
+      glOrtho(0, 6, 0, 6, -15, 15); // set origin to bottom left corner
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    this->QGLWidget::update();
+}
+
+void MyGlWidget::paintGL() {
+
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    if (theModel != 0)
+      return theModel->draw(this);
+
+    glColor3f(1,0,0);
+    glBegin(GL_POLYGON);
+    glVertex2f(0,0);
+    glVertex2f(0, 2);
+    glVertex2f(2,0);
+    glEnd();
+
+    glBegin(GL_POLYGON);
+    glVertex2f(2,2);
+    glVertex2f(2, 4);
+    glVertex2f(4,2);
+    glEnd();
+
+    glBegin(GL_POLYGON);
+    glVertex2f(4,4);
+    glVertex2f(4, 6);
+    glVertex2f(6,4);
+    glEnd();
+
+    this->drawLine(10, 0, 2, 2, 2, 2, 0, 1, 0);
+    
+    /*
+    glLineWidth(5);
+     glColor3f(0,0,1);
+    glBegin(GL_LINES);
+    glVertex2f(0,2);
+    glVertex2f(2,2);
+    glEnd();
+*/
+     this->drawLine(10, 2, 4, 4, 4, 2, 0, 0, 1);
+    glBegin(GL_LINES);
+    glVertex2f(2,4);
+    glVertex2f(4,4);
+    glEnd();
+
+    this->drawNode(10, 2, 4, 10,1,0,0);
 
 }
 
+void MyGlWidget::keyPressEvent(QKeyEvent* event) {
+    switch(event->key()) {
+    case Qt::Key_Escape:
+        close();
+        break;
+    default:
+        event->ignore();
+        break;
+    }
+}
 
 void MyGlWidget::mousePressEvent(QMouseEvent *event)
 {
@@ -155,8 +256,8 @@ void MyGlWidget::mouseReleaseEvent(QMouseEvent *event)
     Vector pressCrd(4);
     A.Solve(in,pressCrd);
 
-    float xPos = mouseReleasePosition.x();
-    float yPos = viewport[3] - mouseReleasePosition.y() -1;
+    xPos = mouseReleasePosition.x();
+    yPos = viewport[3] - mouseReleasePosition.y() -1;
 
     in[0]=2*(xPos-viewport[0])/(1.0*viewport[2]) - 1.0;
     in[1]=2*(yPos-viewport[1])/(1.0*viewport[3]) - 1.0;
@@ -165,13 +266,16 @@ void MyGlWidget::mouseReleaseEvent(QMouseEvent *event)
     Vector releaseCrd(4);
     A.Solve(in,releaseCrd);
 
+    opserr << releaseCrd;
+
     // given press and release coordinated, set vectors containing floors and stories that can be edited
-    theModel->setSelectionBoundary()
+    //theModel->setSelectionBoundary()
 
 }
 
 void MyGlWidget::mouseMoveEvent(QMouseEvent *event)
 {
+    /*
   int dx = event->x() - lastPos.x();
   int dy = event->y() - lastPos.y();
 
@@ -184,76 +288,19 @@ void MyGlWidget::mouseMoveEvent(QMouseEvent *event)
   }
 
   lastPos = event->pos();
+  */
 }
 
 void MyGlWidget::mouseDoubleClickEvent(QMouseEvent *event)
 {
   qDebug() << clickedLeft << " DOUBE CLICK" << doubleClicked;
-
+  
   timer.stop();
   doubleClicked = 0; // this is to discard another press event coming
-  
-  lastPos = event->pos();
-
 
 }
 
 void MyGlWidget::mouseSingleClickEvent(void) {
- qDebug() << clickedLeft << " SINGLE CLICK ";
+  qDebug() << clickedLeft << " SINGLE CLICK ";
 }
 
-void
-MyGlWidget::drawNode(int tag, float x1, float y1, int numPixels, float r, float g, float b)
-{
-   // qDebug() << x1 << " " << y1 << " " << numPixels << r;
-    if (selectMode == 0) {
-        glPointSize(numPixels);
-        glColor3f(r, g, b);
-        glBegin(GL_POINTS);
-        glVertex3f(x1, y1, 0.0);
-        glEnd();
-    } else {
-        if (tag != 0) {
-            glPointSize(numPixels);
-            int r1 = (tag & 0x000000FF) >>  0;
-            int g1 = (tag & 0x0000FF00) >>  8;
-            int b1 = (tag & 0x00FF0000) >> 16;
-                   glColor3f(r1/255.0,g1/255.0,b1/255.0);
-    glPointSize(numPixels);
-        glBegin(GL_POINTS);
-        glVertex3f(x1, y1, 0.0);
-        glEnd();
-        }
-    }
-}
-
-void
-MyGlWidget::drawLine(int tag, float x1, float y1, float x2, float y2, float thick, float r, float g, float b)
-{
-    if (selectMode == 0) {
-        glLineWidth(thick);
-        glColor3f(r, g, b);
-        glBegin(GL_LINES);
-        glVertex3f(x1, y1, 0.0);
-        glVertex3f(x2, y2, 0.0);
-        glEnd();
-    } else {
-        if (tag != 0) {
-            int r1 = (tag & 0x000000FF) >>  0;
-            int g1 = (tag & 0x0000FF00) >>  8;
-            int b1 = (tag & 0x00FF0000) >> 16;
-                   glColor3f(r1/255.0,g1/255.0,b1/255.0);
-        glLineWidth(thick);
-        glBegin(GL_LINES);
-        glVertex3f(x1, y1, 0.0);
-        glVertex3f(x2, y2, 0.0);
-        glEnd();
-        }
-    }
-}
-
-void MyGlWidget::draw()
-{
-    if (theModel != 0)
-        return theModel->draw(this);
-}

@@ -122,7 +122,11 @@ DEFINES += "_LINUX"
 
 
 INCLUDEPATH += "/apps/rappture/dev/include"
-INCLUDEPATH += "$(HOME)/OpenSees/DEVELOPER/core"
+INCLUDEPATH += ./include "./ops"
+
+LIBS += /home/fmk/lib/libLapack.a
+LIBS += /home/fmk/lib/libBlas.a
+LIBS += -lgfortran
 
 SRC += ./ops/Domain.cpp
 
