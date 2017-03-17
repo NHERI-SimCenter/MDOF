@@ -2,6 +2,8 @@
 #include "ui_MainWindow.h"
 
 #include <QDebug>
+#include <QSlider>
+
 
 // OpenSees include files
 #include <Node.h>
@@ -47,7 +49,8 @@ MainWindow::MainWindow(QWidget *parent) :
     numFloors(0), period(0), buildingW(0),storyK(0),
     masses(0), k(0), fy(0), b(0), heights(0),
     dampingRatio(0.02), dt(0), gMotion(0),
-    needAnalysis(true), elCentroData(0), dispResponses(0), maxDisp(0)
+    needAnalysis(true), elCentroData(0), dispResponses(0), maxDisp(0),
+    movingSlider(false), fMinSelected(-1),fMaxSelected(-1)
 {
     ui->setupUi(this);
     //ui->numFloors->setValidator( new QIntValidator);
@@ -74,6 +77,11 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i = 0; i < elCentrolist.size(); ++i) {
         (*elCentroData)(i+1) = elCentrolist.at(i).toDouble();
     }
+    dt = 0.02;
+    numSteps = 1560;
+    ui->slider->setRange(0, numSteps);
+    ui->slider->setSliderPosition(0);
+    //ui->slider->setMaximum(numSteps);
 }
 
 MainWindow::~MainWindow()
@@ -99,16 +107,24 @@ void MainWindow::draw(MyGlWidget *theGL)
     }
 
     for (int i=0; i<numFloors; i++) {
-        theGL->drawLine(i+1+numFloors, dispResponses[i][currentTime],heights[i],
-                        dispResponses[i+1][currentTime],heights[i+1], 2, 0, 0, 0);
+ if (i >= fMinSelected && i+1 <= fMaxSelected)
+        theGL->drawLine(i+1+numFloors, dispResponses[i][currentStep],heights[i],
+                        dispResponses[i+1][currentStep],heights[i+1], 2, 1, 0, 0);
+    else
+        theGL->drawLine(i+1+numFloors, dispResponses[i][currentStep],heights[i],
+                        dispResponses[i+1][currentStep],heights[i+1], 2, 0, 0, 0);
     }
 
     for (int i=0; i<=numFloors; i++) {
-        theGL->drawNode(i, dispResponses[i][currentTime],heights[i], 10, 1, 0, 1);
+       if (i >= fMinSelected && i <= fMaxSelected)
+        theGL->drawNode(i, dispResponses[i][currentStep],heights[i], 10, 1, 0, 0);
+       else
+        theGL->drawNode(i, dispResponses[i][currentStep],heights[i], 10, 0, 0, 1);
     }
+    ui->currentTime->setText(QString().setNum(currentStep*dt,'f',2));
 
-    if (currentTime < 1560)
-       currentTime++;
+    if (currentStep < numSteps)
+       currentStep++;
 }
 
 
@@ -156,7 +172,7 @@ void MainWindow::setBasicModel(int numF, double W, double K)
 
         dispResponses = new double *[numF+1];
         for (int i=0; i<numF+1; i++) {
-            dispResponses[i] = new double[1560];
+            dispResponses[i] = new double[numSteps];
         }
     }
 
@@ -177,8 +193,6 @@ void MainWindow::setBasicModel(int numF, double W, double K)
     storyK = K;
     numFloors = numF;
     buildingH = numF;
-
-
 
     this->updatePeriod();
 
@@ -278,7 +292,7 @@ void MainWindow::doAnalysis()
         // create load pattern and add loads
         //
 
-        PathSeries *theSeries = new PathSeries(1, *elCentroData, .02, 386.4);
+        PathSeries *theSeries = new PathSeries(1, *elCentroData, dt, 386.4);
         GroundMotion *theGroundMotion = new GroundMotion(0,0,theSeries);
         LoadPattern *theLoadPattern = new UniformExcitation(*theGroundMotion, 0, 1);
      //   theLoadPattern->setTimeSeries(theTimeSeries);
@@ -315,31 +329,94 @@ void MainWindow::doAnalysis()
         //
         //analyze & get results
         //
-
-        for (int i=0; i<1560; i++) {
-            theAnalysis.analyze(1, .02);
+        maxDisp = 0;
+        for (int i=0; i<numSteps; i++) {
+            theAnalysis.analyze(1, dt);
             for (int j=0; j<numFloors+1; j++) {
                 double nodeDisp = theNodes[j]->getDisp()(0);
                 dispResponses[j][i] = nodeDisp;
                 if (fabs(nodeDisp) > maxDisp)
-                        maxDisp = nodeDisp;
+                        maxDisp = fabs(nodeDisp);
             }
         }
 
+        // reset values, i.e. slider position, current displayed step, and display properties
         needAnalysis = false;
-        currentTime = 0;
+        currentStep = 0;
+        ui->slider->setSliderPosition(0);
+        ui->myGL->update();
     }
-
 }
 
-void MainWindow::on_run_pressed()
+
+void MainWindow::on_stopButton_clicked()
 {
-    if (needAnalysis == true)
+    stopRun = true;
+}
+
+void MainWindow::on_runButton_clicked()
+{
+    stopRun = false;
+    if (needAnalysis == true) {
         this->doAnalysis();
 
-    currentTime = 0;
-    for (int i=0; i<1560; i++) {
+    }
+
+    currentStep = 0;
+    while (currentStep < numSteps && stopRun == false){
+        ui->slider->setSliderPosition(currentStep);
         ui->myGL->repaint();
         QCoreApplication::processEvents();
     }
+}
+
+
+void MainWindow::on_slider_valueChanged(int value)
+{
+    if (movingSlider == true) {
+        stopRun = true;
+        if (needAnalysis == true) {
+            this->doAnalysis();
+            ui->myGL->update();
+        }
+        currentStep = ui->slider->value();
+        //qDebug() << currentStep;
+        ui->myGL->repaint();
+    }
+}
+
+void MainWindow::on_slider_sliderPressed()
+{
+    movingSlider = true;
+}
+
+void MainWindow::on_slider_sliderReleased()
+{
+    movingSlider = false;
+}
+
+float
+MainWindow::setSelectionBoundary(float y1, float y2)
+{
+    float yMin = 0;
+    float yMax = 0;
+    if (y1 < y2) {
+        yMin = y1;
+        yMax = y2;
+    } else {
+        yMin = y2;
+        yMax = y1;
+    }
+    fMaxSelected = -1;
+    for (int i=0; i<numFloors+1; i++) {
+        if (heights[i] < yMax)
+            fMaxSelected = i;
+    }
+    fMinSelected = numFloors+2;
+    for (int i=numFloors+1; i>=0; i--) {
+        if (heights[i] > yMin)
+            fMinSelected = i;
+    }
+
+    ui->myGL->repaint();
 }

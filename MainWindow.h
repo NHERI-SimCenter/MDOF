@@ -6,10 +6,12 @@
 
 class MyGlWidget;
 class Vector;
+class EarthquakeRecord;
 
 namespace Ui {
 class MainWindow;
 }
+
 
 class MainWindow : public QMainWindow
 {
@@ -23,13 +25,20 @@ public:
     void doAnalysis();
     float getHeight() {return buildingH;};
     float getMaxDisp(){return maxDisp;};
+    float setSelectionBoundary(float y1, float y2);
 
 private slots:
     void on_inFloors_editingFinished();
     void on_inWeight_editingFinished();
     void on_inHeight_editingFinished();
 
-    void on_run_pressed();
+    void on_stopButton_clicked();
+    void on_runButton_clicked();
+ //   void on_slider_sliderMoved(int position);
+
+    void on_slider_valueChanged(int value);
+    void on_slider_sliderPressed();
+    void on_slider_sliderReleased();
 
 private:
     void updatePeriod();
@@ -54,13 +63,19 @@ private:
     double dampingRatio;
 
     double dt;
+    int numSteps;
     double *gMotion;
+    Vector *elCentroData;
 
     bool needAnalysis;
-    Vector *elCentroData;
     double **dispResponses;
     double maxDisp;
-    int currentTime;
+    int currentStep;
+    bool stopRun;
+
+    bool movingSlider;
+    int fMinSelected, fMaxSelected;
+    int sMinSelected, sMaxSelected;
 };
 
 #endif // MAINWINDOW_H
