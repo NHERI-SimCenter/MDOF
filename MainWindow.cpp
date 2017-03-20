@@ -50,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow),
     numFloors(0), period(0), buildingW(0),storyK(0),
     weights(0), k(0), fy(0), b(0), floorHeights(0), storyHeights(0),
-    dampingRatio(0.02), dt(0), gMotion(0),
+    dampingRatio(0.02), g(386.4), dt(0), gMotion(0),
     needAnalysis(true), elCentroData(0), dispResponses(0), maxDisp(0),
     movingSlider(false), fMinSelected(-1),fMaxSelected(-1), sMinSelected(-1),sMaxSelected(-1)
 {
@@ -64,7 +64,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->inPeriod->setValidator(new QDoubleValidator);
     ui->myGL->setModel(this);
     ui->inFloorWeight->setValidator(new QDoubleValidator);
-    ui->inFloorHeight->setValidator(new QDoubleValidator);
+    ui->inGravity->setValidator(new QDoubleValidator);
     ui->inStoryB->setValidator(new QDoubleValidator);
     ui->inStoryFy->setValidator(new QDoubleValidator);
     ui->inStoryHeight->setValidator(new QDoubleValidator);
@@ -73,7 +73,6 @@ MainWindow::MainWindow(QWidget *parent) :
     this->setBasicModel(4, 0.4);
 
     ui->inFloorWeight->setDisabled(true);
-    ui->inFloorHeight->setDisabled(true);
 
     ui->inStoryHeight->setDisabled(true);
     ui->inStoryK->setDisabled(true);
@@ -138,8 +137,7 @@ void MainWindow::draw(MyGlWidget *theGL)
     }
     ui->currentTime->setText(QString().setNum(currentStep*dt,'f',2));
 
-    if (currentStep < numSteps)
-       currentStep++;
+
 }
 
 
@@ -193,7 +191,7 @@ void MainWindow::setBasicModel(int numF, double W, double K)
 
         dispResponses = new double *[numF+1];
         for (int i=0; i<numF+1; i++) {
-            dispResponses[i] = new double[numSteps];
+            dispResponses[i] = new double[numSteps+1]; // +1 as doing 0 at start
         }
     }
 
@@ -222,7 +220,7 @@ void MainWindow::setBasicModel(int numF, double W, double K)
     ui->inWeight->setText(QString::number(buildingW));
     ui->inK->setText(QString::number(storyK));
     ui->inHeight->setText(QString::number(numF));
-
+    ui->inGravity->setText(QString::number(g));
     needAnalysis = true;
 }
 
@@ -277,12 +275,12 @@ void MainWindow::on_inFloorWeight_editingFinished()
     this->reset();
 }
 
-void MainWindow::on_inFloorHeight_editingFinished()
-{   //fmk TO DO:  CHECK NOT MOVED ABOVE OR BELOW FLOORS ADJACENT
-    QString text =  ui->inFloorHeight->text();
+
+void MainWindow::on_inGravity_editingFinished()
+{
+    QString text =  ui->inGravity->text();
     double textToDouble = text.toDouble();
-    for (int i=fMinSelected; i<=fMaxSelected; i++)
-        floorHeights[i] = textToDouble;
+    g = textToDouble;
 
     this->reset();
 }
@@ -374,7 +372,7 @@ void MainWindow::doAnalysis()
                 SP_Constraint *theSP = new SP_Constraint(i+1, 0, 0., true);
                 theDomain.addSP_Constraint(theSP);
             } else {
-                theMass(0,0) = weights[i-1]/386.4;
+                theMass(0,0) = weights[i-1]/g;
                 theNode->setMass(theMass);
             }
         }
@@ -395,7 +393,7 @@ void MainWindow::doAnalysis()
         // create load pattern and add loads
         //
 
-        PathSeries *theSeries = new PathSeries(1, *elCentroData, dt, 386.4);
+        PathSeries *theSeries = new PathSeries(1, *elCentroData, dt, g);
         GroundMotion *theGroundMotion = new GroundMotion(0,0,theSeries);
         LoadPattern *theLoadPattern = new UniformExcitation(*theGroundMotion, 0, 1);
      //   theLoadPattern->setTimeSeries(theTimeSeries);
@@ -433,7 +431,7 @@ void MainWindow::doAnalysis()
         //analyze & get results
         //
         maxDisp = 0;
-        for (int i=0; i<numSteps; i++) {
+        for (int i=0; i<=numSteps; i++) { // <= due to adding 0 at start
             theAnalysis.analyze(1, dt);
             for (int j=0; j<numFloors+1; j++) {
                 double nodeDisp = theNodes[j]->getDisp()(0);
@@ -515,11 +513,12 @@ void MainWindow::on_runButton_clicked()
     }
 
     currentStep = 0;
-    while (currentStep < numSteps && stopRun == false){
+    do { //while (currentStep < numSteps && stopRun == false){
         ui->slider->setSliderPosition(currentStep);
         ui->myGL->repaint();
         QCoreApplication::processEvents();
-    }
+        currentStep++;
+    } while (currentStep <= numSteps && stopRun == false); // <= added 0 to ground motion
 }
 
 
@@ -592,19 +591,13 @@ MainWindow::setSelectionBoundary(float y1, float y2)
     if (fMinSelected == -1) {
         // blank out line edits
         QString blank("");
-        ui->inFloorWeight->setText(blank);
-        ui->inFloorHeight->setText(blank);
+        //ui->inFloorHeight->setText(blank);
         // disable line edits
         ui->inFloorWeight->setDisabled(true);
-        ui->inFloorHeight->setDisabled(true);
 
     } else {
 
         ui->inFloorWeight->setDisabled(false);
-        if (fMinSelected == fMaxSelected) // only time makes sense to change floor height
-            ui->inFloorHeight->setDisabled(false);
-        else
-             ui->inFloorHeight->setDisabled(true);
 
     }
     if (sMaxSelected == -1) { // (fMaxSelected < fMinSelected) {
@@ -643,4 +636,5 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
     sMinSelected = row; sMaxSelected = row;
     ui->myGL->repaint();
 }
+
 

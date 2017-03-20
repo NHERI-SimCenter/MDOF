@@ -46,7 +46,7 @@ private slots:
     void on_slider_sliderReleased();
 
     void on_inFloorWeight_editingFinished();
-    void on_inFloorHeight_editingFinished();
+ //   void on_inFloorHeight_editingFinished();
 
     void on_inStoryHeight_editingFinished();
     void on_inStoryK_editingFinished();
@@ -55,6 +55,8 @@ private slots:
 
     void on_tableWidget_cellChanged(int row, int column);
     void on_tableWidget_cellClicked(int row, int column);
+
+    void on_inGravity_editingFinished();
 
 private:
     void updatePeriod();
@@ -78,6 +80,7 @@ private:
     double *floorHeights;
     double *storyHeights;
     double dampingRatio;
+    double g;
 
     double dt;
     int numSteps;
