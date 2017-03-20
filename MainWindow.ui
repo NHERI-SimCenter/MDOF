@@ -26,16 +26,16 @@
     <widget class="QTabWidget" name="properties">
      <property name="geometry">
       <rect>
-       <x>340</x>
-       <y>-10</y>
+       <x>320</x>
+       <y>10</y>
        <width>350</width>
-       <height>583</height>
+       <height>541</height>
       </rect>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
-     <widget class="QWidget" name="Properties">
+     <widget class="QWidget" name="tabProperties">
       <attribute name="title">
        <string>Properties</string>
       </attribute>
@@ -356,20 +356,36 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_2">
+     <widget class="QWidget" name="tabTableProperties">
       <attribute name="title">
-       <string>Tab 2</string>
+       <string>Table Properties</string>
       </attribute>
+      <widget class="QTableWidget" name="tableWidget">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>351</width>
+         <height>471</height>
+        </rect>
+       </property>
+      </widget>
      </widget>
     </widget>
     <widget class="MyGlWidget" name="myGL" native="true">
      <property name="geometry">
       <rect>
-       <x>0</x>
-       <y>0</y>
+       <x>10</x>
+       <y>20</y>
        <width>291</width>
        <height>481</height>
       </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
     </widget>
    </widget>
@@ -464,7 +480,7 @@
   <customwidget>
    <class>MyGlWidget</class>
    <extends>QWidget</extends>
-   <header>MyGlWidget.h</header>
+   <header location="global">MyGlWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

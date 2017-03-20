@@ -1,3 +1,5 @@
+
+//#include "PropertiesWidget.h"
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
@@ -47,10 +49,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     numFloors(0), period(0), buildingW(0),storyK(0),
-    masses(0), k(0), fy(0), b(0), heights(0),
+    weights(0), k(0), fy(0), b(0), floorHeights(0), storyHeights(0),
     dampingRatio(0.02), dt(0), gMotion(0),
     needAnalysis(true), elCentroData(0), dispResponses(0), maxDisp(0),
-    movingSlider(false), fMinSelected(-1),fMaxSelected(-1)
+    movingSlider(false), fMinSelected(-1),fMaxSelected(-1), sMinSelected(-1),sMaxSelected(-1)
 {
     ui->setupUi(this);
     //ui->numFloors->setValidator( new QIntValidator);
@@ -61,6 +63,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->inK->setValidator(new QDoubleValidator);
     ui->inPeriod->setValidator(new QDoubleValidator);
     ui->myGL->setModel(this);
+    ui->inFloorWeight->setValidator(new QDoubleValidator);
+    ui->inFloorHeight->setValidator(new QDoubleValidator);
+    ui->inStoryB->setValidator(new QDoubleValidator);
+    ui->inStoryFy->setValidator(new QDoubleValidator);
+    ui->inStoryHeight->setValidator(new QDoubleValidator);
+    ui->inStoryK->setValidator(new QDoubleValidator);
+
     this->setBasicModel(4, 0.4);
 
     ui->inFloorWeight->setDisabled(true);
@@ -82,14 +91,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->slider->setRange(0, numSteps);
     ui->slider->setSliderPosition(0);
     //ui->slider->setMaximum(numSteps);
+
+    this->reset();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
 
-    if (masses != 0)
-        delete [] masses;
+    if (weights != 0)
+        delete [] weights;
     if (k != 0)
         delete [] k;
     if (fy != 0)
@@ -98,6 +109,10 @@ MainWindow::~MainWindow()
         delete [] b;
     if (gMotion != 0)
         delete [] gMotion;
+    if (storyHeights != 0)
+        delete [] storyHeights;
+    if (floorHeights != 0)
+        delete [] floorHeights;
 }
 
 void MainWindow::draw(MyGlWidget *theGL)
@@ -107,19 +122,19 @@ void MainWindow::draw(MyGlWidget *theGL)
     }
 
     for (int i=0; i<numFloors; i++) {
- if (i >= fMinSelected && i+1 <= fMaxSelected)
-        theGL->drawLine(i+1+numFloors, dispResponses[i][currentStep],heights[i],
-                        dispResponses[i+1][currentStep],heights[i+1], 2, 1, 0, 0);
+ if (i >= sMinSelected && i <= sMaxSelected)
+        theGL->drawLine(i+1+numFloors, dispResponses[i][currentStep],floorHeights[i],
+                        dispResponses[i+1][currentStep],floorHeights[i+1], 2, 1, 0, 0);
     else
-        theGL->drawLine(i+1+numFloors, dispResponses[i][currentStep],heights[i],
-                        dispResponses[i+1][currentStep],heights[i+1], 2, 0, 0, 0);
+        theGL->drawLine(i+1+numFloors, dispResponses[i][currentStep],floorHeights[i],
+                        dispResponses[i+1][currentStep],floorHeights[i+1], 2, 0, 0, 0);
     }
 
     for (int i=0; i<=numFloors; i++) {
        if (i >= fMinSelected && i <= fMaxSelected)
-        theGL->drawNode(i, dispResponses[i][currentStep],heights[i], 10, 1, 0, 0);
+        theGL->drawNode(i, dispResponses[i][currentStep],floorHeights[i], 10, 1, 0, 0);
        else
-        theGL->drawNode(i, dispResponses[i][currentStep],heights[i], 10, 0, 0, 1);
+        theGL->drawNode(i, dispResponses[i][currentStep],floorHeights[i], 10, 0, 0, 1);
     }
     ui->currentTime->setText(QString().setNum(currentStep*dt,'f',2));
 
@@ -150,25 +165,31 @@ void MainWindow::setBasicModel(int numF, double W, double K)
             return;
 
         // resize arrays
-        if (masses != 0)
-            delete [] masses;
+        if (weights != 0)
+            delete [] weights;
         if (k != 0)
             delete [] k;
         if (fy != 0)
             delete [] fy;
         if (b != 0)
             delete [] b;
+        if (floorHeights != 0)
+            delete [] floorHeights;
+        if (storyHeights != 0)
+            delete [] storyHeights;
+
         if (dispResponses != 0) {
                for (int j=0; j<numFloors+1; j++)
                    delete [] dispResponses[j];
                delete [] dispResponses;
         }
 
-        masses = new double[numF];
+        weights = new double[numF];
         k = new double[numF];
         fy = new double[numF];
         b = new double[numF];
-        heights = new double[numF+1];
+        floorHeights = new double[numF+1];
+        storyHeights = new double[numF];
 
         dispResponses = new double *[numF+1];
         for (int i=0; i<numF+1; i++) {
@@ -177,17 +198,17 @@ void MainWindow::setBasicModel(int numF, double W, double K)
     }
 
     // set values
-    double grav = 386.4;
-    double floorM = W/(numF*grav);
+    double floorW = W/(numF);
 
     for (int i=0; i<numF; i++) {
-        masses[i] = floorM;
-        k[i] = K;
-        fy[i] = 1.0e100;
-        b[i] = 0.;
-        heights[i] = i;
+      weights[i] = floorW;
+      k[i] = K;
+      fy[i] = 1.0e100;
+      b[i] = 0.;
+      floorHeights[i] = i;
+      storyHeights[i] = 1;
     }
-    heights[numF] = numF;
+    floorHeights[numF] = numF;
 
     buildingW = W;
     storyK = K;
@@ -213,8 +234,7 @@ void MainWindow::on_inFloors_editingFinished()
         this->setBasicModel(numFloorsText, period);
     }
 
-    needAnalysis = true;
-    ui->myGL->update();
+    this->reset();
 }
 
 void MainWindow::on_inWeight_editingFinished()
@@ -223,14 +243,12 @@ void MainWindow::on_inWeight_editingFinished()
     double textToDoubleW = textW.toDouble();
     if (textToDoubleW != buildingW) {
         // set values
-        double grav = 386.4;
-        double floorM = textToDoubleW/(numFloors*grav);
+        double floorW = textToDoubleW/(numFloors);
         for (int i=0; i<numFloors; i++) {
-            masses[i] = floorM;
+            weights[i] = floorW;
         }
     }
-    needAnalysis = true;
-    ui->myGL->update();
+    this->reset();
 }
 
 void MainWindow::on_inHeight_editingFinished()
@@ -241,14 +259,99 @@ void MainWindow::on_inHeight_editingFinished()
         // set values
         buildingH = textToDoubleH;
         double deltaH = buildingH/numFloors;
-        // qDebug() << deltaH << " " << buildingH << " " << numFloors;
-        heights[0] = 0;
+        floorHeights[0] = 0;
         for (int i=1; i<=numFloors; i++) {
-            heights[i] = deltaH + heights[i-1];
+            floorHeights[i] = deltaH + floorHeights[i-1];
         }
     }
-    needAnalysis = true;
-    ui->myGL->update();
+    this->reset();
+}
+
+void MainWindow::on_inFloorWeight_editingFinished()
+{
+    QString text =  ui->inFloorWeight->text();
+    double textToDouble = text.toDouble();
+    for (int i=fMinSelected; i<=fMaxSelected; i++)
+        weights[i] = textToDouble;
+
+    this->reset();
+}
+
+void MainWindow::on_inFloorHeight_editingFinished()
+{   //fmk TO DO:  CHECK NOT MOVED ABOVE OR BELOW FLOORS ADJACENT
+    QString text =  ui->inFloorHeight->text();
+    double textToDouble = text.toDouble();
+    for (int i=fMinSelected; i<=fMaxSelected; i++)
+        floorHeights[i] = textToDouble;
+
+    this->reset();
+}
+
+void MainWindow::on_inStoryHeight_editingFinished()
+{
+    QString text =  ui->inStoryHeight->text();
+    double newStoryHeight = text.toDouble();
+    double currentStoryHeight = 0;
+    double *newFloorHeights = new double[numFloors+1];
+
+    newFloorHeights[0] = 0;
+    for (int i=0; i<sMinSelected; i++)
+        newFloorHeights[i+1] = floorHeights[i+1];
+
+    for (int i=sMinSelected; i<=sMaxSelected; i++) {
+        newFloorHeights[i+1] = newFloorHeights[i]+newStoryHeight;
+        storyHeights[i] = newStoryHeight;
+    }
+
+    for (int i=sMaxSelected+1; i<numFloors; i++)
+     newFloorHeights[i+1] = newFloorHeights[i]+floorHeights[i+1]-floorHeights[i];
+
+    buildingH = newFloorHeights[numFloors];
+
+    for (int i=0; i<=numFloors; i++)
+     qDebug() << floorHeights[i] << " " << newFloorHeights[i];
+
+    delete [] floorHeights;
+    floorHeights = newFloorHeights;
+
+    // move focus, update graphic and set analysis flag
+    ui->inStoryK->setFocus();
+    this->reset();
+}
+
+void MainWindow::on_inStoryK_editingFinished()
+{
+    QString text =  ui->inStoryK->text();
+    double textToDouble = text.toDouble();
+    for (int i=sMinSelected; i<=sMaxSelected; i++)
+        k[i] = textToDouble;
+
+    ui->inStoryFy->setFocus();
+    this->reset();
+}
+
+void MainWindow::on_inStoryFy_editingFinished()
+{
+    QString text =  ui->inStoryFy->text();
+    double textToDouble = text.toDouble();
+    for (int i=sMinSelected; i<=sMaxSelected; i++)
+        fy[i] = textToDouble;
+
+    ui->inStoryB->setFocus();
+    this->reset();
+}
+
+void MainWindow::on_inStoryB_editingFinished()
+{
+    QString text =  ui->inStoryB->text();
+    double textToDouble = text.toDouble();
+    for (int i=sMinSelected; i<=sMaxSelected; i++)
+        b[i] = textToDouble;
+
+    ui->inStoryHeight->setFocus();
+    this->reset();
+   // needAnalysis = true;
+   // ui->myGL->update();
 }
 
 
@@ -271,7 +374,7 @@ void MainWindow::doAnalysis()
                 SP_Constraint *theSP = new SP_Constraint(i+1, 0, 0., true);
                 theDomain.addSP_Constraint(theSP);
             } else {
-                theMass(0,0) = masses[i];
+                theMass(0,0) = weights[i-1]/386.4;
                 theNode->setMass(theMass);
             }
         }
@@ -348,6 +451,55 @@ void MainWindow::doAnalysis()
     }
 }
 
+void MainWindow::reset() {
+    needAnalysis = true;
+    ui->myGL->update();
+
+    // update the properties table
+    ui->tableWidget->clear();
+    ui->tableWidget->setColumnCount(5);
+    ui->tableWidget->setRowCount(numFloors);
+    ui->tableWidget->horizontalHeader()->setStretchLastSection(true);// horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+   // ui->tableWidget->setFixedWidth(344);
+    updatingPropertiesTable = true;
+    ui->tableWidget->setHorizontalHeaderLabels(QString(" Weight ; Height ;    K    ;    Fy    ;    b    ").split(";"));
+    for (int i=0; i<numFloors; i++) {
+        ui->tableWidget->setItem(i,0,new QTableWidgetItem(QString().setNum(weights[i])));
+        ui->tableWidget->setItem(i,1,new QTableWidgetItem(QString().setNum(storyHeights[i])));
+        ui->tableWidget->setItem(i,2,new QTableWidgetItem(QString().setNum(k[i])));
+        ui->tableWidget->setItem(i,3,new QTableWidgetItem(QString().setNum(fy[i])));
+        ui->tableWidget->setItem(i,4,new QTableWidgetItem(QString().setNum(b[i])));
+    }
+    ui->tableWidget->resizeRowsToContents();
+    ui->tableWidget->resizeColumnsToContents();
+
+    updatingPropertiesTable = false;
+}
+
+void MainWindow::on_tableWidget_cellChanged(int row, int column)
+{
+    if (updatingPropertiesTable == false) {
+    QString text = ui->tableWidget->item(row,column)->text();
+    bool ok;
+     double textToDouble = text.toDouble(&ok);
+     if (column == 0) {
+         weights[row] = textToDouble;
+     } else if (column  == 1) {
+         storyHeights[row] = textToDouble;
+         for (int i=row; i<numFloors; i++)
+             floorHeights[i+1] = floorHeights[i]+storyHeights[i];
+         buildingH = floorHeights[numFloors];
+    } else if (column == 2) {
+        k[row] = textToDouble;
+     } else if (column == 3) {
+         fy[row] = textToDouble;
+     } else
+         b[row] = textToDouble;
+    }
+    needAnalysis = true;
+    ui->myGL->update();
+}
+
 
 void MainWindow::on_stopButton_clicked()
 {
@@ -380,7 +532,7 @@ void MainWindow::on_slider_valueChanged(int value)
             ui->myGL->update();
         }
         currentStep = ui->slider->value();
-        //qDebug() << currentStep;
+
         ui->myGL->repaint();
     }
 }
@@ -398,6 +550,7 @@ void MainWindow::on_slider_sliderReleased()
 float
 MainWindow::setSelectionBoundary(float y1, float y2)
 {
+    // determine min and max of y1,y2
     float yMin = 0;
     float yMax = 0;
     if (y1 < y2) {
@@ -407,16 +560,87 @@ MainWindow::setSelectionBoundary(float y1, float y2)
         yMin = y2;
         yMax = y1;
     }
+
+    // determine min and max of nodes in [y1,y2] range
+    fMinSelected = -1;
     fMaxSelected = -1;
-    for (int i=0; i<numFloors+1; i++) {
-        if (heights[i] < yMax)
-            fMaxSelected = i;
-    }
-    fMinSelected = numFloors+2;
-    for (int i=numFloors+1; i>=0; i--) {
-        if (heights[i] > yMin)
-            fMinSelected = i;
+    qDebug() << numFloors;
+    for (int i=0; i<=numFloors; i++) {
+        if (floorHeights[i] >= yMin && floorHeights[i] <= yMax) {
+            qDebug() << i << " " << floorHeights[i] << " " << yMin << " " <<  yMax;
+               if (fMinSelected == -1)
+                   fMinSelected = i;
+               fMaxSelected = i;
+        }
     }
 
+    // determine min and max of stories in [y1, y2] range;
+    sMinSelected = -1;
+    sMaxSelected = -1;
+    for (int i=0; i<numFloors; i++) {
+        double midStoryHeight = (floorHeights[i]+floorHeights[i+1])/2.;
+        if (midStoryHeight >= yMin && midStoryHeight <= yMax) {
+               if (sMinSelected == -1)
+                   sMinSelected = i;
+               sMaxSelected = i;
+        }
+    }
+    qDebug() << "sMinSelected: " << sMinSelected << " sMaxSelected: " << sMaxSelected;
+    //
+    // based on min, max nodes enable/disable lineEdits & set text
+    //
+    if (fMinSelected == -1) {
+        // blank out line edits
+        QString blank("");
+        ui->inFloorWeight->setText(blank);
+        ui->inFloorHeight->setText(blank);
+        // disable line edits
+        ui->inFloorWeight->setDisabled(true);
+        ui->inFloorHeight->setDisabled(true);
+
+    } else {
+
+        ui->inFloorWeight->setDisabled(false);
+        if (fMinSelected == fMaxSelected) // only time makes sense to change floor height
+            ui->inFloorHeight->setDisabled(false);
+        else
+             ui->inFloorHeight->setDisabled(true);
+
+    }
+    if (sMaxSelected == -1) { // (fMaxSelected < fMinSelected) {
+        // blank out line edits
+        QString blank("");
+        ui->inStoryHeight->setText(blank);
+        ui->inStoryK->setText(blank);
+        ui->inStoryB->setText(blank);
+        ui->inStoryFy->setText(blank);
+
+        ui->inStoryHeight->setDisabled(true);
+        ui->inStoryK->setDisabled(true);
+        ui->inStoryB->setDisabled(true);
+        ui->inStoryFy->setDisabled(true);
+
+    } else {
+        // enable line edits
+
+        ui->inStoryHeight->setDisabled(false);
+        ui->inStoryK->setDisabled(false);
+        ui->inStoryB->setDisabled(false);
+        ui->inStoryFy->setDisabled(false);
+
+        // set text line edits
+    }
     ui->myGL->repaint();
 }
+
+
+
+
+void MainWindow::on_tableWidget_cellClicked(int row, int column)
+{
+    qDebug() << row << " " << column;
+    fMinSelected = row+1; fMaxSelected = row+1;
+    sMinSelected = row; sMaxSelected = row;
+    ui->myGL->repaint();
+}
+

@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+//#include "PropertiesWidget.h"
 #include <QMainWindow>
 #include <math.h>
 
@@ -11,6 +12,7 @@ class EarthquakeRecord;
 namespace Ui {
 class MainWindow;
 }
+
 
 
 class MainWindow : public QMainWindow
@@ -27,6 +29,9 @@ public:
     float getMaxDisp(){return maxDisp;};
     float setSelectionBoundary(float y1, float y2);
 
+    friend class PropertiesWidget;
+
+
 private slots:
     void on_inFloors_editingFinished();
     void on_inWeight_editingFinished();
@@ -40,12 +45,23 @@ private slots:
     void on_slider_sliderPressed();
     void on_slider_sliderReleased();
 
+    void on_inFloorWeight_editingFinished();
+    void on_inFloorHeight_editingFinished();
+
+    void on_inStoryHeight_editingFinished();
+    void on_inStoryK_editingFinished();
+    void on_inStoryFy_editingFinished();
+    void on_inStoryB_editingFinished();
+
+    void on_tableWidget_cellChanged(int row, int column);
+    void on_tableWidget_cellClicked(int row, int column);
+
 private:
     void updatePeriod();
     void setBasicModel(int numFloors, double period);
     void setBasicModel(int numFloors, double buildingWeight, double buildingK);
+    void reset(void);
     
-
 private:
     Ui::MainWindow *ui;
 
@@ -55,11 +71,12 @@ private:
     double buildingH;
     double storyK;
 
-    double *masses;
+    double *weights;
     double *k;
     double *fy;
     double *b;
-    double *heights;
+    double *floorHeights;
+    double *storyHeights;
     double dampingRatio;
 
     double dt;
@@ -76,6 +93,8 @@ private:
     bool movingSlider;
     int fMinSelected, fMaxSelected;
     int sMinSelected, sMaxSelected;
+
+    bool updatingPropertiesTable;
 };
 
 #endif // MAINWINDOW_H
