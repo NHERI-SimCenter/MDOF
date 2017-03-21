@@ -275,7 +275,7 @@ void MainWindow::on_inFloors_editingFinished()
     if (numFloorsText != numFloors) {
         this->setBasicModel(numFloorsText, period);
     }
-
+ ui->inWeight->setFocus();
     this->reset();
 }
 
@@ -290,6 +290,8 @@ void MainWindow::on_inWeight_editingFinished()
             weights[i] = floorW;
         }
     }
+    
+     ui->inHeight->setFocus();
     this->reset();
 }
 
@@ -307,6 +309,7 @@ void MainWindow::on_inHeight_editingFinished()
             floorHeights[i+1] = deltaH + floorHeights[i];
         }
     }
+    
     this->reset();
 }
 

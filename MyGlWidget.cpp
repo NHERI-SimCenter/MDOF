@@ -53,6 +53,14 @@ MyGlWidget::drawNode(int tag, float x1, float y1, int numPixels, float r, float 
     }
 }
 
+void MyGlWidget::drawText(int tag, float x1, float y1, char *text, float r, float g, float b)
+{
+    glPushMatrix();
+           glColor3f(r, g, b);
+           renderText(x1, y1, 0, text);
+           glPopMatrix();
+}
+
 void
 MyGlWidget::drawLine(int tag, float x1, float y1, float x2, float y2, float thick, float r, float g, float b)
 {
@@ -102,12 +110,13 @@ void MyGlWidget::resizeGL(int w, int h) {
       if (maxDisp == 0)
           maxDisp = 10.0;
 
+      float bounW = maxDisp*1.1;
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
 #ifdef QT_OPENGL_ES_1
-      glOrthof(-maxDisp, +maxDisp, -bounH, bounH+heightB, -15, 15.0);
+      glOrthof(-maxDisp, +maxDisp, -bounH, bounH+heightB, -bounW, bounW);
 #else
-      glOrtho(-maxDisp, +maxDisp, -bounH, heightB+bounH, -15, 15.0);
+      glOrtho(-maxDisp, +maxDisp, -bounH, heightB+bounH, -bounW, bounW);
 #endif
     } else
       glOrtho(0, 6, 0, 6, -15, 15); // set origin to bottom left corner
@@ -127,14 +136,15 @@ void MyGlWidget::update() {
       float bounH = heightB/20;
       if (maxDisp == 0)
         maxDisp = 10.0;
+      float bounW = 1.1*maxDisp;
 
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
 
 #ifdef QT_OPENGL_ES_1
-      glOrthof(-maxDisp, +maxDisp, -bounH, bounH+heightB, -15, 15.0);
+      glOrthof(-bounW, +bounW, -bounH, bounH+heightB, -15, 15.0);
 #else
-      glOrtho(-maxDisp, +maxDisp, -bounH, heightB+bounH, -15, 15.0);
+      glOrtho(-bounW, +bounW, -bounH, heightB+bounH, -15, 15.0);
 #endif
     } else
       glOrtho(0, 6, 0, 6, -15, 15); // set origin to bottom left corner
@@ -189,6 +199,7 @@ void MyGlWidget::mouseReleaseEvent(QMouseEvent *event)
     //
     // need to determine world coords represented by mouse position in view world
     //
+
     GLint viewport[4]; //var to hold the viewport info
     GLdouble modelview[16]; //var to hold the modelview info
     GLdouble projection[16]; //var to hold the projection matrix info
@@ -231,7 +242,6 @@ void MyGlWidget::mouseReleaseEvent(QMouseEvent *event)
 
     // given press and release coordinated, inform ManWindow
     theModel->setSelectionBoundary(pressCrd(1),releaseCrd(1));
-
 }
 
 void MyGlWidget::mouseMoveEvent(QMouseEvent *event)

@@ -86,9 +86,9 @@ SOURCES += ./ops/CTestNormDispIncr.cpp
 SOURCES += ./ops/ConvergenceTest.cpp
 SOURCES += ./ops/LinearSOE.cpp
 SOURCES += ./ops/LinearSOESolver.cpp
-SOURCES += ./ops/BandGenLinSOE.cpp
-SOURCES += ./ops/BandGenLinSolver.cpp
-SOURCES += ./ops/BandGenLinLapackSolver.cpp
+SOURCES += ./ops/ProfileSPDLinSOE.cpp
+SOURCES += ./ops/ProfileSPDLinDirectSolver.cpp
+SOURCES += ./ops/ProfileSPDLinSolver.cpp
 SOURCES += ./ops/FE_Element.cpp
 SOURCES += ./ops/DOF_Group.cpp
 SOURCES += ./ops/Steel01.cpp
@@ -100,6 +100,11 @@ SOURCES += ./ops/DummyElementAPI.cpp
 SOURCES += ./ops/OPS_Stream.cpp
 
 
+#SOURCES += ./ops/BandGenLinSOE.cpp
+#SOURCES += ./ops/BandGenLinSolver.cpp
+# SOURCES += ./ops/BandGenLinLapackSolver.cpp
+# DEFINES += _FORTRAN_LIBS
+
 DEFINES += _bool_h
 
 unix {
@@ -107,9 +112,10 @@ unix {
 macx {
 
 DEFINES += "_MacOSX"
-LIBS += /Users/fmk/lib/libLapack.a
-LIBS += /Users/fmk/lib/libBlas.a
-LIBS += /usr/local/llvm-gcc/lib/libgfortran.a
+
+#LIBS += /Users/fmk/lib/libLapack.a
+#LIBS += /Users/fmk/lib/libBlas.a
+#LIBS += /usr/local/llvm-gcc/lib/libgfortran.a
 
 
 INCLUDEPATH += .include "./ops"
