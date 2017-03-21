@@ -312,7 +312,7 @@ void MainWindow::on_inFloors_editingFinished()
     if (numFloorsText != numFloors) {
         this->setBasicModel(numFloorsText, period);
     }
-
+  //  ui->inWeight->setFocus();
     this->reset();
 }
 
@@ -327,6 +327,7 @@ void MainWindow::on_inWeight_editingFinished()
             weights[i] = floorW;
         }
     }
+    // ui->inHeight->setFocus();
     this->reset();
 }
 
@@ -344,6 +345,27 @@ void MainWindow::on_inHeight_editingFinished()
             floorHeights[i+1] = deltaH + floorHeights[i];
         }
     }
+  //   ui->inK->setFocus();
+    this->reset();
+}
+
+
+void MainWindow::on_inK_editingFinished()
+{
+    QString text =  ui->inK->text();
+    double textToDouble = text.toDouble();
+    for (int i=0; i<=numFloors; i++)
+        k[i] = textToDouble;
+  //  ui->inDamping->setFocus();
+    this->reset();
+}
+
+void MainWindow::on_inDamping_editingFinished()
+{
+    QString text =  ui->inDamping->text();
+    double textToDouble = text.toDouble();
+    dampingRatio = textToDouble;
+//    ui->inGravity->setFocus();
     this->reset();
 }
 
@@ -356,6 +378,8 @@ void MainWindow::on_inFloorWeight_editingFinished()
 
     this->reset();
 }
+
+
 
 
 void MainWindow::on_inGravity_editingFinished()
@@ -774,5 +798,6 @@ void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
         qDebug() << numSteps << " " << dt;
     }
 }
+
 
 

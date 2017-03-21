@@ -77,32 +77,38 @@ public:
 
 
 private slots:
+    // main edits
     void on_inFloors_editingFinished();
     void on_inWeight_editingFinished();
     void on_inHeight_editingFinished();
+    void on_inK_editingFinished();
+    void on_inDamping_editingFinished();
+    void on_inGravity_editingFinished();
 
-    void on_stopButton_clicked();
-    void on_runButton_clicked();
- //   void on_slider_sliderMoved(int position);
-
-    void on_slider_valueChanged(int value);
-    void on_slider_sliderPressed();
-    void on_slider_sliderReleased();
-
+    // for selected floor edits
     void on_inFloorWeight_editingFinished();
- //   void on_inFloorHeight_editingFinished();
 
+    // for selected story edits
     void on_inStoryHeight_editingFinished();
     void on_inStoryK_editingFinished();
     void on_inStoryFy_editingFinished();
     void on_inStoryB_editingFinished();
 
+    // for earthquake motion combo box
+    void on_inMotionSelection_currentTextChanged(const QString &arg1);
+
+     // for stop and start buttons
+    void on_stopButton_clicked();
+    void on_runButton_clicked();
+
+    // for time slider
+    void on_slider_valueChanged(int value);
+    void on_slider_sliderPressed();
+    void on_slider_sliderReleased();
+
+    // for table editing
     void on_tableWidget_cellChanged(int row, int column);
     void on_tableWidget_cellClicked(int row, int column);
-
-    void on_inGravity_editingFinished();
-
-    void on_inMotionSelection_currentTextChanged(const QString &arg1);
 
 private:
     void updatePeriod();
