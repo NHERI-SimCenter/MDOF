@@ -1,7 +1,7 @@
 
-//#include "PropertiesWidget.h"
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include "EarthquakeRecord.h"
 
 #include <QDebug>
 #include <QSlider>
@@ -52,7 +52,8 @@ MainWindow::MainWindow(QWidget *parent) :
     weights(0), k(0), fy(0), b(0), floorHeights(0), storyHeights(0),
     dampingRatio(0.02), g(386.4), dt(0), gMotion(0),
     needAnalysis(true), elCentroData(0), dispResponses(0), maxDisp(0),
-    movingSlider(false), fMinSelected(-1),fMaxSelected(-1), sMinSelected(-1),sMaxSelected(-1)
+    movingSlider(false), fMinSelected(-1),fMaxSelected(-1), sMinSelected(-1),sMaxSelected(-1),
+    time(1560),values(1560)
 {
     ui->setupUi(this);
     //ui->numFloors->setValidator( new QIntValidator);
@@ -79,18 +80,49 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->inStoryB->setDisabled(true);
     ui->inStoryFy->setDisabled(true);
 
+    ui->inHazard->addItem(QString("Earthquake"));
+
+    // create elCentro EarthquakeRecord and make current
     QStringList elCentrolist = elCentroTextData.split(QRegExp("[\r\n\t ]+"), QString::SkipEmptyParts);
     elCentroData = new Vector(elCentrolist.size()+1);
     (*elCentroData)(0) = 0;
+    time[0]=0.;
+    values[0]=0.;
+    double maxValue = 0;
     for (int i = 0; i < elCentrolist.size(); ++i) {
-        (*elCentroData)(i+1) = elCentrolist.at(i).toDouble();
+        double value = elCentrolist.at(i).toDouble();
+        (*elCentroData)(i+1) = value;
+        time[i+1]=i*0.02;
+        values[i+1]=value;
+        if (fabs(value) > maxValue)
+            maxValue = fabs(value);
     }
     dt = 0.02;
     numSteps = 1560;
+    QString elCentroString("elCentro");
+    EarthquakeRecord *elCentro = new EarthquakeRecord(elCentroString, 1560, 0.02, elCentroData);
+    records.insert(std::make_pair(QString("elCentro"), elCentro));
+
+    ui->inMotionSelection->addItem(elCentroString);
+    ui->inMotionSelection->addItem(QString("BLANK"));
+
     ui->slider->setRange(0, numSteps);
     ui->slider->setSliderPosition(0);
     //ui->slider->setMaximum(numSteps);
-
+    graph = ui->earthquakePlot->addGraph();
+    ui->earthquakePlot->graph(0)->setData(time, values);
+    ui->earthquakePlot->xAxis->setRange(0, 1560*dt);
+    ui->earthquakePlot->yAxis->setRange(-maxValue, maxValue);
+    ui->earthquakePlot->axisRect()->setAutoMargins(QCP::msNone);
+    ui->earthquakePlot->axisRect()->setMargins(QMargins(0,0,0,0));
+    groupTracer = new QCPItemTracer(ui->earthquakePlot);
+    groupTracer->setGraph(graph);
+    groupTracer->setGraphKey(0);
+    groupTracer->setInterpolating(true);
+    groupTracer->setStyle(QCPItemTracer::tsCircle);
+    groupTracer->setPen(QPen(Qt::red));
+    groupTracer->setBrush(Qt::red);
+    groupTracer->setSize(7);
     this->reset();
 }
 
@@ -136,8 +168,11 @@ void MainWindow::draw(MyGlWidget *theGL)
         theGL->drawNode(i, dispResponses[i][currentStep],floorHeights[i], 10, 0, 0, 1);
     }
     ui->currentTime->setText(QString().setNum(currentStep*dt,'f',2));
-
-
+    groupTracer->setGraph(0);
+    groupTracer->setGraph(graph);
+    groupTracer->setGraphKey(currentStep*dt);
+    groupTracer->updatePosition();
+    ui->earthquakePlot->replot();
 }
 
 
@@ -444,6 +479,7 @@ void MainWindow::doAnalysis()
         // reset values, i.e. slider position, current displayed step, and display properties
         needAnalysis = false;
         currentStep = 0;
+        groupTracer->setGraphKey(0);
         ui->slider->setSliderPosition(0);
         ui->myGL->update();
     }
@@ -517,7 +553,9 @@ void MainWindow::on_runButton_clicked()
         ui->slider->setSliderPosition(currentStep);
         ui->myGL->repaint();
         QCoreApplication::processEvents();
+
         currentStep++;
+
     } while (currentStep <= numSteps && stopRun == false); // <= added 0 to ground motion
 }
 
@@ -635,6 +673,21 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
     fMinSelected = row+1; fMaxSelected = row+1;
     sMinSelected = row; sMaxSelected = row;
     ui->myGL->repaint();
+}
+
+
+
+void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
+{
+    qDebug() << "MOTION SELECTED " << arg1;
+    std::map<QString, EarthquakeRecord *>::iterator it;
+    it = records.find(arg1);
+    if (it != records.end()) {
+        EarthquakeRecord *theRecord = records.at(arg1);
+        numSteps =  theRecord->numSteps;
+        dt =  theRecord->dt;
+        qDebug() << numSteps << " " << dt;
+    }
 }
 
 

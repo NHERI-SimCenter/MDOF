@@ -16,9 +16,13 @@ include(OPS_includes.pro)
 
 SOURCES += main.cpp\
         MainWindow.cpp \
-    MyGlWidget.cpp
+    MyGlWidget.cpp \
+    qcustomplot.cpp \
+    EarthquakeRecord.cpp
 
 HEADERS  += MainWindow.h \
-    MyGlWidget.h
+    MyGlWidget.h \
+    qcustomplot.h \
+    EarthquakeRecord.h
 
 FORMS    += MainWindow.ui

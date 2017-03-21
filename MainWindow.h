@@ -4,9 +4,14 @@
 //#include "PropertiesWidget.h"
 #include <QMainWindow>
 #include <math.h>
+#include <map>
+#include <QString>
 
 class MyGlWidget;
 class Vector;
+class EarthquakeRecord;
+class QCPGraph;
+class QCPItemTracer;
 class EarthquakeRecord;
 
 namespace Ui {
@@ -58,6 +63,8 @@ private slots:
 
     void on_inGravity_editingFinished();
 
+    void on_inMotionSelection_currentTextChanged(const QString &arg1);
+
 private:
     void updatePeriod();
     void setBasicModel(int numFloors, double period);
@@ -98,6 +105,13 @@ private:
     int sMinSelected, sMaxSelected;
 
     bool updatingPropertiesTable;
+
+    QVector<double> time;
+    QVector<double> values;
+     QCPGraph *graph;
+     QCPItemTracer *groupTracer;
+
+     std::map <QString, EarthquakeRecord *> records;
 };
 
 #endif // MAINWINDOW_H
