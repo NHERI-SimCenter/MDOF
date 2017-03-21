@@ -315,7 +315,6 @@ Matrix::Assemble(const Matrix &V, const ID &rows, const ID &cols, double fact)
   return res;
 }
 
-/*
 #ifdef _WIN32
 #ifndef _DLL
 extern "C" int  DGESV(int *N, int *NRHS, double *A, int *LDA, 
@@ -349,7 +348,6 @@ extern "C" int dgerfs_(char *TRANS, int *N, int *NRHS, double *A, int *LDA,
 		       double *WORK, int *IWORK, int *INFO);
 
 #endif
-*/
 
 int
 Matrix::Solve(const Vector &b, Vector &x) const
@@ -424,7 +422,6 @@ Matrix::Solve(const Vector &b, Vector &x) const
     double *Xptr = x.theData;
     int *iPIV = intWork;
 
-    /*
 
 #ifdef _WIN32
 #ifndef _DLL
@@ -439,10 +436,6 @@ Matrix::Solve(const Vector &b, Vector &x) const
 #endif
 
     return -abs(info);
-    */
-
-    opserr << "Matrix::Solve - removed fortran call\n";
-    return -1;
 }
 
 
@@ -524,7 +517,7 @@ Matrix::Solve(const Matrix &b, Matrix &x) const
     int *iPIV = intWork;
     
 	info = -1;
-/*
+
 #ifdef _WIN32
 #ifndef _DLL
     DGESV(&n,&nrhs,Aptr,&ldA,iPIV,Xptr,&ldB,&info);
@@ -536,10 +529,6 @@ Matrix::Solve(const Matrix &b, Matrix &x) const
 #else
     dgesv_(&n,&nrhs,Aptr,&ldA,iPIV,Xptr,&ldB,&info);
 
-
-
-
-    /*
     // further correction if required
    // double Bptr[n*n];
 //    for (int i=0; i<n*n; i++) Bptr[i] = b.data[i];
@@ -554,10 +543,6 @@ Matrix::Solve(const Matrix &b, Matrix &x) const
 
 #endif
     return -abs(info);
-    */
-    opserr << "Matrix::Solve - removed fortran calls\n";
-    return -1;
-
 }
 
 
@@ -626,8 +611,7 @@ Matrix::Invert(Matrix &theInverse) const
     int workSize = sizeDoubleWork;
     
     int *iPIV = intWork;
-    
-/*
+
 #ifdef _WIN32
 #ifndef _DLL
     DGETRF(&n,&n,Aptr,&ldA,iPIV,&info);
@@ -656,9 +640,6 @@ Matrix::Invert(Matrix &theInverse) const
 #endif
 
     return -abs(info);
-    */
-    opserr << "Matrix::Ivert - removed fortran calls\n";
-    return -1;
 }
 
 
