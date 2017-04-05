@@ -42,7 +42,11 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <QDebug>
 #include <QSlider>
+//#include <QtNetwork>
 
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
 
 // OpenSees include files
 #include <Node.h>
@@ -158,6 +162,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->slider->setSliderPosition(0);
     //ui->slider->setMaximum(numSteps);
 
+    // access a web page which will increment the usage count for this tool
+    manager = new QNetworkAccessManager(this);
+
+    connect(manager, SIGNAL(finished(QNetworkReply*)),
+         this, SLOT(replyFinished(QNetworkReply*)));
+
+    manager->get(QNetworkRequest(QUrl("http://opensees.berkeley.edu")));
 }
 
 MainWindow::~MainWindow()
@@ -239,6 +250,7 @@ void MainWindow::setBasicModel(int numF, double period)
 void MainWindow::setBasicModel(int numF, double W, double K)
 {
     if (numFloors != numF) {
+
         // if invalid numFloor, return
         if (numF <= 0)
             return;
@@ -271,10 +283,14 @@ void MainWindow::setBasicModel(int numF, double W, double K)
         storyHeights = new double[numF];
 
         dispResponses = new double *[numF+1];
+
+        //for (int i=0; i<numF+1; i++) {}
+numSteps = 2000;
         for (int i=0; i<numF+1; i++) {
             dispResponses[i] = new double[numSteps+1]; // +1 as doing 0 at start
         }
     }
+
 
     // set values
     double floorW = W/(numF);
@@ -746,6 +762,12 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
     fMinSelected = row+1; fMaxSelected = row+1;
     sMinSelected = row; sMaxSelected = row;
     ui->myGL->repaint();
+}
+
+void MainWindow::replyFinished(QNetworkReply *pReply)
+{
+    //QByteArray data=pReply->readAll();
+    //QString str(data);
 }
 
 

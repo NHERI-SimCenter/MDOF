@@ -113,10 +113,9 @@ macx {
 
 DEFINES += "_MacOSX"
 
-#LIBS += /Users/fmk/lib/libLapack.a
-#LIBS += /Users/fmk/lib/libBlas.a
-#LIBS += /usr/local/llvm-gcc/lib/libgfortran.a
-
+LIBS += /Users/fmk/lib/libLapack.a
+LIBS += /Users/fmk/lib/libBlas.a
+LIBS += /usr/local/llvm-gcc/lib/libgfortran.a
 
 INCLUDEPATH += .include "./ops"
 #INCLUDEPATH += "$(HOME)/OpenSees/DEVELOPER/core"
