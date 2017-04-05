@@ -113,6 +113,7 @@ private slots:
     void on_tableWidget_cellClicked(int row, int column);
 
     void replyFinished(QNetworkReply*);
+    void on_exitButton_released();
 
 private:
     void updatePeriod();

@@ -116,17 +116,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->inStoryHeight->setValidator(new QDoubleValidator);
     ui->inStoryK->setValidator(new QDoubleValidator);
 
-    this->setBasicModel(4, 0.4);
-
-    ui->inFloorWeight->setDisabled(true);
-
-    ui->inStoryHeight->setDisabled(true);
-    ui->inStoryK->setDisabled(true);
-    ui->inStoryB->setDisabled(true);
-    ui->inStoryFy->setDisabled(true);
-
-    ui->inHazard->addItem(QString("Earthquake"));
-
     // create elCentro EarthquakeRecord and make current
     QStringList elCentrolist = elCentroTextData.split(QRegExp("[\r\n\t ]+"), QString::SkipEmptyParts);
     Vector *elCentroData = new Vector(elCentrolist.size()+1);
@@ -153,6 +142,18 @@ MainWindow::MainWindow(QWidget *parent) :
     QString blankString("BLANK");
     EarthquakeRecord *blank = new EarthquakeRecord(blankString, 100, 0.02, blankData);
     records.insert(std::make_pair(blankString, blank));
+
+    this->setBasicModel(4, 0.4);
+
+    ui->inFloorWeight->setDisabled(true);
+
+    ui->inStoryHeight->setDisabled(true);
+    ui->inStoryK->setDisabled(true);
+    ui->inStoryB->setDisabled(true);
+    ui->inStoryFy->setDisabled(true);
+
+    ui->inHazard->addItem(QString("Earthquake"));
+
 
 
     ui->inMotionSelection->addItem(elCentroString);
@@ -565,6 +566,9 @@ void MainWindow::doAnalysis()
             }
         }
 
+        // clean up memory
+        delete [] theNodes;
+
         // reset values, i.e. slider position, current displayed step, and display properties
         needAnalysis = false;
         currentStep = 0;
@@ -774,7 +778,6 @@ void MainWindow::replyFinished(QNetworkReply *pReply)
 
 void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
 {
-    qDebug() << "MOTION SELECTED " << arg1;
     std::map<QString, EarthquakeRecord *>::iterator it;
     it = records.find(arg1);
     if (it != records.end()) {
@@ -822,4 +825,7 @@ void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
 }
 
 
-
+void MainWindow::on_exitButton_released()
+{
+    QApplication::quit();
+}
