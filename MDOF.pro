@@ -26,3 +26,9 @@ HEADERS  += MainWindow.h \
     EarthquakeRecord.h
 
 FORMS    += MainWindow.ui
+
+RESOURCES += \
+    resources.qrc
+
+DISTFILES += \
+    ../../../../Desktop/sc/styles /material_down_arrow.png

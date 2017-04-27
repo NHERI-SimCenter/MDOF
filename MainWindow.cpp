@@ -39,6 +39,8 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 #include "EarthquakeRecord.h"
+#include <QDesktopWidget>
+#include <QMainWindow>
 
 #include <QDebug>
 #include <QSlider>
@@ -163,6 +165,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->slider->setSliderPosition(0);
     //ui->slider->setMaximum(numSteps);
 
+
     // access a web page which will increment the usage count for this tool
     manager = new QNetworkAccessManager(this);
 
@@ -170,6 +173,7 @@ MainWindow::MainWindow(QWidget *parent) :
          this, SLOT(replyFinished(QNetworkReply*)));
 
     manager->get(QNetworkRequest(QUrl("http://opensees.berkeley.edu")));
+
 }
 
 MainWindow::~MainWindow()
@@ -586,8 +590,9 @@ void MainWindow::reset() {
     ui->tableWidget->clear();
     ui->tableWidget->setColumnCount(5);
     ui->tableWidget->setRowCount(numFloors);
-    ui->tableWidget->horizontalHeader()->setStretchLastSection(true);// horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+    ui->tableWidget->horizontalHeader()->setStretchLastSection(false);// horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
    // ui->tableWidget->setFixedWidth(344);
+   //maxwell setStretchLastSection(true) -> seStretchLastSection(false)
     updatingPropertiesTable = true;
     ui->tableWidget->setHorizontalHeaderLabels(QString(" Weight ; Height ;    K    ;    Fy    ;    b    ").split(";"));
     for (int i=0; i<numFloors; i++) {
