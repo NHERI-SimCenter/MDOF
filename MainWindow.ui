@@ -1202,7 +1202,9 @@ border:none; </string>
     <rect>
      <x>0</x>
      <y>0</y>
+
      <width>880</width>
+
      <height>22</height>
     </rect>
    </property>

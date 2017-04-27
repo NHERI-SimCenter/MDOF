@@ -52,6 +52,8 @@ class EarthquakeRecord;
 class QCPGraph;
 class QCPItemTracer;
 class EarthquakeRecord;
+class QNetworkAccessManager;
+class QNetworkReply;
 
 namespace Ui {
 class MainWindow;
@@ -110,6 +112,9 @@ private slots:
     void on_tableWidget_cellChanged(int row, int column);
     void on_tableWidget_cellClicked(int row, int column);
 
+    void replyFinished(QNetworkReply*);
+    void on_exitButton_released();
+
 private:
     void updatePeriod();
     void setBasicModel(int numFloors, double period);
@@ -157,6 +162,8 @@ private:
     QCPItemTracer *groupTracer;
 
     std::map <QString, EarthquakeRecord *> records;
+
+    QNetworkAccessManager *manager;
 };
 
 #endif // MAINWINDOW_H

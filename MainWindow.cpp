@@ -44,7 +44,11 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <QDebug>
 #include <QSlider>
+//#include <QtNetwork>
 
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
 
 // OpenSees include files
 #include <Node.h>
@@ -114,17 +118,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->inStoryHeight->setValidator(new QDoubleValidator);
     ui->inStoryK->setValidator(new QDoubleValidator);
 
-    this->setBasicModel(4, 0.4);
-
-    ui->inFloorWeight->setDisabled(true);
-
-    ui->inStoryHeight->setDisabled(true);
-    ui->inStoryK->setDisabled(true);
-    ui->inStoryB->setDisabled(true);
-    ui->inStoryFy->setDisabled(true);
-
-    ui->inHazard->addItem(QString("Earthquake"));
-
     // create elCentro EarthquakeRecord and make current
     QStringList elCentrolist = elCentroTextData.split(QRegExp("[\r\n\t ]+"), QString::SkipEmptyParts);
     Vector *elCentroData = new Vector(elCentrolist.size()+1);
@@ -152,6 +145,18 @@ MainWindow::MainWindow(QWidget *parent) :
     EarthquakeRecord *blank = new EarthquakeRecord(blankString, 100, 0.02, blankData);
     records.insert(std::make_pair(blankString, blank));
 
+    this->setBasicModel(4, 0.4);
+
+    ui->inFloorWeight->setDisabled(true);
+
+    ui->inStoryHeight->setDisabled(true);
+    ui->inStoryK->setDisabled(true);
+    ui->inStoryB->setDisabled(true);
+    ui->inStoryFy->setDisabled(true);
+
+    ui->inHazard->addItem(QString("Earthquake"));
+
+
 
     ui->inMotionSelection->addItem(elCentroString);
     ui->inMotionSelection->addItem(QString("BLANK"));
@@ -160,6 +165,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->slider->setSliderPosition(0);
     //ui->slider->setMaximum(numSteps);
 
+
+    // access a web page which will increment the usage count for this tool
+    manager = new QNetworkAccessManager(this);
+
+    connect(manager, SIGNAL(finished(QNetworkReply*)),
+         this, SLOT(replyFinished(QNetworkReply*)));
+
+    manager->get(QNetworkRequest(QUrl("http://opensees.berkeley.edu")));
 
 }
 
@@ -242,6 +255,7 @@ void MainWindow::setBasicModel(int numF, double period)
 void MainWindow::setBasicModel(int numF, double W, double K)
 {
     if (numFloors != numF) {
+
         // if invalid numFloor, return
         if (numF <= 0)
             return;
@@ -274,10 +288,14 @@ void MainWindow::setBasicModel(int numF, double W, double K)
         storyHeights = new double[numF];
 
         dispResponses = new double *[numF+1];
+
+        //for (int i=0; i<numF+1; i++) {}
+numSteps = 2000;
         for (int i=0; i<numF+1; i++) {
             dispResponses[i] = new double[numSteps+1]; // +1 as doing 0 at start
         }
     }
+
 
     // set values
     double floorW = W/(numF);
@@ -552,6 +570,9 @@ void MainWindow::doAnalysis()
             }
         }
 
+        // clean up memory
+        delete [] theNodes;
+
         // reset values, i.e. slider position, current displayed step, and display properties
         needAnalysis = false;
         currentStep = 0;
@@ -752,11 +773,16 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
     ui->myGL->repaint();
 }
 
+void MainWindow::replyFinished(QNetworkReply *pReply)
+{
+    //QByteArray data=pReply->readAll();
+    //QString str(data);
+}
+
 
 
 void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
 {
-    qDebug() << "MOTION SELECTED " << arg1;
     std::map<QString, EarthquakeRecord *>::iterator it;
     it = records.find(arg1);
     if (it != records.end()) {
@@ -804,4 +830,7 @@ void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
 }
 
 
-
+void MainWindow::on_exitButton_released()
+{
+    QApplication::quit();
+}
