@@ -52,7 +52,7 @@ MyGlWidget::MyGlWidget(QWidget *parent)
   timer.setInterval(200);
   timer.setSingleShot(true);
   connect(&timer, SIGNAL(timeout()), this, SLOT(mouseSingleClickEvent()));
-  doubleClicked = 0;    
+  doubleClicked = 0;
 }
 
 MyGlWidget::~MyGlWidget()
@@ -71,7 +71,7 @@ MyGlWidget::drawNode(int tag, float x1, float y1, int numPixels, float r, float 
 
     if (selectMode == 0) {
         glPointSize(numPixels);
-        glColor3f(r, g, b);
+        glColor3f(0.275f, 0.510f, 0.706f); //r,g,b floats - maxwell
         glBegin(GL_POINTS);
         glVertex2f(x1, y1);
         glEnd();
@@ -82,7 +82,7 @@ MyGlWidget::drawNode(int tag, float x1, float y1, int numPixels, float r, float 
             int r1 = (tag & 0x000000FF) >>  0;
             int g1 = (tag & 0x0000FF00) >>  8;
             int b1 = (tag & 0x00FF0000) >> 16;
-            glColor3f(r1/255.0,g1/255.0,b1/255.0);
+            glColor3f(r1/255.0,g1/255.0,b1/255.0); /*255,255,255*/
             glPointSize(numPixels);
             glBegin(GL_POINTS);
             glVertex3f(x1, y1, 0.0);
@@ -115,7 +115,7 @@ MyGlWidget::drawLine(int tag, float x1, float y1, float x2, float y2, float thic
             int r1 = (tag & 0x000000FF) >>  0;
             int g1 = (tag & 0x0000FF00) >>  8;
             int b1 = (tag & 0x00FF0000) >> 16;
-            glColor3f(r1/255.0,g1/255.0,b1/255.0);
+            glColor3f(r1/255.0,g1/255.0,b1/255.0); /*255,255,255*/
             glLineWidth(thick);
             glBegin(GL_LINES);
             glVertex3f(x1, y1, 0.0);
@@ -133,7 +133,7 @@ void MyGlWidget::initializeGL() {
     glEnable(GL_BLEND);
     glEnable(GL_POLYGON_SMOOTH);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glClearColor(1, 1, 1, 0);
+    glClearColor(239, 110, 110, 0); /*1,1,1,0*/
 }
 
 void MyGlWidget::resizeGL(int w, int h) {

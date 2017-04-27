@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     MainWindow w;
+    w.setFixedSize(880,764); //maxwell set options
     w.show();
 
     return a.exec();
