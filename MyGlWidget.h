@@ -50,27 +50,33 @@ class MyGlWidget : public QGLWidget {
     Q_OBJECT // must include this if you use Qt signals/slots
 
 public:
-    MyGlWidget(QWidget *parent = NULL);
-    ~MyGlWidget();
-    void setModel(MainWindow *);
-    
-    void update();
-    void drawLine(int tag, float x1, float y1, float x2, float y2, float thick, float r, float g, float b);
-    void drawNode(int tag, float x1, float y1, int numPixels, float r, float g, float b);
-    void drawText(int tag, float x1, float y1, char *text, float r, float g, float b);
-
+  MyGlWidget(QWidget *parent = NULL);
+  ~MyGlWidget();
+  void setModel(MainWindow *);
+  
+  void update();
+  void reset();
+  void drawLine(int tag, float x1, float y1, float x2, float y2, float thick, float r, float g, float b);
+  void drawPoint(int tag, float x1, float y1, int numPixels, float r, float g, float b);
+  void drawText(int tag, float x1, float y1, char *text, float r, float g, float b);
+  
   public slots:
   void mousePressEvent(QMouseEvent *event);
   void mouseReleaseEvent(QMouseEvent *event);
   void mouseMoveEvent(QMouseEvent *event);
   void mouseDoubleClickEvent(QMouseEvent *);
   void mouseSingleClickEvent(void);
-    
-protected:
+  
+public:
+
+      void drawBuffers();
+
+ protected:
     void initializeGL();
     void resizeGL(int w, int h);
-    void paintGL();
+          void paintGL();
 
+    
     /*
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
@@ -85,6 +91,18 @@ protected:
     int doubleClicked;
     QTimer timer;
     bool clickedLeft;
+    
+    int *pointIDs;
+    int numPoint, maxNumPoint;
+    GLfloat *pointVertices;
+    GLfloat *pointColors;
+   // GLfloat *pointTagColors;
+    
+    int *lineIDs;
+    int numLine, maxNumLine;
+    GLfloat *lineVertices;
+    GLfloat *lineColors;
+   // GLfloat *lineTagColors;
 };
 
 

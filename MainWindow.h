@@ -39,12 +39,23 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 // Written: fmckenna
 
-
 //#include "PropertiesWidget.h"
+
 #include <QMainWindow>
 #include <math.h>
 #include <map>
 #include <QString>
+
+class QLineEdit;
+class QComboBox;
+class QHBoxLayout;
+class QVBoxLayout;
+class QLabel;
+class QPushButton;
+class QCustomPlot;
+class MyGlWidget;
+class QSlider;
+
 
 class MyGlWidget;
 class Vector;
@@ -54,6 +65,9 @@ class QCPItemTracer;
 class EarthquakeRecord;
 class QNetworkAccessManager;
 class QNetworkReply;
+class QFrame;
+
+class SimpleSpreadsheetWidget;
 
 namespace Ui {
 class MainWindow;
@@ -71,12 +85,11 @@ public:
 
     void draw(MyGlWidget *);
     void doAnalysis();
-    float getHeight() {return buildingH;};
+    float getBuildingHeight() {return buildingH;};
     float getMaxDisp(){return maxDisp;};
     float setSelectionBoundary(float y1, float y2);
 
     friend class PropertiesWidget;
-
 
 private slots:
     // main edits
@@ -102,6 +115,7 @@ private slots:
      // for stop and start buttons
     void on_stopButton_clicked();
     void on_runButton_clicked();
+    void on_exitButton_clicked();
 
     // for time slider
     void on_slider_valueChanged(int value);
@@ -109,34 +123,101 @@ private slots:
     void on_slider_sliderReleased();
 
     // for table editing
-    void on_tableWidget_cellChanged(int row, int column);
-    void on_tableWidget_cellClicked(int row, int column);
+    void on_theSpreadsheet_cellChanged(int row, int column);
+    void on_theSpreadsheet_cellClicked(int row, int column);
 
     void replyFinished(QNetworkReply*);
-    void on_exitButton_released();
+
+    void on_pushButton_2_clicked();
+
+
+    void newFile();
+    void open();
+    bool save();
+    bool saveAs();
 
 private:
     void updatePeriod();
-    void setBasicModel(int numFloors, double period);
-    void setBasicModel(int numFloors, double buildingWeight, double buildingK);
+    void setBasicModel(int numFloors, double buildingW, double buildingH, double storyK, double zeta, double grav);
     void reset(void);
     
 private:
+
+    // private functions for setup, and for loading and saving current run info
+    void createInputPanel();
+    void createOutputPanel();
+    void createActions();
+    void setCurrentFile(const QString &fileName);
+    bool saveFile(const QString &fileName);
+    void loadFile(const QString &fileName);
+
+
+    QHBoxLayout *mainLayout;
+
+    QVBoxLayout *outputLayout;
+    QVBoxLayout *inputLayout;
+
+    QComboBox *inMotion;
+
+    // global properties inputs when nothing slected
+    QLineEdit *inFloors;
+    QLineEdit *inWeight;
+    QLineEdit *inHeight;
+    QLineEdit *inK;
+    QLineEdit *inDamping;
+    QLineEdit *inGravity;
+
+    // specific inputs when many selected
+    QLineEdit *inFloorWeight;
+    QLineEdit *inStoryK;
+    QLineEdit *inStoryFy;
+    QLineEdit *inStoryB;
+    QLineEdit *inStoryHeight;
+
+    // buttons for running, stoppping & exiting
+    QPushButton *runButton;
+    QPushButton *stopButton;
+    QPushButton *exitButton;
+
+    // input frames displayed depending on selection
+    QFrame *floorMassFrame;
+    QFrame *storyPropertiesFrame;
+    QFrame *spreadSheetFrame;
+
+    SimpleSpreadsheetWidget *theSpreadsheet;
+
+    // output panel widgets
+    QCustomPlot *earthquakePlot;
+    QSlider *slider;
+    MyGlWidget *myGL;
+    QComboBox *periods;
+
+    QLabel *currentTime;
+    QLabel *currentDisp;
+
+    QStringList headings;
+    QList<int> dataTypes;
+    
     Ui::MainWindow *ui;
 
-    int numFloors;
-    double period;
+    //
+    // following are the model properties
+    //
+    int    numFloors;
     double buildingW;
     double buildingH;
     double storyK;
+    double dampingRatio;
 
     double *weights;
     double *k;
     double *fy;
     double *b;
+
     double *floorHeights;
     double *storyHeights;
-    double dampingRatio;
+    double *dampRatios;
+
     double g;
 
     double dt;
@@ -144,15 +225,16 @@ private:
     double *gMotion;
     Vector *eqData;
 
-    bool needAnalysis;
+    bool   needAnalysis;
     double **dispResponses;
     double maxDisp;
-    int currentStep;
-    bool stopRun;
+    int    currentStep;
+    bool   stopRun;
 
-    bool movingSlider;
-    int fMinSelected, fMaxSelected;
-    int sMinSelected, sMaxSelected;
+    bool   movingSlider;
+    int    fMinSelected, fMaxSelected;
+    int    sMinSelected, sMaxSelected;
+    int    floorSelected, storySelected;
 
     bool updatingPropertiesTable;
 
@@ -164,6 +246,8 @@ private:
     std::map <QString, EarthquakeRecord *> records;
 
     QNetworkAccessManager *manager;
+
+    QString currentFile;
 };
 
 #endif // MAINWINDOW_H

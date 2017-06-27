@@ -45,18 +45,32 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <Vector.h>
 
 MyGlWidget::MyGlWidget(QWidget *parent)
-  : QGLWidget(parent), selectMode(0)
+    : QGLWidget(parent), selectMode(0)
 {
     setMouseTracking(true);
 
-  timer.setInterval(200);
-  timer.setSingleShot(true);
-  connect(&timer, SIGNAL(timeout()), this, SLOT(mouseSingleClickEvent()));
-  doubleClicked = 0;    
+    timer.setInterval(200);
+    timer.setSingleShot(true);
+    connect(&timer, SIGNAL(timeout()), this, SLOT(mouseSingleClickEvent()));
+    doubleClicked = 0;
+
+    numPoint = 0;
+    maxNumPoint = 16;
+    pointIDs = new int[maxNumPoint];
+    pointVertices = new GLfloat[maxNumPoint*3];
+    pointColors = new GLfloat[maxNumPoint*3];
+
+    numLine = 0;
+    maxNumLine = 16;
+    lineIDs = new int[maxNumLine];
+    lineVertices = new GLfloat[maxNumLine*2*3];
+    lineColors = new GLfloat[maxNumLine*2*3];
+
 }
 
 MyGlWidget::~MyGlWidget()
 {
+
 }
 
 void MyGlWidget::setModel(MainWindow *theM)
@@ -66,65 +80,144 @@ void MyGlWidget::setModel(MainWindow *theM)
 
 
 void
-MyGlWidget::drawNode(int tag, float x1, float y1, int numPixels, float r, float g, float b)
-{
+MyGlWidget::drawBuffers(){
+    // draw the shapes
+    glEnableClientState(GL_COLOR_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
 
-    if (selectMode == 0) {
-        glPointSize(numPixels);
-        glColor3f(r, g, b);
-        glBegin(GL_POINTS);
-        glVertex2f(x1, y1);
-        glEnd();
-    } else {
-        // for picking purposes, not used yet
-        if (tag != 0) {
-            glPointSize(numPixels);
-            int r1 = (tag & 0x000000FF) >>  0;
-            int g1 = (tag & 0x0000FF00) >>  8;
-            int b1 = (tag & 0x00FF0000) >> 16;
-            glColor3f(r1/255.0,g1/255.0,b1/255.0);
-            glPointSize(numPixels);
-            glBegin(GL_POINTS);
-            glVertex3f(x1, y1, 0.0);
-            glEnd();
-        }
+
+    glLineWidth(2.0);
+    glPointSize(10);
+
+    if (numPoint > 0) {
+        glColorPointer(3, GL_FLOAT, 0, pointColors);
+        glVertexPointer(3, GL_FLOAT, 0, pointVertices);
+        glDrawArrays(GL_POINTS, 0, numPoint);
     }
+
+    if (numLine > 0) {
+        glColorPointer(3, GL_FLOAT, 0, lineColors);
+        glVertexPointer(3, GL_FLOAT, 0, lineVertices);
+        glDrawArrays(GL_LINES, 0, 2*numLine);
+    }
+}
+
+void
+MyGlWidget::drawPoint(int tag, float x1, float y1, int numPixels, float r, float g, float b)
+{
+    numPoint++;
+    if (numPoint > maxNumPoint) {
+
+
+        GLfloat *oldPointColors = pointColors;
+        GLfloat *oldPointVertices = pointVertices;
+        int *oldPointIDs = pointIDs;
+
+        int newPointSize = (maxNumPoint+32)*3;
+        pointVertices = new GLfloat[newPointSize];
+
+        pointColors = new GLfloat[newPointSize];
+        pointIDs = new int[(maxNumPoint+32)];
+
+        for (int i=0; i<maxNumPoint*3; i++) {
+            pointVertices[i] = oldPointVertices[i];
+
+            pointColors[i] = oldPointColors[i];
+        }
+        for (int i=0; i<maxNumPoint; i++) {
+            pointIDs[i] = oldPointIDs[i];
+        }
+
+        if (oldPointVertices != 0)
+            delete [] oldPointVertices;
+
+        if (oldPointColors != 0)
+            delete [] oldPointColors;
+        if (oldPointIDs != 0)
+            delete [] oldPointIDs;
+
+
+        maxNumPoint += 32;
+    }
+
+    pointIDs[numPoint-1] = tag;
+
+    GLfloat *locInVertices = &pointVertices[(numPoint-1)*3];
+    GLfloat *locInColors = &pointColors[(numPoint-1)*3];
+
+
+    // add location and value for point to pointVertices and pointColors
+    locInVertices[0] = x1;
+    locInVertices[1] = y1;
+    locInVertices[2] = 0.;
+    locInColors[0] = r;
+    locInColors[1]=g;
+    locInColors[2]=b;
+
+    return;
+
 }
 
 void MyGlWidget::drawText(int tag, float x1, float y1, char *text, float r, float g, float b)
 {
     glPushMatrix();
-           glColor3f(r, g, b);
-           renderText(x1, y1, 0, text);
-           glPopMatrix();
+    glColor3f(r, g, b);
+    renderText(x1, y1, 0, text);
+    glPopMatrix();
 }
 
 void
 MyGlWidget::drawLine(int tag, float x1, float y1, float x2, float y2, float thick, float r, float g, float b)
 {
-    if (selectMode == 0) {
-        glLineWidth(thick);
-        glColor3f(r, g, b);
-        glBegin(GL_LINES);
-        glVertex2f(x1, y1);
-        glVertex2f(x2, y2);
-        glEnd();
-    } else {
-        // for picking purposes, not used yet
-        if (tag != 0) {
-            int r1 = (tag & 0x000000FF) >>  0;
-            int g1 = (tag & 0x0000FF00) >>  8;
-            int b1 = (tag & 0x00FF0000) >> 16;
-            glColor3f(r1/255.0,g1/255.0,b1/255.0);
-            glLineWidth(thick);
-            glBegin(GL_LINES);
-            glVertex3f(x1, y1, 0.0);
-            glVertex3f(x2, y2, 0.0);
-            glEnd();
+    numLine++;
+    if (numLine > maxNumLine) {
+        GLfloat *oldLineColors = lineColors;
+        GLfloat *oldLineVertices = lineVertices;
+        int *oldLineIDs = lineIDs;
+
+        int newLineSize = (maxNumLine+32)*2*3;
+        lineVertices = new GLfloat[newLineSize];
+        lineColors = new GLfloat[newLineSize];
+        lineIDs = new int[(maxNumLine+32)];
+
+        for (int i=0; i<2*maxNumLine*3; i++) {
+            lineVertices[i] = oldLineVertices[i];
+            lineColors[i] = oldLineColors[i];
         }
+        for (int i=0; i<maxNumLine; i++) {
+            lineIDs[i] = oldLineIDs[i];
+        }
+        if (oldLineVertices != 0)
+            delete [] oldLineVertices;
+        if (oldLineColors != 0)
+            delete [] oldLineColors;
+        if (oldLineIDs != 0)
+            delete [] oldLineIDs;
+        maxNumLine += 32;
     }
+
+    GLfloat *locInVertices = &lineVertices[2*(numLine-1)*3];
+    GLfloat *locInColors = &lineColors[2*(numLine-1)*3];
+
+    locInVertices[0] = x1;
+    locInVertices[1] = y1;
+    locInVertices[2] = 0.;
+    locInVertices[3] = x2;
+    locInVertices[4] = y2;
+    locInVertices[5] = 0.;
+
+    locInColors[0] = r;
+    locInColors[1] = g;
+    locInColors[2] = b;
+    locInColors[3] = r;
+    locInColors[4] = g;
+    locInColors[5] = b;
 }
 
+void MyGlWidget::reset() {
+    numPoint = 0;
+    numLine = 0;
+}
 
 void MyGlWidget::initializeGL() {
     glDisable(GL_TEXTURE_2D);
@@ -140,24 +233,25 @@ void MyGlWidget::resizeGL(int w, int h) {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+//qDebug() << "HEIGHT" << buildingH;
 
     if (theModel != 0) {
-      float heightB = theModel->getHeight();
-      float maxDisp = theModel->getMaxDisp();
-      float bounH = heightB/20;
-      if (maxDisp == 0)
-          maxDisp = 10.0;
+        float heightB = theModel->getBuildingHeight();
+        float maxDisp = theModel->getMaxDisp();
+        float bounH = heightB/20;
+        if (maxDisp == 0)
+            maxDisp = 10.0;
 
-      float bounW = maxDisp*1.1;
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
+        float bounW = maxDisp*1.1;
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
 #ifdef QT_OPENGL_ES_1
-      glOrthof(-maxDisp, +maxDisp, -bounH, bounH+heightB, -bounW, bounW);
+        glOrthof(-maxDisp, +maxDisp, -bounH, bounH+heightB, -bounW, bounW);
 #else
-      glOrtho(-maxDisp, +maxDisp, -bounH, heightB+bounH, -bounW, bounW);
+        glOrtho(-maxDisp, +maxDisp, -bounH, heightB+bounH, -bounW, bounW);
 #endif
     } else
-      glOrtho(0, 6, 0, 6, -15, 15); // set origin to bottom left corner
+        glOrtho(0, 6, 0, 6, -15, 15); // set origin to bottom left corner
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -169,23 +263,23 @@ void MyGlWidget::update() {
     glLoadIdentity();
 
     if (theModel != 0) {
-      float heightB = theModel->getHeight();
-      float maxDisp = theModel->getMaxDisp();
-      float bounH = heightB/20;
-      if (maxDisp == 0)
-        maxDisp = 10.0;
-      float bounW = 1.1*maxDisp;
+        float heightB = theModel->getBuildingHeight();
+        float maxDisp = theModel->getMaxDisp();
+        float bounH = heightB/20;
+        if (maxDisp == 0)
+            maxDisp = 10.0;
+        float bounW = 1.1*maxDisp;
 
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
 
 #ifdef QT_OPENGL_ES_1
-      glOrthof(-bounW, +bounW, -bounH, bounH+heightB, -15, 15.0);
+        glOrthof(-bounW, +bounW, -bounH, bounH+heightB, -15, 15.0);
 #else
-      glOrtho(-bounW, +bounW, -bounH, heightB+bounH, -15, 15.0);
+        glOrtho(-bounW, +bounW, -bounH, heightB+bounH, -15, 15.0);
 #endif
     } else
-      glOrtho(0, 6, 0, 6, -15, 15); // set origin to bottom left corner
+        glOrtho(0, 6, 0, 6, -15, 15); // set origin to bottom left corner
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -196,9 +290,13 @@ void MyGlWidget::update() {
 void MyGlWidget::paintGL() {
 
     glClear(GL_COLOR_BUFFER_BIT);
-    
+
+
     if (theModel != 0)
-      return theModel->draw(this);
+        theModel->draw(this);
+
+    this->drawBuffers();
+
 }
 
 void MyGlWidget::keyPressEvent(QKeyEvent* event) {
@@ -216,7 +314,7 @@ void MyGlWidget::mousePressEvent(QMouseEvent *event)
 {
     // Save mouse press position
     mousePressPosition = event->localPos();
-    
+
     if(event->buttons() & Qt::LeftButton) {
         clickedLeft = true;
     } else {
@@ -284,18 +382,18 @@ void MyGlWidget::mouseReleaseEvent(QMouseEvent *event)
 
 void MyGlWidget::mouseMoveEvent(QMouseEvent *event)
 {
-  // not used yet
+    // not used yet
 }
 
 void MyGlWidget::mouseDoubleClickEvent(QMouseEvent *event)
 {
-  // not used yet
-  timer.stop();
-  doubleClicked = 0; // this is to discard another press event coming
+    // not used yet
+    timer.stop();
+    doubleClicked = 0; // this is to discard another press event coming
 
 }
 
 void MyGlWidget::mouseSingleClickEvent(void) {
-  // not used yet
+    // not used yet
 }
 
