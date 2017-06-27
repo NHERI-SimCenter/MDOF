@@ -53,6 +53,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //#include <../widgets/InputSheetBM/SimpleSpreadsheetWidget.h>
 #include <SimpleSpreadsheetWidget.h>
+#include <NodeResponseWidget.h>
 
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
@@ -171,7 +172,7 @@ MainWindow::MainWindow(QWidget *parent) :
     dampingRatio(0.02), g(386.4), dt(0), gMotion(0),
     needAnalysis(true), eqData(0), dispResponses(0), maxDisp(1),
     movingSlider(false), fMinSelected(-1),fMaxSelected(-1), sMinSelected(-1),sMaxSelected(-1),
-    time(1560),values(1560), graph(0), groupTracer(0),floorSelected(-1),storySelected(-1)
+    time(1560),excitationValues(1560), graph(0), groupTracer(0),floorSelected(-1),storySelected(-1)
 {
 
     createActions();
@@ -194,15 +195,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QStringList elCentrolist = elCentroTextData.split(QRegExp("[\r\n\t ]+"), QString::SkipEmptyParts);
     Vector *elCentroData = new Vector(elCentrolist.size()+1);
+   // qDebug() << elCentrolist.size();
+
     (*elCentroData)(0) = 0;
     time[0]=0.;
-    values[0]=0.;
+    excitationValues[0]=0.;
     double maxValue = 0;
     for (int i = 0; i < elCentrolist.size(); ++i) {
         double value = elCentrolist.at(i).toDouble();
         (*elCentroData)(i+1) = value;
         time[i+1]=i*0.02;
-        values[i+1]=value;
+        excitationValues[i+1]=value;
         if (fabs(value) > maxValue)
             maxValue = fabs(value);
     }
@@ -393,6 +396,7 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
     needAnalysis = true;
     this->reset();
 
+    theNodeResponse->setFloor(numF);
 }
 
 void MainWindow::on_inFloors_editingFinished()
@@ -409,7 +413,7 @@ void MainWindow::on_inFloors_editingFinished()
 
 void MainWindow::on_inWeight_editingFinished()
 {
-    qDebug() << "on_inWeight";
+   // qDebug() << "on_inWeight";
     QString textW =  inWeight->text();
     double textToDoubleW = textW.toDouble();
     if (textToDoubleW != buildingW) {
@@ -562,8 +566,6 @@ void MainWindow::on_inStoryB_editingFinished()
 
     inStoryHeight->setFocus();
     this->reset();
-    // needAnalysis = true;
-    // myGL->update();
 }
 
 
@@ -656,7 +658,7 @@ void MainWindow::doAnalysis()
         for (int i=0; i<numFloors; i++) {
             dampValues(i)=dampRatios[i];
         }
-        theDomain.setModalDampingFactors(&dampValues);
+       theDomain.setModalDampingFactors(&dampValues);
 
 
         double T1 = 2*3.14159/sqrt(theEig(0));
@@ -681,13 +683,32 @@ void MainWindow::doAnalysis()
 
         // clean up memory
         delete [] theNodes;
- currentDisp->setText(QString().setNum(maxDisp,'f',2));
+        currentDisp->setText(QString().setNum(maxDisp,'f',2));
         // reset values, i.e. slider position, current displayed step, and display properties
         needAnalysis = false;
         currentStep = 0;
         groupTracer->setGraphKey(0);
         slider->setSliderPosition(0);
         myGL->update();
+
+        int nodeResponseFloor = theNodeResponse->getFloor();
+        nodeResponseValues.resize(numSteps);
+
+        for (int i = 0; i < numSteps; ++i) {
+            nodeResponseValues[i]=dispResponses[nodeResponseFloor][i];
+        }
+        theNodeResponse->setData(nodeResponseValues,time,numSteps,dt);
+    }
+}
+
+void
+MainWindow::setFloorResponse(int floor)
+{
+    if (floor > 0 && floor <= numFloors) {
+        for (int i = 0; i < numSteps; ++i) {
+            nodeResponseValues[i]=dispResponses[floor][i];
+        }
+        theNodeResponse->setData(nodeResponseValues,time,numSteps,dt);
     }
 }
 
@@ -933,12 +954,12 @@ void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
         dt =  theRecord->dt;
         eqData = theRecord->data;
         double maxValue = 0;
-        values.resize(numSteps);
+        excitationValues.resize(numSteps);
         time.resize(numSteps);
         for (int i = 0; i < numSteps; ++i) {
             double value = (*eqData)[i];
             time[i]=i*dt;
-            values[i]=value;
+            excitationValues[i]=value;
             if (fabs(value) > maxValue)
                 maxValue = fabs(value);
         }
@@ -946,7 +967,7 @@ void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
         // reset earthquake plot
         earthquakePlot->clearGraphs();
         graph = earthquakePlot->addGraph();
-        earthquakePlot->graph(0)->setData(time, values);
+        earthquakePlot->graph(0)->setData(time, excitationValues);
         earthquakePlot->xAxis->setRange(0, numSteps*dt);
         earthquakePlot->yAxis->setRange(-maxValue, maxValue);
         earthquakePlot->axisRect()->setAutoMargins(QCP::msNone);
@@ -1127,7 +1148,6 @@ void MainWindow::loadFile(const QString &fileName)
 void MainWindow::createActions() {
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
 
-
     //const QIcon openIcon = QIcon::fromTheme("document-open", QIcon(":/images/open.png"));
     //const QIcon saveIcon = QIcon::fromTheme("document-save", QIcon(":/images/save.png"));
 
@@ -1147,13 +1167,11 @@ void MainWindow::createActions() {
     fileMenu->addAction(openAction);
     //fileToolBar->addAction(openAction);
 
-
     QAction *saveAction = new QAction(tr("&Save"), this);
     saveAction->setShortcuts(QKeySequence::Save);
     saveAction->setStatusTip(tr("Save the document to disk"));
     connect(saveAction, &QAction::triggered, this, &MainWindow::save);
     fileMenu->addAction(saveAction);
-
 
     QAction *saveAsAction = new QAction(tr("&Save As"), this);
     saveAction->setStatusTip(tr("Save the document with new filename to disk"));
@@ -1168,6 +1186,27 @@ void MainWindow::createActions() {
     // exitAction->setShortcuts(QKeySequence::Quit);
     exitAction->setStatusTip(tr("Exit the application"));
     fileMenu->addAction(exitAction);
+
+    QMenu *viewMenu = menuBar()->addMenu(tr("&View"));
+
+    theNodeResponse = new NodeResponseWidget(this);
+    QDockWidget *nodeResponseDock = new QDockWidget(tr("Node Response"), this);
+        //dockO->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea |\
+     Qt::TopDockWidgetArea);
+     nodeResponseDock->setWidget(theNodeResponse);
+     nodeResponseDock->setAllowedAreas(Qt::NoDockWidgetArea);
+     nodeResponseDock->setFloating(true);
+     nodeResponseDock->close();
+
+     viewMenu->addAction(nodeResponseDock->toggleViewAction());
+}
+
+void MainWindow::viewNodeResponse(){
+
+}
+
+void MainWindow::viewStoryResponse(){
+
 }
 
 void MainWindow::createInputPanel() {

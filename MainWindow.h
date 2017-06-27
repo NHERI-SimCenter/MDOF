@@ -68,6 +68,7 @@ class QNetworkReply;
 class QFrame;
 
 class SimpleSpreadsheetWidget;
+class NodeResponseWidget;
 
 namespace Ui {
 class MainWindow;
@@ -87,7 +88,10 @@ public:
     void doAnalysis();
     float getBuildingHeight() {return buildingH;};
     float getMaxDisp(){return maxDisp;};
+    int getNumFloors(){return numFloors;};
+    void setFloorResponse(int floor);
     float setSelectionBoundary(float y1, float y2);
+
 
     friend class PropertiesWidget;
 
@@ -130,11 +134,13 @@ private slots:
 
     void on_pushButton_2_clicked();
 
-
     void newFile();
     void open();
     bool save();
     bool saveAs();
+
+    void viewNodeResponse();
+    void viewStoryResponse();
 
 private:
     void updatePeriod();
@@ -198,6 +204,9 @@ private:
     QStringList headings;
     QList<int> dataTypes;
     
+
+    NodeResponseWidget *theNodeResponse;
+
     Ui::MainWindow *ui;
 
     //
@@ -239,7 +248,9 @@ private:
     bool updatingPropertiesTable;
 
     QVector<double> time;
-    QVector<double> values;
+    QVector<double> excitationValues;
+    QVector<double> nodeResponseValues;
+    QVector<double> storyResponseValues;
     QCPGraph *graph;
     QCPItemTracer *groupTracer;
 
