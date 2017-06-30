@@ -20,13 +20,16 @@ SOURCES += main.cpp\
     qcustomplot.cpp \
     EarthquakeRecord.cpp \
         SimpleSpreadsheetWidget.cpp \
-    NodeResponseWidget.cpp
+    NodeResponseWidget.cpp \
+    surveysplashscreen.cpp
 
 HEADERS  += MainWindow.h \
     MyGlWidget.h \
     qcustomplot.h \
     EarthquakeRecord.h \
 SimpleSpreadsheetWidget.h \
-    NodeResponseWidget.h
+    NodeResponseWidget.h \
+    surveysplashscreen.h
 
-FORMS    += MainWindow.ui
+FORMS    += MainWindow.ui \
+    surveysplashscreen.ui
