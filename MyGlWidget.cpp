@@ -43,9 +43,12 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <QDebug>
 #include <Matrix.h>
 #include <Vector.h>
+#include <QOpenGLShaderProgram>
+
+
 
 MyGlWidget::MyGlWidget(QWidget *parent)
-    : QGLWidget(parent), selectMode(0)
+    : QOpenGLWidget(parent), selectMode(0)
 {
     setMouseTracking(true);
 
@@ -66,6 +69,9 @@ MyGlWidget::MyGlWidget(QWidget *parent)
     lineVertices = new GLfloat[maxNumLine*2*3];
     lineColors = new GLfloat[maxNumLine*2*3];
 
+    thePointVertices = new vertexStruct[maxNumPoint];
+    theLineVertices = new vertexStruct[maxNumLine*2]; // 2 points for every line
+
 }
 
 MyGlWidget::~MyGlWidget()
@@ -79,35 +85,83 @@ void MyGlWidget::setModel(MainWindow *theM)
 }
 
 
+
 void
-MyGlWidget::drawBuffers(){
-    // draw the shapes
-    glEnableClientState(GL_COLOR_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
+MyGlWidget::drawBuffers()
+{
 
-
+    // program->setUniformValue("mvpMatrix", orthoProjectionMatrix);
+    //program->bind();
+    program->bind();
     glLineWidth(2.0);
     glPointSize(10);
 
+
+    /*
+    glGenBuffers(1, &pointBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, pointBuffer);
+    glBufferData(GL_ARRAY_BUFFER, numPoint*sizeof(vertexStruct), thePointVertices, GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE,
+        sizeof(vertexStruct), (void *)offsetof(vertexStruct, position));
+    glVertexAttribPointer(vColor, 3, GL_FLOAT, GL_FALSE,
+        sizeof(vertexStruct), (void *)offsetof(vertexStruct, color));
+
+   // glDrawArrays(GL_POINTS, 0, numPoint);
+    //glDrawBuffers(1,pointBuffer);
+
+    glGenBuffers(1, &lineBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, lineBuffer);
+    glBufferData(GL_ARRAY_BUFFER, numLine*2*sizeof(vertexStruct), theLineVertices, GL_DYNAMIC_DRAW);
+
+   // return;
+
+    // draw the shapes
+  //  glEnableClientState(GL_COLOR_ARRAY);
+  //  glEnableClientState(GL_VERTEX_ARRAY);
+
+   */
+
+    program->setUniformValue(mvpMatrix, orthoProjectionMatrix);
+
     if (numPoint > 0) {
-        glColorPointer(3, GL_FLOAT, 0, pointColors);
-        glVertexPointer(3, GL_FLOAT, 0, pointVertices);
+
+        glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE,0, pointVertices);
+        glVertexAttribPointer(vColor, 3, GL_FLOAT, GL_FALSE, 0, pointColors);
+
+        glEnableVertexAttribArray(vPosition);
+        glEnableVertexAttribArray(vColor);
+
         glDrawArrays(GL_POINTS, 0, numPoint);
+
+        glDisableVertexAttribArray(vPosition);
+        glDisableVertexAttribArray(vColor);
     }
 
+
     if (numLine > 0) {
-        glColorPointer(3, GL_FLOAT, 0, lineColors);
-        glVertexPointer(3, GL_FLOAT, 0, lineVertices);
+        glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE,0, lineVertices);
+        glVertexAttribPointer(vColor, 3, GL_FLOAT, GL_FALSE, 0, lineColors);
+
+        glEnableVertexAttribArray(vPosition);
+        glEnableVertexAttribArray(vColor);
+
         glDrawArrays(GL_LINES, 0, 2*numLine);
+
+        glDisableVertexAttribArray(vPosition);
+        glDisableVertexAttribArray(vColor);
     }
+
+    program->release();
+
 }
 
 void
 MyGlWidget::drawPoint(int tag, float x1, float y1, int numPixels, float r, float g, float b)
 {
+
     numPoint++;
     if (numPoint > maxNumPoint) {
-
 
         GLfloat *oldPointColors = pointColors;
         GLfloat *oldPointVertices = pointVertices;
@@ -121,7 +175,6 @@ MyGlWidget::drawPoint(int tag, float x1, float y1, int numPixels, float r, float
 
         for (int i=0; i<maxNumPoint*3; i++) {
             pointVertices[i] = oldPointVertices[i];
-
             pointColors[i] = oldPointColors[i];
         }
         for (int i=0; i<maxNumPoint; i++) {
@@ -136,7 +189,20 @@ MyGlWidget::drawPoint(int tag, float x1, float y1, int numPixels, float r, float
         if (oldPointIDs != 0)
             delete [] oldPointIDs;
 
-
+        /*
+        vertexStruct *oldVertexPoints = thePointVertices;
+        thePointVertices = new vertexStruct[maxNumPoint+32];
+        for (int i=0; i<maxNumPoint; i++) {
+            thePointVertices[i].position[0] = oldVertexPoints[i].position[0];
+            thePointVertices[i].position[1] = oldVertexPoints[i].position[1];
+            thePointVertices[i].position[2] = oldVertexPoints[i].position[2];
+            thePointVertices[i].color[0]= oldVertexPoints[i].color[0];
+            thePointVertices[i].color[1]= oldVertexPoints[i].color[1];
+            thePointVertices[i].color[2]= oldVertexPoints[i].color[2];
+        }
+        if (oldVertexPoints != 0)
+            delete [] oldVertexPoints;
+        */
         maxNumPoint += 32;
     }
 
@@ -154,6 +220,15 @@ MyGlWidget::drawPoint(int tag, float x1, float y1, int numPixels, float r, float
     locInColors[1]=g;
     locInColors[2]=b;
 
+    /*
+    thePointVertices[numPoint-1].position[0] = x1;
+    thePointVertices[numPoint-1].position[1] = y1;
+    thePointVertices[numPoint-1].position[2] = 0;
+    thePointVertices[numPoint-1].color[0] = r;
+    thePointVertices[numPoint-1].color[1] = g;
+    thePointVertices[numPoint-1].color[2] = b;
+    */
+
     return;
 
 }
@@ -162,13 +237,14 @@ void MyGlWidget::drawText(int tag, float x1, float y1, char *text, float r, floa
 {
     glPushMatrix();
     glColor3f(r, g, b);
-    renderText(x1, y1, 0, text);
+    //renderText(x1, y1, 0, text);
     glPopMatrix();
 }
 
 void
 MyGlWidget::drawLine(int tag, float x1, float y1, float x2, float y2, float thick, float r, float g, float b)
 {
+
     numLine++;
     if (numLine > maxNumLine) {
         GLfloat *oldLineColors = lineColors;
@@ -219,7 +295,29 @@ void MyGlWidget::reset() {
     numLine = 0;
 }
 
+
+
+static const char *vertexShaderSource =
+        "attribute vec3 vPosition;\n"
+        "attribute vec3 vColor;\n"
+        "varying   vec3 fColor;\n"
+        "uniform   mat4 mvpMatrix;\n"
+        "void main() {\n"
+        "   fColor = vColor;\n"
+        "   gl_Position = mvpMatrix * vec4(vPosition, 1.0);\n"
+        "}\n";
+
+static const char *fragmentShaderSource =
+        "varying vec3 fColor;\n"
+        "void main() {\n"
+        "   gl_FragColor = vec4(fColor, 1.0);\n"
+        "}\n";
+
+
+
 void MyGlWidget::initializeGL() {
+    initializeOpenGLFunctions();
+
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_COLOR_MATERIAL);
@@ -227,13 +325,41 @@ void MyGlWidget::initializeGL() {
     glEnable(GL_POLYGON_SMOOTH);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(1, 1, 1, 0);
+
+    vPosition = 0;
+    vColor = 1;
+    mvpMatrix = 2;
+
+
+    /*
+     QOpenGLShader *vshader = new QOpenGLShader(QOpenGLShader::Vertex, this);
+     vshader->compileSourceCode(vertexShaderSource);
+      QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
+      fshader->compileSourceCode(fragmentShaderSource);
+      program = new QOpenGLShaderProgram;
+      program->addShader(vshader);
+      program->addShader(fshader);
+      program->bindAttributeLocation("vertexPosition", vPosition);
+      program->bindAttributeLocation("vertexColor", vColor);
+      mvpMatrix = program->uniformLocation("mvpMatrix");
+      program->link();
+      program->bind();
+      */
+
+    program = new QOpenGLShaderProgram(this);
+    program->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource);
+    program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource);
+    program->link();
+
+    vPosition = program->attributeLocation("vPosition");
+    vColor = program->attributeLocation("vColor");
+    mvpMatrix = program->uniformLocation("mvpMatrix");
 }
 
-void MyGlWidget::resizeGL(int w, int h) {
+void MyGlWidget::resizeGL(int width, int height) {
+    w = width;
+    h=height;
     glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-//qDebug() << "HEIGHT" << buildingH;
 
     if (theModel != 0) {
         float heightB = theModel->getBuildingHeight();
@@ -243,24 +369,14 @@ void MyGlWidget::resizeGL(int w, int h) {
             maxDisp = 10.0;
 
         float bounW = maxDisp*1.1;
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-#ifdef QT_OPENGL_ES_1
-        glOrthof(-maxDisp, +maxDisp, -bounH, bounH+heightB, -bounW, bounW);
-#else
-        glOrtho(-maxDisp, +maxDisp, -bounH, heightB+bounH, -bounW, bounW);
-#endif
-    } else
-        glOrtho(0, 6, 0, 6, -15, 15); // set origin to bottom left corner
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+        orthoProjectionMatrix.setToIdentity();
+        orthoProjectionMatrix.ortho(-bounW, bounW, -bounH, bounH+heightB, -bounW, bounW);
+    }
+    return;
 }
 
 void MyGlWidget::update() {
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
 
     if (theModel != 0) {
         float heightB = theModel->getBuildingHeight();
@@ -269,33 +385,20 @@ void MyGlWidget::update() {
         if (maxDisp == 0)
             maxDisp = 10.0;
         float bounW = 1.1*maxDisp;
-
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-
-#ifdef QT_OPENGL_ES_1
-        glOrthof(-bounW, +bounW, -bounH, bounH+heightB, -15, 15.0);
-#else
-        glOrtho(-bounW, +bounW, -bounH, heightB+bounH, -15, 15.0);
-#endif
-    } else
-        glOrtho(0, 6, 0, 6, -15, 15); // set origin to bottom left corner
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    this->QGLWidget::update();
+        orthoProjectionMatrix.setToIdentity();
+        orthoProjectionMatrix.ortho(-bounW, bounW, -bounH, bounH+heightB, -bounW, bounW);
+    }
+    this->QOpenGLWidget::update();
 }
 
 void MyGlWidget::paintGL() {
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-
     if (theModel != 0)
         theModel->draw(this);
 
-    this->drawBuffers();
+    //this->drawBuffers();
 
 }
 
@@ -336,45 +439,33 @@ void MyGlWidget::mouseReleaseEvent(QMouseEvent *event)
     // need to determine world coords represented by mouse position in view world
     //
 
-    GLint viewport[4]; //var to hold the viewport info
-    GLdouble modelview[16]; //var to hold the modelview info
-    GLdouble projection[16]; //var to hold the projection matrix info
-
-    glGetDoublev( GL_MODELVIEW_MATRIX, modelview ); //get the modelview info
-    glGetDoublev( GL_PROJECTION_MATRIX, projection ); //get the projection matrix info
-    glGetIntegerv( GL_VIEWPORT, viewport ); //get the viewport info
-
-    for (int i=0; i<4; i++)
-        viewport[i] /= devicePixelRatio();
-
-    // get the world coordinates from the screen coordinates, in QT5.8 we have the unproject function
-    // Qt5.8: QVector3D world = QVector3D(mousePressPosition.x(), mousePressPosition.y(), 0).unproject(modelview, projection, viewport, &x, &y, &z);
-
-    Matrix viewPortMatrix(4,4);
-    Matrix modelViewMatrix(modelview,4,4);
-    Matrix projectionMatrix(projection, 4,4);
-    Matrix A = projectionMatrix*modelViewMatrix;
-
-    Vector in(4);
+    static Vector in(4);
     float xPos = mousePressPosition.x();
-    float yPos = viewport[3] - mousePressPosition.y() -1;
+    float yPos = h - mousePressPosition.y() -1;
 
-    in[0]=2*(xPos-viewport[0])/(1.0*viewport[2]) - 1.0;
-    in[1]=2*(yPos-viewport[1])/(1.0*viewport[3]) - 1.0;
+    in[0]=2*xPos/(1.0*w) - 1.0;
+    in[1]=2*yPos/(1.0*h) - 1.0;
     in[2]=0.0;
     in[3]=1.0;
-    Vector pressCrd(4);
-    A.Solve(in,pressCrd);
+    static Vector pressCrd(4);
+    QMatrix4x4 invert = orthoProjectionMatrix.inverted();
+    static Matrix A(4,4);
+    for (int i=0; i<4; i++)
+        for (int j=0; j<4; j++)
+            A(i,j)=invert(i,j);
+
+    pressCrd.addMatrixVector(0.,A,in,1.0);
 
     xPos = mouseReleasePosition.x();
-    yPos = viewport[3] - mouseReleasePosition.y() -1;
+    yPos = h- mouseReleasePosition.y() -1;
 
-    in[0]=2*(xPos-viewport[0])/(1.0*viewport[2]) - 1.0;
-    in[1]=2*(yPos-viewport[1])/(1.0*viewport[3]) - 1.0;
+    in[0]=2*xPos/(1.0*w) - 1.0;
+    in[1]=2*yPos/(1.0*h) - 1.0;
     in[2]=0.0;
     in[3]=1.0;
-    Vector releaseCrd(4);
-    A.Solve(in,releaseCrd);
+    static Vector releaseCrd(4);
+
+    releaseCrd.addMatrixVector(0.,A,in,1.0);
 
     // given press and release coordinated, inform ManWindow
     theModel->setSelectionBoundary(pressCrd(1),releaseCrd(1));
