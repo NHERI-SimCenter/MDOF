@@ -55,6 +55,7 @@ class QPushButton;
 class QCustomPlot;
 class MyGlWidget;
 class QSlider;
+class QCheckBox;
 
 
 class MyGlWidget;
@@ -97,6 +98,7 @@ public:
 
 private slots:
     // main edits
+    void on_includePDeltaChanged(int);
     void on_inFloors_editingFinished();
     void on_inWeight_editingFinished();
     void on_inHeight_editingFinished();
@@ -115,6 +117,7 @@ private slots:
 
     // for earthquake motion combo box
     void on_inMotionSelection_currentTextChanged(const QString &arg1);
+    void on_addMotion_clicked();
 
      // for stop and start buttons
     void on_stopButton_clicked();
@@ -164,6 +167,7 @@ private:
     QVBoxLayout *inputLayout;
 
     QComboBox *inMotion;
+    QPushButton *addMotion;
 
     // global properties inputs when nothing slected
     QLineEdit *inFloors;
@@ -172,6 +176,7 @@ private:
     QLineEdit *inK;
     QLineEdit *inDamping;
     QLineEdit *inGravity;
+    QCheckBox *pDeltaBox;
 
     // specific inputs when many selected
     QLineEdit *inFloorWeight;
@@ -234,6 +239,7 @@ private:
     double *gMotion;
     Vector *eqData;
 
+    bool includePDelta;
     bool   needAnalysis;
     double **dispResponses;
     double maxDisp;

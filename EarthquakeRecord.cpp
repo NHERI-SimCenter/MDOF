@@ -38,6 +38,13 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "EarthquakeRecord.h"
 #include <Vector.h>
+#include <QJsonArray>
+#include <QJsonObject>
+
+EarthquakeRecord::EarthquakeRecord()
+{
+     data = 0;
+}
 
 EarthquakeRecord::EarthquakeRecord(QString fileName)
 {
@@ -56,3 +63,30 @@ EarthquakeRecord::~EarthquakeRecord()
         delete [] data;
 }
 
+void
+EarthquakeRecord::outputToJSON(QJsonObject &jsonObj){
+    jsonObj["name"]=name;
+    jsonObj["dT"]=dt;
+    jsonObj["numberSteps"]=numSteps;
+    QJsonArray dataValues;
+    for (int i=0; i<data->Size(); i++) {
+        dataValues.append((*data)[i]);
+    }
+}
+
+void
+EarthquakeRecord::inputFromJSON(QJsonObject &jsonObj){
+    QJsonValue theValue = jsonObj["name"];
+    name=theValue.toString();
+    theValue = jsonObj["dT"];
+    dt=theValue.toDouble();
+    theValue = jsonObj["numberSteps"];
+    numSteps=theValue.toInt();
+    if (data != 0)
+        delete [] data;
+    data = new Vector(numSteps);
+    theValue = jsonObj["name"];
+    QJsonArray dataPoints = theValue.toArray();
+    for (int i=0; i<numSteps; i++)
+        (*data)[i] = dataPoints.at(i).toDouble();
+}

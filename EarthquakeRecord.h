@@ -41,13 +41,19 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <QString>
 class Vector;
+class QJsonObject;
 
 class EarthquakeRecord
 {
 public:
+    EarthquakeRecord();
     EarthquakeRecord(QString fileName);
     EarthquakeRecord(QString name, int numSteps, double dt, Vector *data);
     ~EarthquakeRecord();
+
+    void outputToJSON(QJsonObject &jsonObj);
+    void inputFromJSON(QJsonObject &jsonObj);
+
 
     QString name;
     int numSteps;
