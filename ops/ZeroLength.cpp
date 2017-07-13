@@ -75,7 +75,7 @@ ZeroLength::ZeroLength(int tag,
   }
   connectedExternalNodes(0) = Nd1;
   connectedExternalNodes(1) = Nd2;
-  opserr << tag << " " << connectedExternalNodes;
+  //opserr << tag << " " << connectedExternalNodes;
   PdivL = pdivl;
 }
 

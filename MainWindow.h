@@ -205,6 +205,8 @@ private:
 
     QLabel *currentTime;
     QLabel *currentDisp;
+    QLabel *currentPeriod;
+    QLabel *maxDispLabel;
 
     QStringList headings;
     QList<int> dataTypes;
