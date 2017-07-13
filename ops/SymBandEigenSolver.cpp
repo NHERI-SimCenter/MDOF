@@ -145,13 +145,14 @@ SymBandEigenSolver::solve(int nModes, bool generalized, bool findSmallest)
   int iu = numModes;
 
   // Compute eigenvalues and eigenvectors
-  char *jobz = "V";
+  static char jobz[2]; strcpy(jobz, "V");
+  //char *jobz = "V";
 
   // Selected eigenpairs are based on index range [il,iu]
-  char *range = "I";
+  static char range[2]; strcpy(range, "I"); // char *range = "I";
 
   // Upper triagle of matrix is stored
-  char *uplo = "U";
+  static char uplo[2]; strcpy(uplo, "U"); // char *uplo = "U";
   
   // Return value
   int *ifail = new int [n];
@@ -205,9 +206,11 @@ SymBandEigenSolver::solve(int nModes, bool generalized, bool findSmallest)
   // Call the LAPACK eigenvalue subroutine
 #ifdef _WIN32
   unsigned int sizeC = 1;
+
   DSBEVX(jobz, range, uplo, &n, &kd, ab, &ldab,
 	 q, &ldq, &vl, &vu, &il, &iu, &abstol, &m,
 	 eigenvalue, eigenvector, &ldz, work, iwork, ifail, &info);
+
 #else
   dsbevx_(jobz, range, uplo, &n, &kd, ab, &ldab,
 	  q, &ldq, &vl, &vu, &il, &iu, &abstol, &m,

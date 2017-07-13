@@ -61,7 +61,12 @@ BandGenLinLapackSolver::~BandGenLinLapackSolver()
 
 #ifdef _WIN32
 
-extern "C" int DGBSV(int *N, int *KL, int *KU, int *NRHS, double *A, 
+extern "C" int dgbsv(int *N, int *KL, int *KU, int *NRHS, double *A,
+                  int *LDA, int *iPiv, double *B, int *LDB,
+                  int *INFO);
+
+
+extern "C" int DGBSV(int *N, int *KL, int *KU, int *NRHS, double *A,
 			      int *LDA, int *iPiv, double *B, int *LDB, 
 			      int *INFO);
 
@@ -119,12 +124,13 @@ BandGenLinLapackSolver::solve(void)
 #ifdef _WIN32
     {if (theSOE->factored == false)  
 	// factor and solve 
-	DGBSV(&n,&kl,&ku,&nrhs,Aptr,&ldA,iPIV,Xptr,&ldB,&info);	
+    DGBSV(&n,&kl,&ku,&nrhs,Aptr,&ldA,iPIV,Xptr,&ldB,&info);
     else  {
 	// solve only using factored matrix
 	unsigned int sizeC = 1;
 	//DGBTRS("N", &sizeC, &n,&kl,&ku,&nrhs,Aptr,&ldA,iPIV,Xptr,&ldB,&info);
-	DGBTRS("N", &n,&kl,&ku,&nrhs,Aptr,&ldA,iPIV,Xptr,&ldB,&info);
+    static char trans[2]; strcpy(trans,"N");
+    DGBTRS(trans, &n,&kl,&ku,&nrhs,Aptr,&ldA,iPIV,Xptr,&ldB,&info);
     }}
 #else
     {if (theSOE->factored == false)      
