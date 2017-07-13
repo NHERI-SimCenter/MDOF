@@ -131,6 +131,7 @@ createTextEntry(QString text,
 
     theLayout->addLayout(entryLayout);
 
+
     return res;
 }
 
@@ -190,6 +191,16 @@ MainWindow::MainWindow(QWidget *parent) :
     widget->setLayout(mainLayout);
     this->setCentralWidget(widget);
 
+
+//    resize(QDesktopWidget().availableGeometry(this).size() * 0.7);
+
+
+    QRect rec = QApplication::desktop()->screenGeometry();
+
+    int height = 0.7*rec.height();
+    int width = 0.7*rec.width();
+
+    this->resize(width, height);
     //
     // create 2 blank motions & make elCentro current
     //
@@ -297,13 +308,14 @@ void MainWindow::draw(MyGlWidget *theGL)
     theGL->drawBuffers();
 
     // update red dot on earthquake plot
+    /*
     groupTracer->setGraph(0);
     groupTracer->setGraph(graph);
     groupTracer->setGraphKey(currentStep*dt);
     groupTracer->updatePosition();
     //earthquakePlot->replot();
 
-
+*/
 }
 
 
@@ -711,7 +723,7 @@ void MainWindow::doAnalysis()
         // reset values, i.e. slider position, current displayed step, and display properties
         needAnalysis = false;
         currentStep = 0;
-        groupTracer->setGraphKey(0);
+      //  groupTracer->setGraphKey(0);
         slider->setSliderPosition(0);
         myGL->update();
 
@@ -747,7 +759,7 @@ void MainWindow::reset() {
     theSpreadsheet->setColumnCount(6);
     theSpreadsheet->setRowCount(numFloors);
     theSpreadsheet->horizontalHeader()->setStretchLastSection(true);// horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-    theSpreadsheet->setFixedWidth(344);
+    //theSpreadsheet->setFixedWidth(344);
     updatingPropertiesTable = true;
     theSpreadsheet->setHorizontalHeaderLabels(QString(" Weight ; Height ;    K    ;    Fy    ;    b    ;  zeta").split(";"));
     for (int i=0; i<numFloors; i++) {
@@ -942,6 +954,7 @@ MainWindow::setSelectionBoundary(float y1, float y2)
     //
 
     myGL->repaint();
+    return 0;
 }
 
 
@@ -1002,6 +1015,7 @@ void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
         earthquakePlot->yAxis->setRange(-maxValue, maxValue);
         earthquakePlot->axisRect()->setAutoMargins(QCP::msNone);
         earthquakePlot->axisRect()->setMargins(QMargins(0,0,0,0));
+        /*
         if (groupTracer != 0)
             delete groupTracer;
         groupTracer = new QCPItemTracer(earthquakePlot);
@@ -1012,7 +1026,7 @@ void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
         groupTracer->setPen(QPen(Qt::red));
         groupTracer->setBrush(Qt::red);
         groupTracer->setSize(7);
-
+*/
         // reset slider range
         slider->setRange(0, numSteps);
 
@@ -1482,13 +1496,16 @@ void MainWindow::createInputPanel() {
     dataTypes << SIMPLESPREADSHEET_QDouble;
 
     theSpreadsheet = new SimpleSpreadsheetWidget(6, 4, headings, dataTypes,0);
-    spreadsheetFrameLayout->addWidget(theSpreadsheet);
+   //theSpreadsheet = new QTableWidget();
+    spreadsheetFrameLayout->addWidget(theSpreadsheet, 1.0);
+
     spreadSheetFrame->setLayout(spreadsheetFrameLayout);
     spreadSheetFrame->setLineWidth(1);
     spreadSheetFrame->setFrameShape(QFrame::Box);
+    //theSpreadsheet->setS
 
     inputLayout->addWidget(spreadSheetFrame);
-    spreadSheetFrame->setVisible(false);
+   // spreadSheetFrame->setVisible(false);
 
     inputLayout->addStretch();
 

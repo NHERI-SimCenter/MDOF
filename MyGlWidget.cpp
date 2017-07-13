@@ -44,6 +44,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <Matrix.h>
 #include <Vector.h>
 #include <QOpenGLShaderProgram>
+//#include <GL/gl.h>
 
 
 
@@ -85,16 +86,19 @@ void MyGlWidget::setModel(MainWindow *theM)
 }
 
 
-
+// extern void glPointSize(GLfloat size);
 void
 MyGlWidget::drawBuffers()
 {
-
+ //glClearColor(0, 1, 1, 0);
     // program->setUniformValue("mvpMatrix", orthoProjectionMatrix);
     //program->bind();
     program->bind();
-    glLineWidth(2.0);
-    glPointSize(10);
+   // gl.enable(gl.POINT_SPRITE);
+    //    gl.enable(gl.VERTEX_PROGRAM_POINT_SIZE);
+    glLineWidth(4.0);
+
+   // glPointSize(10.0);
 
 
     /*
@@ -122,6 +126,7 @@ MyGlWidget::drawBuffers()
 
    */
 
+
     program->setUniformValue(mvpMatrix, orthoProjectionMatrix);
 
     if (numPoint > 0) {
@@ -140,6 +145,7 @@ MyGlWidget::drawBuffers()
 
 
     if (numLine > 0) {
+
         glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE,0, lineVertices);
         glVertexAttribPointer(vColor, 3, GL_FLOAT, GL_FALSE, 0, lineColors);
 
@@ -152,8 +158,48 @@ MyGlWidget::drawBuffers()
         glDisableVertexAttribArray(vColor);
     }
 
-    program->release();
 
+
+    program->release();
+/*
+    const qreal retinaScale = devicePixelRatio();
+    glViewport(0, 0, width() * retinaScale, height() * retinaScale);
+
+    glClear(GL_COLOR_BUFFER_BIT);
+  glClearColor(0, 0, 0, 0);
+    program->bind();
+    QMatrix4x4 matrix;
+    matrix.perspective(60.0f, 4.0f/3.0f, 0.1f, 100.0f);
+    matrix.translate(0, 0, -2);
+   // matrix.rotate(100.0f * m_frame / screen()->refreshRate(), 0, 1, 0);
+
+    program->setUniformValue(mvpMatrix, matrix);
+
+    GLfloat vertices[] = {
+        0.0f, 0.707f, 0.,
+        -0.5f, -0.5f, 0.,
+        0.5f, -0.5f, 0.
+    };
+
+    GLfloat colors[] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+
+    glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+    glVertexAttribPointer(vColor, 3, GL_FLOAT, GL_FALSE, 0, colors);
+
+    glEnableVertexAttribArray(vPosition);
+    glEnableVertexAttribArray(vColor);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glDisableVertexAttribArray(vPosition);
+    glDisableVertexAttribArray(vColor);
+
+    program->release();
+*/
 }
 
 void
@@ -235,10 +281,10 @@ MyGlWidget::drawPoint(int tag, float x1, float y1, int numPixels, float r, float
 
 void MyGlWidget::drawText(int tag, float x1, float y1, char *text, float r, float g, float b)
 {
-    glPushMatrix();
-    glColor3f(r, g, b);
+  //  glPushMatrix();
+  //  glColor3f(r, g, b);
     //renderText(x1, y1, 0, text);
-    glPopMatrix();
+  //  glPopMatrix();
 }
 
 void
@@ -297,32 +343,50 @@ void MyGlWidget::reset() {
 
 
 
-static const char *vertexShaderSource =
+static const char *vertexShaderSource1 =
         "attribute vec3 vPosition;\n"
         "attribute vec3 vColor;\n"
         "varying   vec3 fColor;\n"
         "uniform   mat4 mvpMatrix;\n"
         "void main() {\n"
-        "   fColor = vColor;\n"
+        "fColor = vColor;\n"
+        "gl_PointSize = 10.0;"
         "   gl_Position = mvpMatrix * vec4(vPosition, 1.0);\n"
         "}\n";
 
-static const char *fragmentShaderSource =
+static const char *fragmentShaderSource1 =
         "varying vec3 fColor;\n"
         "void main() {\n"
         "   gl_FragColor = vec4(fColor, 1.0);\n"
         "}\n";
 
+static const char *vertexShaderSource =
+    "attribute highp vec4 vPosition;\n"
+    "attribute lowp vec4 vColor;\n"
+    "varying lowp vec4 col;\n"
+    "uniform highp mat4 mvpMatrix;\n"
+    "void main() {\n"
+    "   col = vColor;\n"
+    "   gl_PointSize = 10.0;\n"
+    "   gl_Position = mvpMatrix * vPosition;\n"
+    "}\n";
 
+static const char *fragmentShaderSource =
+    "varying lowp vec4 col;\n"
+    "void main() {\n"
+    "   gl_FragColor = col;\n"
+    "}\n";
 
 void MyGlWidget::initializeGL() {
     initializeOpenGLFunctions();
+    glEnable(0x8642);
 
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
-    glDisable(GL_COLOR_MATERIAL);
+    glEnable(0x8642);
+   // glDisable(GL_COLOR_MATERIAL);
     glEnable(GL_BLEND);
-    glEnable(GL_POLYGON_SMOOTH);
+   // glEnable(GL_POLYGON_SMOOTH);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(1, 1, 1, 0);
 
