@@ -40,6 +40,9 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <QApplication>
 #include "surveysplashscreen.h"
 
+#include "qfile.h"
+#include "qtextstream.h"
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -49,6 +52,13 @@ int main(int argc, char *argv[])
 
     MainWindow w;
     w.show();
+
+    QFile file("/Users/TylerDurden/Projects/sim/mdof_fork/MDOF/style.qss");
+    if(file.open(QFile::ReadOnly)) {
+       QString styleSheet = QLatin1String(file.readAll());
+       a.setStyleSheet(styleSheet);
+
+    }
 
     return a.exec();
 }

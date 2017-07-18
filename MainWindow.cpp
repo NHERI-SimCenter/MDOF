@@ -100,6 +100,10 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <SymBandEigenSOE.h>
 #include <SymBandEigenSolver.h>
 
+//style inludes
+#include <QGroupBox>
+#include <QFrame>
+
 StandardStream sserr;
 OPS_Stream *opserrPtr = &sserr;
 Domain theDomain;
@@ -181,14 +185,18 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // create a main layout
     mainLayout = new QHBoxLayout();
+    largeLayout = new QVBoxLayout();
 
     // create input and output panel layouts and each to main layout
+    createHeaderBox();
     createInputPanel();
     createOutputPanel();
+    createFooterBox();
 
-    // create a widget in which to show everything
+
+    // create a widget in which to show everything //ALSO SET TO LARGE LAYOUT
     QWidget *widget = new QWidget();
-    widget->setLayout(mainLayout);
+    widget->setLayout(largeLayout);
     this->setCentralWidget(widget);
 
 
@@ -1419,15 +1427,79 @@ void MainWindow::viewStoryResponse(){
 
 }
 
+void MainWindow::createHeaderBox() {
+
+    //
+    // Make the header layout
+    // styleSheet
+
+    headerLayout = new QHBoxLayout;
+
+    QGroupBox *header =new QGroupBox(tr("Multiple Degrees of Freedom Application"));
+    headerLayout->addWidget(header);
+
+    largeLayout->addLayout(headerLayout);
+}
+
+void MainWindow::createFooterBox() {
+
+    //
+    // Make the footer layout
+    // styleSheet
+
+    QGroupBox *footer =new QGroupBox();
+    QLabel *nsfLogo = new QLabel();
+    QPixmap pixmap("/Users/TylerDurden/Projects/sim/mdof_fork/MDOF/mdof.gif");
+    QPixmap newPixmap = pixmap.scaled(QSize(40,40),  Qt::KeepAspectRatio);
+    nsfLogo->setPixmap(newPixmap);
+    nsfLogo->setMask(newPixmap.mask());
+    nsfLogo->show();
+
+    QLabel *nsfText = new QLabel();
+    nsfText->setObjectName(QString::fromUtf8("nsfText"));
+    nsfText->setText(tr("This work is based on material supported by the National Science Foundation under grant 1612843-2"));
+
+    footerLayout = new QHBoxLayout;
+    footerLayout->addWidget(nsfLogo);
+    footerLayout->addWidget(nsfText);
+
+    footer->setLayout(footerLayout);
+
+    largeLayout->addWidget(footer);
+}
+
 void MainWindow::createInputPanel() {
     inputLayout = new QVBoxLayout;
+
+
+    //
+    // Create a section line + title + add
+    // styleSheet
+
+    QFrame *line4 = new QFrame();
+    line4->setObjectName(QString::fromUtf8("line"));
+    line4->setGeometry(QRect(320, 150, 118, 3));
+    line4->setFrameShape(QFrame::HLine);
+    line4->setFrameShadow(QFrame::Sunken);
+
+    QLabel *inTitle = new QLabel(); //styleSheet
+    inTitle->setText(tr("Input Section Title")); //styleSheet
+    inTitle->setObjectName(QString::fromUtf8("outTitle")); //styleSheet
+
+    inputLayout->addWidget(inTitle);
+    inputLayout->addWidget(line4);
+
 
     //
     // create the frame for the input motion selection
     //
 
-    QFrame *inputMotion = new QFrame();
+    QFrame *inputMotion = new QFrame(); //styleSheet
+    inputMotion->setObjectName(QString::fromUtf8("inputMotion")); //styleSheet
     QHBoxLayout *inputMotionLayout = new QHBoxLayout();
+    QLabel *sectionTitle = new QLabel();
+    sectionTitle->setText(tr("Input Motion Title"));
+    sectionTitle->setObjectName(QString::fromUtf8("sectionTitle")); //styleSheet
     QLabel *entryLabel = new QLabel();
     entryLabel->setText(tr("Input Motion"));
 
@@ -1444,10 +1516,38 @@ void MainWindow::createInputPanel() {
     inputLayout->addWidget(inputMotion);
 
     //
+    // Create a section line
+    // styleSheet
+
+    QFrame *line = new QFrame();
+    line->setObjectName(QString::fromUtf8("line"));
+    line->setGeometry(QRect(320, 150, 118, 3));
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+
+
+    //
+    // Create a section line 2
+    // styleSheet
+
+    QFrame *line2 = new QFrame();
+    line2->setObjectName(QString::fromUtf8("line2"));
+    line2->setGeometry(QRect(320, 150, 118, 3));
+    line2->setFrameShape(QFrame::HLine);
+    line2->setFrameShadow(QFrame::Sunken);
+    QLabel *propertiesTitle = new QLabel();
+    propertiesTitle->setText(tr("Properties Section Title"));
+    propertiesTitle->setObjectName(QString::fromUtf8("propertiesTitle"));
+    inputLayout->addWidget(propertiesTitle);
+    inputLayout->addWidget(line2);
+
+
+    //
     // create to hold major model inputs
     //
 
     QFrame *mainProperties = new QFrame();
+    mainProperties->setObjectName(QString::fromUtf8("mainProperties")); //styleSheet
     QVBoxLayout *mainPropertiesLayout = new QVBoxLayout();
     inFloors = createTextEntry(tr("number Floors"), mainPropertiesLayout);
     inWeight = createTextEntry(tr("building Weight"), mainPropertiesLayout);
@@ -1521,6 +1621,7 @@ void MainWindow::createInputPanel() {
     //
 
     QFrame *pushButtons = new QFrame();
+    pushButtons->setObjectName(QString::fromUtf8("pushButtons")); //styleSheet
     QHBoxLayout *pushButtonsLayout = new QHBoxLayout();
     runButton = new QPushButton("Run");
     pushButtonsLayout->addWidget(runButton);
@@ -1537,6 +1638,7 @@ void MainWindow::createInputPanel() {
     inputLayout->addWidget(pushButtons);
 
     mainLayout->addLayout(inputLayout);
+    //largeLayout->addLayout(mainLayout);
 
 
     //
@@ -1591,16 +1693,62 @@ void MainWindow::createOutputPanel() {
 
     outputLayout = new QVBoxLayout;
 
+    //
+    // Create a section line + title + add
+    // styleSheet
+
+    QFrame *line3 = new QFrame();
+    line3->setObjectName(QString::fromUtf8("line"));
+    line3->setGeometry(QRect(320, 150, 118, 3));
+    line3->setFrameShape(QFrame::HLine);
+    line3->setFrameShadow(QFrame::Sunken);
+
+    QLabel *outTitle = new QLabel(); //styleSheet
+    outTitle->setText(tr("Output Section Title")); //styleSheet
+    outTitle->setObjectName(QString::fromUtf8("outTitle")); //styleSheet
+
+    outputLayout->addWidget(outTitle);
+    outputLayout->addWidget(line3);
+
+
     // frame for basic outputs,
     QFrame *outputMaxFrame = new QFrame();
+
+    // frame for max disp / current period
+    QFrame *firstOutput = new QFrame(); //styleSheet
+    firstOutput->setObjectName(QString::fromUtf8("firstOutput"));
+    QVBoxLayout *firstOutputLayout = new QVBoxLayout();
+
+
     QVBoxLayout *outputMaxLayout = new QVBoxLayout();
-    maxDispLabel = createLabelEntry(tr("Max Disp"), outputMaxLayout);
-    currentPeriod= createLabelEntry(tr("Fundamental Period"),outputMaxLayout);
+    QLabel *vizTitle = new QLabel(); //styleSheet
+    vizTitle->setText(tr("Visualization Section Title")); //styleSheet
+    vizTitle->setObjectName(QString::fromUtf8("vizTitle")); //styleSheet
+    maxDispLabel = createLabelEntry(tr("Max Disp"), firstOutputLayout); //styleSheet
+    currentPeriod= createLabelEntry(tr("Fundamental Period"),firstOutputLayout); //styleSheet
     outputMaxFrame->setLayout(outputMaxLayout);
     outputMaxFrame->setLineWidth(1);
     outputMaxFrame->setFrameShape(QFrame::Box);
     outputMaxFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    outputMaxFrame->setLayout(firstOutputLayout); //this does not set properly???????
     outputLayout->addWidget(outputMaxFrame);
+
+    //
+    // Create a section line
+    // styleSheet
+
+    QFrame *line = new QFrame();
+    line->setObjectName(QString::fromUtf8("line"));
+    line->setGeometry(QRect(320, 150, 118, 3));
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+
+    //
+    // Add title and line
+    // styleSheet
+
+    outputLayout->addWidget(vizTitle);
+    outputLayout->addWidget(line);
 
     // GL Widget
     myGL = new MyGlWidget();
@@ -1631,8 +1779,9 @@ void MainWindow::createOutputPanel() {
     outputDataFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     outputLayout->addWidget(outputDataFrame);
 
-    // add layout to mainLayout
+    // add layout to mainLayout and to largeLayout
     mainLayout->addLayout(outputLayout);
+    largeLayout->addLayout(mainLayout); //styleSheet
 
     // signal and slot connects for slider
     connect(slider, SIGNAL(sliderPressed()),  this, SLOT(on_slider_sliderPressed()));
