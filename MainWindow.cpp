@@ -1449,7 +1449,7 @@ void MainWindow::createFooterBox() {
 
     QGroupBox *footer =new QGroupBox();
     QLabel *nsfLogo = new QLabel();
-    QPixmap pixmap("/Users/TylerDurden/Projects/sim/mdof_fork/MDOF/mdof.gif");
+    QPixmap pixmap(":/mdof.gif");
     QPixmap newPixmap = pixmap.scaled(QSize(40,40),  Qt::KeepAspectRatio);
     nsfLogo->setPixmap(newPixmap);
     nsfLogo->setMask(newPixmap.mask());

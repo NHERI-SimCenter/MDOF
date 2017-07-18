@@ -38,4 +38,6 @@ DISTFILES += \
     style.qss
 
 RESOURCES += \
-    images.qrc
+    images.qrc \
+    style.qss \
+    mdof.gif
