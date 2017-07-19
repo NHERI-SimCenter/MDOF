@@ -39,13 +39,27 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 // Written: fmckenna
 
-#include <QGLWidget>
+#include <QOpenGLWidget>
+#include <QOpenGLFunctions>
+
+QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram);
+
+//#include <QGLWidget>
 #include <QVector2D>
 #include <QTimer>
+#include <QMatrix4x4>
 
 class MainWindow;
 
-class MyGlWidget : public QGLWidget {
+typedef struct _vertexStruct
+{
+    GLfloat position[3];
+    GLfloat color[3];
+} vertexStruct;
+
+
+class MyGlWidget : public QOpenGLWidget, protected QOpenGLFunctions {
+
 
     Q_OBJECT // must include this if you use Qt signals/slots
 
@@ -103,6 +117,19 @@ public:
     GLfloat *lineVertices;
     GLfloat *lineColors;
    // GLfloat *lineTagColors;
+
+    // new GL stuff
+      QOpenGLShaderProgram *program;
+      GLuint h;
+      GLuint w;
+      GLuint vPosition;
+      GLuint vColor;
+       GLuint mvpMatrix;
+    GLuint pointBuffer;
+    GLuint lineBuffer;
+    vertexStruct *thePointVertices;
+    vertexStruct *theLineVertices;
+    QMatrix4x4   orthoProjectionMatrix;
 };
 
 

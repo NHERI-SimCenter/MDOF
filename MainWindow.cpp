@@ -51,6 +51,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <qcustomplot.h>
 #include <MyGlWidget.h>
 
+
 //#include <../widgets/InputSheetBM/SimpleSpreadsheetWidget.h>
 #include <SimpleSpreadsheetWidget.h>
 #include <NodeResponseWidget.h>
@@ -130,6 +131,7 @@ createTextEntry(QString text,
 
     theLayout->addLayout(entryLayout);
 
+
     return res;
 }
 
@@ -170,9 +172,9 @@ MainWindow::MainWindow(QWidget *parent) :
     numFloors(0), periods(0), buildingW(0), buildingH(1), storyK(0),
     weights(0), k(0), fy(0), b(0), dampRatios(0), floorHeights(0), storyHeights(0),
     dampingRatio(0.02), g(386.4), dt(0), gMotion(0),
-    needAnalysis(true), eqData(0), dispResponses(0), maxDisp(1),
+    includePDelta(true), needAnalysis(true), eqData(0), dispResponses(0), maxDisp(1),
     movingSlider(false), fMinSelected(-1),fMaxSelected(-1), sMinSelected(-1),sMaxSelected(-1),
-    time(1560),excitationValues(1560), graph(0), groupTracer(0),floorSelected(-1),storySelected(-1)
+    time(1561),excitationValues(1561), graph(0), groupTracer(0),floorSelected(-1),storySelected(-1)
 {
 
     createActions();
@@ -189,13 +191,23 @@ MainWindow::MainWindow(QWidget *parent) :
     widget->setLayout(mainLayout);
     this->setCentralWidget(widget);
 
+
+    //    resize(QDesktopWidget().availableGeometry(this).size() * 0.7);
+
+
+    QRect rec = QApplication::desktop()->screenGeometry();
+
+    int height = 0.7*rec.height();
+    int width = 0.7*rec.width();
+
+    this->resize(width, height);
     //
     // create 2 blank motions & make elCentro current
     //
 
     QStringList elCentrolist = elCentroTextData.split(QRegExp("[\r\n\t ]+"), QString::SkipEmptyParts);
     Vector *elCentroData = new Vector(elCentrolist.size()+1);
-   // qDebug() << elCentrolist.size();
+    // qDebug() << elCentrolist.size();
 
     (*elCentroData)(0) = 0;
     time[0]=0.;
@@ -225,8 +237,8 @@ MainWindow::MainWindow(QWidget *parent) :
     inMotion->addItem(tr("Blank"));
 
     // create a basic model with defaults
-    this->setBasicModel(4, 4, 4, 48, .02, 386.4);
-
+    this->setBasicModel(5, 5*100, 144, 31.54, .05, 386.4);
+    //setBasicModel(4,4,4,4,.02,386.4);
 
     // access a web page which will increment the usage count for this tool
     manager = new QNetworkAccessManager(this);
@@ -264,7 +276,6 @@ void MainWindow::draw(MyGlWidget *theGL)
     if (needAnalysis == true) {
         doAnalysis();
     }
-
     theGL->reset();
 
     for (int i=0; i<numFloors; i++) {
@@ -287,25 +298,25 @@ void MainWindow::draw(MyGlWidget *theGL)
         else
             theGL->drawPoint(i, dispResponses[i][currentStep],floorHeights[i], 10, 0, 0, 1);
     }
-    
+
     // display range of displacement
     static char maxDispString[30];
     snprintf(maxDispString, 50, "%.3e", maxDisp);
     theGL->drawLine(0, -maxDisp, 0.0, maxDisp, 0.0, 1.0, 0., 0., 0.);
-    //theGL->drawText(0, -maxDisp, buildingH/100., maxDispString,0,0,0);
-
-    // display current time
-
-    // theGL->paintGL();
 
     currentTime->setText(QString().setNum(currentStep*dt,'f',2));
-    
+    currentDisp->setText(QString().setNum(dispResponses[numFloors][currentStep],'f',2));
+    theGL->drawBuffers();
+
     // update red dot on earthquake plot
+    /*
     groupTracer->setGraph(0);
     groupTracer->setGraph(graph);
     groupTracer->setGraphKey(currentStep*dt);
     groupTracer->updatePosition();
-    earthquakePlot->replot();
+    //earthquakePlot->replot();
+
+*/
 }
 
 
@@ -399,6 +410,18 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
     theNodeResponse->setFloor(numF);
 }
 
+
+void
+MainWindow::on_includePDeltaChanged(int state)
+{
+    if (state == Qt::Checked)
+        includePDelta = true;
+    else
+        includePDelta = false;
+
+    this->reset();
+}
+
 void MainWindow::on_inFloors_editingFinished()
 {
     QString textFloors =  inFloors->text();
@@ -413,7 +436,6 @@ void MainWindow::on_inFloors_editingFinished()
 
 void MainWindow::on_inWeight_editingFinished()
 {
-   // qDebug() << "on_inWeight";
     QString textW =  inWeight->text();
     double textToDoubleW = textW.toDouble();
     if (textToDoubleW != buildingW) {
@@ -450,7 +472,7 @@ void MainWindow::on_inK_editingFinished()
 {
     QString text =  inK->text();
     double textToDouble = text.toDouble();
-    for (int i=0; i<=numFloors; i++)
+    for (int i=0; i<numFloors; i++)
         k[i] = textToDouble;
     //  inDamping->setFocus();
     this->reset();
@@ -478,6 +500,11 @@ void MainWindow::on_inFloorWeight_editingFinished()
     for (int i=fMinSelected; i<=fMaxSelected; i++)
         weights[i] = textToDouble;
 
+    buildingW = 0;
+    for (int i=0; i<numFloors; i++)
+        buildingW = buildingW+weights[i];
+
+    inWeight->setText(QString::number(buildingW));
     this->reset();
 }
 
@@ -518,6 +545,8 @@ void MainWindow::on_inStoryHeight_editingFinished()
 
     // delete old array and reset pointer
     buildingH = newFloorHeights[numFloors];
+    inHeight->setText(QString::number(buildingH));
+
     delete [] floorHeights;
     floorHeights = newFloorHeights;
 
@@ -571,9 +600,10 @@ void MainWindow::on_inStoryB_editingFinished()
 
 void MainWindow::doAnalysis()
 {
+
     if (needAnalysis == true) {
 
-        // clear existing model
+        // clear existinqDebugg model
         theDomain.clearAll();
         OPS_clearAllUniaxialMaterial();
         ops_Dt = 0.0;
@@ -598,10 +628,17 @@ void MainWindow::doAnalysis()
         Vector x(3); x(0) = 1.0; x(1) = 0.0; x(2) = 0.0;
         Vector y(3); y(0) = 0.0; y(1) = 1.0; y(2) = 0.0;
 
-        for (int i=0; i<numFloors; i++) {
-            UniaxialMaterial *theMat = new Steel01(i+1,fy[i],k[i],b[i]);
-            ZeroLength *theEle = new ZeroLength(i+1, 1, i+1, i+2,
-                                                x, y, *theMat, 0);
+        double axialLoad = 0;
+        for (int i=numFloors;  i>0; i--) {
+            UniaxialMaterial *theMat = new Steel01(i,fy[i-1],k[i-1],b[i-1]);
+            //  ZeroLength *theEle = new ZeroLength(i+1, 1, i+1, i+2,
+            //x, y, *theMat, 0);
+            double PdivL = 0.0;
+            if (includePDelta == true && storyHeights[i-1] != 0) {
+                axialLoad = axialLoad + weights[i-1];
+                PdivL = -axialLoad/storyHeights[i-1]; // negative for compression
+            }
+            ZeroLength *theEle = new ZeroLength(i, i, i+1, *theMat, PdivL);
             theDomain.addElement(theEle);
         }
 
@@ -625,7 +662,7 @@ void MainWindow::doAnalysis()
 
         AnalysisModel     *theModel = new AnalysisModel();
         CTestNormDispIncr *theTest = new CTestNormDispIncr(1.0e-3, 20, 0);
-        EquiSolnAlgo      *theSolnAlgo = new NewtonRaphson();
+        EquiSolnAlgo      *theSolnAlgo = new NewtonRaphson(INITIAL_TANGENT);
         TransientIntegrator  *theIntegrator = new Newmark(0.5, 0.25);
         //ConstraintHandler *theHandler = new TransformationConstraintHandler();
         ConstraintHandler *theHandler = new PlainHandler();
@@ -658,11 +695,11 @@ void MainWindow::doAnalysis()
         for (int i=0; i<numFloors; i++) {
             dampValues(i)=dampRatios[i];
         }
-       theDomain.setModalDampingFactors(&dampValues);
+        theDomain.setModalDampingFactors(&dampValues);
 
 
         double T1 = 2*3.14159/sqrt(theEig(0));
-
+        //qDebug() << T1;
         //inPeriod->setText(QString::number(T1));
 
 
@@ -672,22 +709,25 @@ void MainWindow::doAnalysis()
         //
         maxDisp = 0;
         for (int i=0; i<=numSteps; i++) { // <= due to adding 0 at start
-            theAnalysis.analyze(1, dt);
+            int ok = theAnalysis.analyze(1, dt);
             for (int j=0; j<numFloors+1; j++) {
                 double nodeDisp = theNodes[j]->getDisp()(0);
                 dispResponses[j][i] = nodeDisp;
                 if (fabs(nodeDisp) > maxDisp)
                     maxDisp = fabs(nodeDisp);
             }
+            if (ok != 0)
+                break;
         }
 
         // clean up memory
         delete [] theNodes;
-        currentDisp->setText(QString().setNum(maxDisp,'f',2));
+        maxDispLabel->setText(QString().setNum(maxDisp,'f',2));
+        currentPeriod->setText(QString().setNum(T1,'f',2));
         // reset values, i.e. slider position, current displayed step, and display properties
         needAnalysis = false;
         currentStep = 0;
-        groupTracer->setGraphKey(0);
+        //  groupTracer->setGraphKey(0);
         slider->setSliderPosition(0);
         myGL->update();
 
@@ -713,6 +753,7 @@ MainWindow::setFloorResponse(int floor)
 }
 
 void MainWindow::reset() {
+
     needAnalysis = true;
     myGL->update();
 
@@ -722,7 +763,7 @@ void MainWindow::reset() {
     theSpreadsheet->setColumnCount(6);
     theSpreadsheet->setRowCount(numFloors);
     theSpreadsheet->horizontalHeader()->setStretchLastSection(true);// horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-    theSpreadsheet->setFixedWidth(344);
+    //theSpreadsheet->setFixedWidth(344);
     updatingPropertiesTable = true;
     theSpreadsheet->setHorizontalHeaderLabels(QString(" Weight ; Height ;    K    ;    Fy    ;    b    ;  zeta").split(";"));
     for (int i=0; i<numFloors; i++) {
@@ -751,11 +792,16 @@ void MainWindow::on_theSpreadsheet_cellChanged(int row, int column)
         double textToDouble = text.toDouble(&ok);
         if (column == 0) {
             weights[row] = textToDouble;
+            buildingW = 0;
+            for (int i=0; i<numFloors; i++)
+                buildingW += weights[i];
+            inWeight->setText(QString::number(buildingW));
         } else if (column  == 1) {
             storyHeights[row] = textToDouble;
             for (int i=row; i<numFloors; i++)
                 floorHeights[i+1] = floorHeights[i]+storyHeights[i];
             buildingH = floorHeights[numFloors];
+            inHeight->setText(QString::number(buildingH));
         } else if (column == 2) {
             k[row] = textToDouble;
         } else if (column == 3) {
@@ -763,7 +809,7 @@ void MainWindow::on_theSpreadsheet_cellChanged(int row, int column)
         } else if (column == 4) {
             b[row] = textToDouble;
         } else
-             dampRatios[row] = textToDouble;
+            dampRatios[row] = textToDouble;
 
 
         needAnalysis = true;
@@ -877,7 +923,10 @@ MainWindow::setSelectionBoundary(float y1, float y2)
     } else if (fMinSelected == fMaxSelected && fMinSelected != -1) {
 
         floorMassFrame->setVisible(true);
-        storyPropertiesFrame->setVisible(false);
+        if (sMinSelected == -1 && sMaxSelected == -1)
+            storyPropertiesFrame->setVisible(false);
+        else
+            storyPropertiesFrame->setVisible(true);
         spreadSheetFrame->setVisible(false);
         floorSelected=-1;
         storySelected=-1;
@@ -912,6 +961,7 @@ MainWindow::setSelectionBoundary(float y1, float y2)
     //
 
     myGL->repaint();
+    return 0;
 }
 
 
@@ -923,7 +973,7 @@ void MainWindow::on_theSpreadsheet_cellClicked(int row, int column)
         floorSelected = row+1;
         storySelected = -1;
     }
-    else if (column > 1 && column < 5) {
+    else if (column > 0 && column < 5) {
         storySelected = row;
         floorSelected = -1;
     } else {
@@ -972,6 +1022,7 @@ void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
         earthquakePlot->yAxis->setRange(-maxValue, maxValue);
         earthquakePlot->axisRect()->setAutoMargins(QCP::msNone);
         earthquakePlot->axisRect()->setMargins(QMargins(0,0,0,0));
+        /*
         if (groupTracer != 0)
             delete groupTracer;
         groupTracer = new QCPItemTracer(earthquakePlot);
@@ -982,7 +1033,7 @@ void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
         groupTracer->setPen(QPen(Qt::red));
         groupTracer->setBrush(Qt::red);
         groupTracer->setSize(7);
-
+*/
         // reset slider range
         slider->setRange(0, numSteps);
 
@@ -1050,6 +1101,59 @@ void MainWindow::setCurrentFile(const QString &fileName)
     setWindowFilePath(shownName);
 }
 
+
+void MainWindow::on_addMotion_clicked()
+{
+
+    //
+    // open files
+    //
+
+    QString inputMotionName = QFileDialog::getOpenFileName(this);
+    if (inputMotionName.isEmpty())
+        return;
+
+    QFile file(inputMotionName);
+    if (!file.open(QFile::ReadOnly | QFile::Text)) {
+        QMessageBox::warning(this, tr("Application"),
+                             tr("Cannot read file %1:\n%2.")
+                             .arg(QDir::toNativeSeparators(inputMotionName), file.errorString()));
+        return;
+    }
+
+    // place contents of file into json object
+    QString val;
+    val=file.readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(val.toUtf8());
+
+    QJsonObject jsonObject = doc.object();
+
+    QJsonValue theValue = jsonObject["name"];
+    QString name =theValue.toString();
+    theValue = jsonObject["numPoints"];
+    int numPoints = theValue.toInt();
+    theValue = jsonObject["dT"];
+    double dT = theValue.toDouble();
+    theValue = jsonObject["data"];
+    QJsonArray data = theValue.toArray();
+
+    // create blank motion
+    Vector *theData = new Vector(numPoints);
+
+    for (int i=0; i<numPoints; i++) {
+        theValue = data.at(i);
+        (*theData)[i] = theValue.toDouble();
+    }
+
+    EarthquakeRecord *theRecord = new EarthquakeRecord(name, numPoints, dT, theData);
+    records.insert(std::make_pair(name, theRecord));
+
+    inMotion->addItem(name);
+
+    // close file
+    file.close();
+}
+
 bool MainWindow::saveFile(const QString &fileName)
 {
     //
@@ -1079,6 +1183,8 @@ bool MainWindow::saveFile(const QString &fileName)
     json["dampingRatio"]=dampingRatio;
     json["G"]=g;
     json["currentMotion"]=inMotion->currentText();
+    json["currentMotionIndex"]=inMotion->currentIndex();
+
     QJsonArray weightsArray;
     QJsonArray kArray;
     QJsonArray fyArray;
@@ -1100,6 +1206,7 @@ bool MainWindow::saveFile(const QString &fileName)
     json["storyK"]=kArray;
     json["storyFy"]=fyArray;
     json["storyB"]=bArray;
+    json["storyHeights"]=heightsArray;
     json["dampRatios"]=dampArray;
 
     //inputWidget->outputToJSON(json);
@@ -1133,7 +1240,110 @@ void MainWindow::loadFile(const QString &fileName)
     QString val;
     val=file.readAll();
     QJsonDocument doc = QJsonDocument::fromJson(val.toUtf8());
-    QJsonObject jsonObj = doc.object();
+    QJsonObject jsonObject = doc.object();
+
+    QJsonValue theValue = jsonObject["numFloors"];
+    numFloors=theValue.toInt();
+    inFloors->setText(QString::number(numFloors));
+
+    theValue = jsonObject["buildingHeight"];
+    buildingH=theValue.toDouble();
+    inHeight->setText(QString::number(buildingH));
+
+    theValue = jsonObject["buildingWeight"];
+    buildingW=theValue.toDouble();
+    inWeight->setText(QString::number(buildingW));
+
+    theValue = jsonObject["K"];
+    storyK=theValue.toDouble();
+    inK->setText(QString::number(storyK));
+
+    theValue = jsonObject["G"];
+    g=theValue.toDouble();
+    inGravity->setText(QString::number(g));
+
+    theValue = jsonObject["dampingRatio"];
+    dampingRatio=theValue.toDouble();
+    inDamping->setText(QString::number(dampingRatio));
+
+    theValue = jsonObject["currentMotionIndex"];
+    inMotion->setCurrentIndex(theValue.toInt());
+    theValue = jsonObject["currentMotion"];
+
+    if (weights != 0)
+        delete [] weights;
+    if (k != 0)
+        delete [] k;
+    if (fy != 0)
+        delete [] fy;
+    if (b != 0)
+        delete [] b;
+    if (floorHeights != 0)
+        delete [] floorHeights;
+    if (storyHeights != 0)
+        delete [] storyHeights;
+    if (dampRatios != 0)
+        delete [] dampRatios;
+
+    weights = new double[numFloors];
+    k = new double[numFloors];
+    fy = new double[numFloors];
+    b = new double[numFloors];
+    floorHeights = new double[numFloors+1];
+    storyHeights = new double[numFloors];
+    dampRatios = new double[numFloors];
+
+    QJsonArray theArray;
+
+    theValue = jsonObject["floorWeights"];
+    theArray=theValue.toArray();
+
+    for (int i=0; i<numFloors; i++)
+        weights[i] = theArray.at(i).toDouble();
+
+    theValue = jsonObject["storyK"];
+    theArray=theValue.toArray();
+
+    for (int i=0; i<numFloors; i++)
+        k[i] = theArray.at(i).toDouble();
+
+    theValue = jsonObject["storyFy"];
+    theArray=theValue.toArray();
+
+    for (int i=0; i<numFloors; i++)
+        fy[i] = theArray.at(i).toDouble();
+
+    theValue = jsonObject["storyB"];
+    theArray=theValue.toArray();
+
+    for (int i=0; i<numFloors; i++)
+        b[i] = theArray.at(i).toDouble();
+
+    theValue = jsonObject["storyHeights"];
+    theArray=theValue.toArray();
+
+    floorHeights[0] = 0;
+    for (int i=0; i<numFloors; i++) {
+        storyHeights[i] = theArray.at(i).toDouble();
+        floorHeights[i+1] = floorHeights[i] + storyHeights[i];
+    }
+
+    theValue = jsonObject["dampRatios"];
+    theArray=theValue.toArray();
+
+    for (int i=0; i<numFloors; i++)
+        dampRatios[i] = theArray.at(i).toDouble();
+
+
+    dispResponses = new double *[numFloors+1];
+    for (int i=0; i<numFloors+1; i++) {
+        dispResponses[i] = new double[numSteps+1]; // +1 as doing 0 at start
+    }
+
+
+    this->reset();
+    this->on_inMotionSelection_currentTextChanged(theValue.toString());
+    theNodeResponse->setFloor(numFloors);
 
     // close file
     file.close();
@@ -1141,7 +1351,7 @@ void MainWindow::loadFile(const QString &fileName)
     // given the json object, create the C++ objects
     // inputWidget->inputFromJSON(jsonObj);
 
-    setCurrentFile(fileName);
+    //setCurrentFile(fileName);
 }
 
 
@@ -1191,14 +1401,14 @@ void MainWindow::createActions() {
 
     theNodeResponse = new NodeResponseWidget(this);
     QDockWidget *nodeResponseDock = new QDockWidget(tr("Node Response"), this);
-        //dockO->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea |\
-     Qt::TopDockWidgetArea);
-     nodeResponseDock->setWidget(theNodeResponse);
-     nodeResponseDock->setAllowedAreas(Qt::NoDockWidgetArea);
-     nodeResponseDock->setFloating(true);
-     nodeResponseDock->close();
+    //dockO->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea |\
+    Qt::TopDockWidgetArea);
+    nodeResponseDock->setWidget(theNodeResponse);
+    nodeResponseDock->setAllowedAreas(Qt::NoDockWidgetArea);
+    nodeResponseDock->setFloating(true);
+    nodeResponseDock->close();
 
-     viewMenu->addAction(nodeResponseDock->toggleViewAction());
+    viewMenu->addAction(nodeResponseDock->toggleViewAction());
 }
 
 void MainWindow::viewNodeResponse(){
@@ -1224,6 +1434,8 @@ void MainWindow::createInputPanel() {
     inMotion = new QComboBox();
     inputMotionLayout->addWidget(entryLabel);
     inputMotionLayout->addWidget(inMotion);
+    addMotion = new QPushButton("Add");
+    inputMotionLayout->addWidget(addMotion);
     inputMotion->setLayout(inputMotionLayout);
     // inputMotion->setFrameStyle(QFrame::Raised);
     inputMotion->setLineWidth(1);
@@ -1243,6 +1455,10 @@ void MainWindow::createInputPanel() {
     inK = createTextEntry(tr("story Stiffness"), mainPropertiesLayout);
     inDamping = createTextEntry(tr("damping Ratio"), mainPropertiesLayout);
     inGravity =  createTextEntry(tr("gravity"), mainPropertiesLayout);
+    pDeltaBox = new QCheckBox(tr("Include PDelta"), 0);
+    pDeltaBox->setCheckState(Qt::Checked);
+
+    mainPropertiesLayout->addWidget(pDeltaBox);
     mainProperties->setLayout(mainPropertiesLayout);
     // mainProperties->setFrameStyle(QFrame::Raised);
     mainProperties->setLineWidth(1);
@@ -1287,10 +1503,13 @@ void MainWindow::createInputPanel() {
     dataTypes << SIMPLESPREADSHEET_QDouble;
 
     theSpreadsheet = new SimpleSpreadsheetWidget(6, 4, headings, dataTypes,0);
-    spreadsheetFrameLayout->addWidget(theSpreadsheet);
+    //theSpreadsheet = new QTableWidget();
+    spreadsheetFrameLayout->addWidget(theSpreadsheet, 1.0);
+
     spreadSheetFrame->setLayout(spreadsheetFrameLayout);
     spreadSheetFrame->setLineWidth(1);
     spreadSheetFrame->setFrameShape(QFrame::Box);
+    //theSpreadsheet->setS
 
     inputLayout->addWidget(spreadSheetFrame);
     spreadSheetFrame->setVisible(false);
@@ -1339,7 +1558,8 @@ void MainWindow::createInputPanel() {
     //
     // connect signals & slots
     //
-
+    connect(pDeltaBox, SIGNAL(stateChanged(int)), this, SLOT(on_includePDeltaChanged(int)));
+    connect(addMotion,SIGNAL(clicked()), this, SLOT(on_addMotion_clicked()));
     connect(inFloors,SIGNAL(editingFinished()), this, SLOT(on_inFloors_editingFinished()));
     connect(inWeight,SIGNAL(editingFinished()), this, SLOT(on_inWeight_editingFinished()));
     connect(inHeight,SIGNAL(editingFinished()), this, SLOT(on_inHeight_editingFinished()));
@@ -1374,7 +1594,8 @@ void MainWindow::createOutputPanel() {
     // frame for basic outputs,
     QFrame *outputMaxFrame = new QFrame();
     QVBoxLayout *outputMaxLayout = new QVBoxLayout();
-    currentDisp = createLabelEntry(tr("Max Disp"), outputMaxLayout);
+    maxDispLabel = createLabelEntry(tr("Max Disp"), outputMaxLayout);
+    currentPeriod= createLabelEntry(tr("Fundamental Period"),outputMaxLayout);
     outputMaxFrame->setLayout(outputMaxLayout);
     outputMaxFrame->setLineWidth(1);
     outputMaxFrame->setFrameShape(QFrame::Box);
@@ -1403,6 +1624,7 @@ void MainWindow::createOutputPanel() {
     QFrame *outputDataFrame = new QFrame();
     QVBoxLayout *outputDataLayout = new QVBoxLayout();
     currentTime = createLabelEntry(tr("Current Time"), outputDataLayout);
+    currentDisp = createLabelEntry(tr("Current Roof Disp"), outputDataLayout);
     outputDataFrame->setLayout(outputDataLayout);
     outputDataFrame->setLineWidth(1);
     outputDataFrame->setFrameShape(QFrame::Box);
