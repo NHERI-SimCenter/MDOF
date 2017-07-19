@@ -237,7 +237,7 @@ MainWindow::MainWindow(QWidget *parent) :
     inMotion->addItem(tr("Blank"));
 
     // create a basic model with defaults
-    this->setBasicModel(5, 5*100, 144, 31.54, .05, 386.4);
+    this->setBasicModel(5, 5*100, 5*144, 31.54, .05, 386.4);
     //setBasicModel(4,4,4,4,.02,386.4);
 
     // access a web page which will increment the usage count for this tool
@@ -688,8 +688,23 @@ void MainWindow::doAnalysis()
         EigenSOE *theEigenSOE = new SymBandEigenSOE(*theEigenSolver, *theModel);
         theAnalysis.setEigenSOE(*theEigenSOE);
 
-        theAnalysis.eigen(numFloors,true);
+        int ok = theAnalysis.eigen(numFloors,true);
         const Vector &theEig = theDomain.getEigenvalues();
+        if (ok == 0)
+          for (int i=0; i<numFloors; i++)
+            if (theEig(i) <= 0)
+                ok = -1;
+
+        if (ok != 0) {
+            QMessageBox::warning(this, tr("Application"),
+                                 tr("Eigenvalue Analysis Failed. Possible Causes: Negative stiffness "
+                                    "(either due to negative story stiffness value or large Axial force leading to "
+                                    "large negative PDelta contribibution"));
+            needAnalysis = false;
+                                // .arg(QDir::toNativeSeparators(fileName), file.errorString()));
+            return;
+        }
+
 
         Vector dampValues(numFloors);
         for (int i=0; i<numFloors; i++) {
@@ -710,6 +725,14 @@ void MainWindow::doAnalysis()
         maxDisp = 0;
         for (int i=0; i<=numSteps; i++) { // <= due to adding 0 at start
             int ok = theAnalysis.analyze(1, dt);
+            if (ok != 0) {
+                QMessageBox::warning(this, tr("Application"),
+                                     tr("Transient Analysis Failed"));
+                needAnalysis = false;
+
+                                    // .arg(QDir::toNativeSeparators(fileName), file.errorString()));
+                break;
+            }
             for (int j=0; j<numFloors+1; j++) {
                 double nodeDisp = theNodes[j]->getDisp()(0);
                 dispResponses[j][i] = nodeDisp;
