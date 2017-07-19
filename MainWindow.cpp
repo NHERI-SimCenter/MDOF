@@ -1455,13 +1455,22 @@ void MainWindow::createFooterBox() {
     nsfLogo->setMask(newPixmap.mask());
     nsfLogo->show();
 
+//    QLabel *simLogo = new QLabel();
+//    QPixmap pixmap1("/Users/TylerDurden/Projects/sim/mdof_fork/MDOF/simcenter_cut.png");
+//    QPixmap simPixmap = pixmap1.scaled(QSize(40,40),  Qt::KeepAspectRatio);
+//    simLogo->setPixmap(simPixmap);
+//    simLogo->setMask(simPixmap.mask());
+//    simLogo->show();
+
     QLabel *nsfText = new QLabel();
     nsfText->setObjectName(QString::fromUtf8("nsfText"));
     nsfText->setText(tr("This work is based on material supported by the National Science Foundation under grant 1612843-2"));
 
     footerLayout = new QHBoxLayout;
+    footerLayout->setAlignment(Qt::AlignCenter); //can this be done in CSS???
     footerLayout->addWidget(nsfLogo);
     footerLayout->addWidget(nsfText);
+    //footerLayout->addWidget(simLogo);
 
     footer->setLayout(footerLayout);
 
@@ -1483,8 +1492,8 @@ void MainWindow::createInputPanel() {
     line4->setFrameShadow(QFrame::Sunken);
 
     QLabel *inTitle = new QLabel(); //styleSheet
-    inTitle->setText(tr("Input Section Title")); //styleSheet
-    inTitle->setObjectName(QString::fromUtf8("outTitle")); //styleSheet
+    inTitle->setText(tr("Input Variables")); //styleSheet
+    inTitle->setObjectName(QString::fromUtf8("inTitle")); //styleSheet
 
     inputLayout->addWidget(inTitle);
     inputLayout->addWidget(line4);
@@ -1536,7 +1545,7 @@ void MainWindow::createInputPanel() {
     line2->setFrameShape(QFrame::HLine);
     line2->setFrameShadow(QFrame::Sunken);
     QLabel *propertiesTitle = new QLabel();
-    propertiesTitle->setText(tr("Properties Section Title"));
+    propertiesTitle->setText(tr("Building Properties"));
     propertiesTitle->setObjectName(QString::fromUtf8("propertiesTitle"));
     inputLayout->addWidget(propertiesTitle);
     inputLayout->addWidget(line2);
@@ -1572,6 +1581,7 @@ void MainWindow::createInputPanel() {
 
 
     floorMassFrame = new QFrame();
+    floorMassFrame->setObjectName(QString::fromUtf8("floorMassFrame")); //styleSheet
     QVBoxLayout *floorMassFrameLayout = new QVBoxLayout();
     inFloorWeight = createTextEntry(tr("Floor Weight"), floorMassFrameLayout);
     floorMassFrame->setLayout(floorMassFrameLayout);
@@ -1581,6 +1591,7 @@ void MainWindow::createInputPanel() {
     floorMassFrame->setVisible(false);
 
     storyPropertiesFrame = new QFrame();
+    storyPropertiesFrame->setObjectName(QString::fromUtf8("storyPropertiesFrame"));
     QVBoxLayout *storyPropertiesFrameLayout = new QVBoxLayout();
     inStoryHeight = createTextEntry(tr("Story Height"), storyPropertiesFrameLayout);
     inStoryK = createTextEntry(tr("Stiffness"), storyPropertiesFrameLayout);
@@ -1704,7 +1715,7 @@ void MainWindow::createOutputPanel() {
     line3->setFrameShadow(QFrame::Sunken);
 
     QLabel *outTitle = new QLabel(); //styleSheet
-    outTitle->setText(tr("Output Section Title")); //styleSheet
+    outTitle->setText(tr("Output Results")); //styleSheet
     outTitle->setObjectName(QString::fromUtf8("outTitle")); //styleSheet
 
     outputLayout->addWidget(outTitle);
@@ -1718,20 +1729,26 @@ void MainWindow::createOutputPanel() {
     QFrame *firstOutput = new QFrame(); //styleSheet
     firstOutput->setObjectName(QString::fromUtf8("firstOutput"));
     QVBoxLayout *firstOutputLayout = new QVBoxLayout();
+    maxDispLabel = createLabelEntry(tr("Max Disp"), firstOutputLayout); //styleSheet
+    currentPeriod= createLabelEntry(tr("Fundamental Period"),firstOutputLayout); //styleSheet
+    firstOutput->setLayout(firstOutputLayout);
+    firstOutput->setLineWidth(1);
+    firstOutput->setFrameShape(QFrame::Box);
+    outputLayout->addWidget(firstOutput);
 
 
     QVBoxLayout *outputMaxLayout = new QVBoxLayout();
     QLabel *vizTitle = new QLabel(); //styleSheet
     vizTitle->setText(tr("Visualization Section Title")); //styleSheet
     vizTitle->setObjectName(QString::fromUtf8("vizTitle")); //styleSheet
-    maxDispLabel = createLabelEntry(tr("Max Disp"), firstOutputLayout); //styleSheet
-    currentPeriod= createLabelEntry(tr("Fundamental Period"),firstOutputLayout); //styleSheet
+    //maxDispLabel = createLabelEntry(tr("Max Disp"), firstOutputLayout); //styleSheet
+    //currentPeriod= createLabelEntry(tr("Fundamental Period"),firstOutputLayout); //styleSheet
     outputMaxFrame->setLayout(outputMaxLayout);
     outputMaxFrame->setLineWidth(1);
     outputMaxFrame->setFrameShape(QFrame::Box);
     outputMaxFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     outputMaxFrame->setLayout(firstOutputLayout); //this does not set properly???????
-    outputLayout->addWidget(outputMaxFrame);
+    //outputLayout->addWidget(outputMaxFrame);
 
     //
     // Create a section line
@@ -1770,6 +1787,7 @@ void MainWindow::createOutputPanel() {
 
     // output frame to show current time
     QFrame *outputDataFrame = new QFrame();
+    outputDataFrame->setObjectName(QString::fromUtf8("outputDataFrame"));
     QVBoxLayout *outputDataLayout = new QVBoxLayout();
     currentTime = createLabelEntry(tr("Current Time"), outputDataLayout);
     currentDisp = createLabelEntry(tr("Current Roof Disp"), outputDataLayout);

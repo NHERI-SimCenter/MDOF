@@ -19,13 +19,13 @@ QPushButton:pressed {
 QComboBox {
     bborder: 1px solid gray;
     border-radius: 3px;
-    background-color: #EEEEEE;
+    background-color: #E0E0E0;
     padding: 1px 18px 1px 3px;
     min-width: 6em;
 }
 
 QComboBox:editable {
-    background: #EEEEEE;
+    background: #E0E0E0;
 }
 
 
@@ -61,9 +61,13 @@ QComboBox QAbstractItemView {
 
 
 QLineEdit {
-    background-color: #EEEEEE;
+    background-color: #E0E0E0;
     border-radius: 5px;
 }
+
+/*
+* ======= <HEADER AND FOOTER> =======
+*/
 
 QGroupBox {
     background-color: #B0BEC5;
@@ -84,6 +88,10 @@ QLabel#nsfText {
 }
 
 /*
+* ======= <HEADER AND FOOTER> =======
+*/
+
+/*
 * ======= <SECTION LABEL STYLES> =======
 */
 
@@ -98,6 +106,16 @@ QLabel#propertiesTitle {
 }
 
 QLabel#vizTitle {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+QLabel#outTitle {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+QLabel#inTitle {
     font-size: 12px;
     font-weight: bold;
 }
@@ -117,17 +135,38 @@ QFrame#line2 {
 }
 
 QFrame#inputMotion {
-    background-color: #FAFAFA;
+    background-color: #FFFFFF;
     border:none;
 }
 
-QFrame#mainProperties {
-    background-color: #FAFAFA;
+
+QFrame#firstOutput {
+    background-color: #FFFFFF;
     border:none;
 }
 
 QFrame#outputDataFrame {
-    background-color: #FAFAFA;
+    background-color: #FFFFFF;
+    border:none;
+}
+
+QFrame#mainProperties {
+    background-color: #FFFFFF;
+    border:none;
+}
+
+QFrame#floorMassFrame {
+    background-color: #FFFFFF;
+    border:none;
+}
+
+QFrame#storyPropertiesFrame {
+    background-color: #FFFFFF;
+    border:none;
+}
+
+QFrame#outputDataFrame {
+    background-color: #FFFFFF;
     border:none;
 }
 

@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/images">
         <file>mdof.gif</file>
+        <file>../simcenter_cut.png</file>
     </qresource>
 </RCC>
