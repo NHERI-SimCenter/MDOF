@@ -26,7 +26,6 @@ signals:
 public slots:
     void floorEditChanged(void);
 
-
 private:
     QCustomPlot *thePlot;
     QLineEdit *theFloorEdit;

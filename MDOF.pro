@@ -13,6 +13,8 @@ TEMPLATE = app
 
 include(OPS_includes.pro)
 
+VERSION=0.0.1
+DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 SOURCES += main.cpp\
         MainWindow.cpp \
