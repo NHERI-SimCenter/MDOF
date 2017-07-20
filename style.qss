@@ -80,6 +80,7 @@ footerLayout {
     background-color: #B0BEC5;
     height: 30px;
     border-radius: 5px;
+    text-align: center;
 }
 
 QLabel#nsfText {

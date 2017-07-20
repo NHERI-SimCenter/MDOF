@@ -191,7 +191,7 @@ MainWindow::MainWindow(QWidget *parent) :
     createHeaderBox();
     createInputPanel();
     createOutputPanel();
-    createFooterBox();
+    //createFooterBox();
 
 
     // create a widget in which to show everything //ALSO SET TO LARGE LAYOUT
@@ -1455,12 +1455,12 @@ void MainWindow::createFooterBox() {
     nsfLogo->setMask(newPixmap.mask());
     nsfLogo->show();
 
-//    QLabel *simLogo = new QLabel();
-//    QPixmap pixmap1("/Users/TylerDurden/Projects/sim/mdof_fork/MDOF/simcenter_cut.png");
-//    QPixmap simPixmap = pixmap1.scaled(QSize(40,40),  Qt::KeepAspectRatio);
-//    simLogo->setPixmap(simPixmap);
-//    simLogo->setMask(simPixmap.mask());
-//    simLogo->show();
+    QLabel *simLogo = new QLabel();
+    QPixmap pixmap1("/Users/TylerDurden/Projects/sim/mdof_fork/simcenter_cut.png");
+    QPixmap simPixmap = pixmap1.scaled(QSize(40,40),  Qt::KeepAspectRatio);
+    simLogo->setPixmap(simPixmap);
+    simLogo->setMask(simPixmap.mask());
+    simLogo->show();
 
     QLabel *nsfText = new QLabel();
     nsfText->setObjectName(QString::fromUtf8("nsfText"));
@@ -1470,7 +1470,7 @@ void MainWindow::createFooterBox() {
     footerLayout->setAlignment(Qt::AlignCenter); //can this be done in CSS???
     footerLayout->addWidget(nsfLogo);
     footerLayout->addWidget(nsfText);
-    //footerLayout->addWidget(simLogo);
+    footerLayout->addWidget(simLogo);
 
     footer->setLayout(footerLayout);
 
@@ -1492,7 +1492,7 @@ void MainWindow::createInputPanel() {
     line4->setFrameShadow(QFrame::Sunken);
 
     QLabel *inTitle = new QLabel(); //styleSheet
-    inTitle->setText(tr("Input Variables")); //styleSheet
+    inTitle->setText(tr("Input Motion")); //styleSheet
     inTitle->setObjectName(QString::fromUtf8("inTitle")); //styleSheet
 
     inputLayout->addWidget(inTitle);
@@ -1715,7 +1715,7 @@ void MainWindow::createOutputPanel() {
     line3->setFrameShadow(QFrame::Sunken);
 
     QLabel *outTitle = new QLabel(); //styleSheet
-    outTitle->setText(tr("Output Results")); //styleSheet
+    outTitle->setText(tr("Output")); //styleSheet
     outTitle->setObjectName(QString::fromUtf8("outTitle")); //styleSheet
 
     outputLayout->addWidget(outTitle);
@@ -1764,8 +1764,8 @@ void MainWindow::createOutputPanel() {
     // Add title and line
     // styleSheet
 
-    outputLayout->addWidget(vizTitle);
-    outputLayout->addWidget(line);
+    //outputLayout->addWidget(vizTitle);
+    //outputLayout->addWidget(line);
 
     // GL Widget
     myGL = new MyGlWidget();
