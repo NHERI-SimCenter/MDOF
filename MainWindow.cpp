@@ -176,7 +176,7 @@ MainWindow::MainWindow(QWidget *parent) :
     numFloors(0), periods(0), buildingW(0), buildingH(1), storyK(0),
     weights(0), k(0), fy(0), b(0), dampRatios(0), floorHeights(0), storyHeights(0),
     dampingRatio(0.02), g(386.4), dt(0), gMotion(0),
-    includePDelta(true), needAnalysis(true), eqData(0), dispResponses(0), maxDisp(1),
+    includePDelta(true), needAnalysis(true), analysisFailed(false), eqData(0), dispResponses(0), maxDisp(1),
     movingSlider(false), fMinSelected(-1),fMaxSelected(-1), sMinSelected(-1),sMaxSelected(-1),
     time(1561),excitationValues(1561), graph(0), groupTracer(0),floorSelected(-1),storySelected(-1)
 {
@@ -205,10 +205,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QRect rec = QApplication::desktop()->screenGeometry();
 
-    int height = 0.7*rec.height();
-    int width = 0.7*rec.width();
+    int height = 0.6*rec.height();
+    int width = 0.6*rec.width();
 
     this->resize(width, height);
+
     //
     // create 2 blank motions & make elCentro current
     //
@@ -282,7 +283,7 @@ MainWindow::~MainWindow()
 void MainWindow::draw(MyGlWidget *theGL)
 {
     if (needAnalysis == true) {
-        doAnalysis();
+         doAnalysis();
     }
     theGL->reset();
 
@@ -339,8 +340,10 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
     if (numFloors != numF) {
 
         // if invalid numFloor, return
-        if (numF <= 0)
-            return;
+        if (numF <= 0) {
+            numF = 1;
+           // return;
+        }
 
         // resize arrays
         if (weights != 0)
@@ -413,6 +416,7 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
     inDamping->setText(QString::number(zeta));
     inGravity->setText(QString::number(g));
     needAnalysis = true;
+
     this->reset();
 
     theNodeResponse->setFloor(numF);
@@ -435,11 +439,8 @@ void MainWindow::on_inFloors_editingFinished()
     QString textFloors =  inFloors->text();
     int numFloorsText = textFloors.toInt();
     if (numFloorsText != numFloors) {
-        this->setBasicModel(numFloorsText, buildingW, numFloorsText, storyK, dampingRatio, 386.4);
+        this->setBasicModel(numFloorsText, buildingW, buildingH, storyK, dampingRatio, 386.4);
     }
-    //  inWeight->setFocus();
-
-    this->reset();
 }
 
 void MainWindow::on_inWeight_editingFinished()
@@ -452,9 +453,11 @@ void MainWindow::on_inWeight_editingFinished()
         for (int i=0; i<numFloors; i++) {
             weights[i] = floorW;
         }
+        buildingW = textToDoubleW;
+        //inHeight->setFocus();
+
+        this->reset();
     }
-    // inHeight->setFocus();
-    this->reset();
 }
 
 void MainWindow::on_inHeight_editingFinished()
@@ -608,8 +611,7 @@ void MainWindow::on_inStoryB_editingFinished()
 
 void MainWindow::doAnalysis()
 {
-
-    if (needAnalysis == true) {
+    if (needAnalysis == true && analysisFailed == false) {
 
         // clear existinqDebugg model
         theDomain.clearAll();
@@ -647,6 +649,7 @@ void MainWindow::doAnalysis()
                 PdivL = -axialLoad/storyHeights[i-1]; // negative for compression
             }
             ZeroLength *theEle = new ZeroLength(i, i, i+1, *theMat, PdivL);
+            delete theMat;
             theDomain.addElement(theEle);
         }
 
@@ -704,12 +707,20 @@ void MainWindow::doAnalysis()
                 ok = -1;
 
         if (ok != 0) {
-            QMessageBox::warning(this, tr("Application"),
-                                 tr("Eigenvalue Analysis Failed. Possible Causes: Negative stiffness "
-                                    "(either due to negative story stiffness value or large Axial force leading to "
-                                    "large negative PDelta contribibution"));
             needAnalysis = false;
-                                // .arg(QDir::toNativeSeparators(fileName), file.errorString()));
+            analysisFailed = true;
+            for (int i=0; i<numSteps; i++) {
+                for (int j=0; j<numFloors+1; j++) {
+                    dispResponses[j][i] = 0;
+                }
+            }
+            maxDispLabel->setText(QString().setNum(0.0,'f',2));
+            currentPeriod->setText(QString(tr("undefined")));
+
+            QMessageBox::warning(this, tr("Application"),
+                                 tr("Eigenvalue Analysis Failed.<p> Possible Causes: Negstive Mass or Negative stiffness.<p> "
+                                    "Negative stiffness due to negative value entered or, if PDelta include, story stiffness - axial load divided by L is negtive."));
+
             return;
         }
 
@@ -762,6 +773,7 @@ void MainWindow::doAnalysis()
         slider->setSliderPosition(0);
         myGL->update();
 
+        analysisFailed = false;
         int nodeResponseFloor = theNodeResponse->getFloor();
         nodeResponseValues.resize(numSteps);
 
@@ -784,7 +796,8 @@ MainWindow::setFloorResponse(int floor)
 }
 
 void MainWindow::reset() {
-
+//qDebug() << "RESET";
+    analysisFailed = false;
     needAnalysis = true;
     myGL->update();
 
@@ -1799,6 +1812,7 @@ void MainWindow::createInputPanel() {
     connect(addMotion,SIGNAL(clicked()), this, SLOT(on_addMotion_clicked()));
     connect(inFloors,SIGNAL(editingFinished()), this, SLOT(on_inFloors_editingFinished()));
     connect(inWeight,SIGNAL(editingFinished()), this, SLOT(on_inWeight_editingFinished()));
+    //connect(inWeight,SIGNAL(returnPressed()),this,SLOT(on_inWeight_editingFinished()));
     connect(inHeight,SIGNAL(editingFinished()), this, SLOT(on_inHeight_editingFinished()));
     connect(inK,SIGNAL(editingFinished()), this, SLOT(on_inK_editingFinished()));
     connect(inDamping,SIGNAL(editingFinished()), this, SLOT(on_inDamping_editingFinished()));
@@ -1893,7 +1907,7 @@ void MainWindow::createOutputPanel() {
 
     // GL Widget
     myGL = new MyGlWidget();
-    myGL->setMinimumHeight(400);
+    myGL->setMinimumHeight(300);
     myGL->setMinimumWidth(250);
     myGL->setModel(this);
     outputLayout->addWidget(myGL);

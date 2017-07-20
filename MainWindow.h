@@ -253,6 +253,7 @@ private:
 
     bool includePDelta;
     bool   needAnalysis;
+    bool  analysisFailed;
     double **dispResponses;
     double maxDisp;
     int    currentStep;
