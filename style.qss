@@ -85,7 +85,7 @@ footerLayout {
 
 QLabel#nsfText {
     color: #E0E0E0;
-    font-size: 12px;
+    font: bold 15 px;
 }
 
 /*
@@ -117,7 +117,7 @@ QLabel#outTitle {
 }
 
 QLabel#inTitle {
-    font-size: 12px;
+    font: bold 15 px;
     font-weight: bold;
 }
 
