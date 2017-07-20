@@ -191,7 +191,7 @@ MainWindow::MainWindow(QWidget *parent) :
     createHeaderBox();
     createInputPanel();
     createOutputPanel();
-    //createFooterBox();
+    createFooterBox();
 
 
     // create a widget in which to show everything //ALSO SET TO LARGE LAYOUT
@@ -1867,11 +1867,11 @@ void MainWindow::createOutputPanel() {
     vizTitle->setObjectName(QString::fromUtf8("vizTitle")); //styleSheet
     //maxDispLabel = createLabelEntry(tr("Max Disp"), firstOutputLayout); //styleSheet
     //currentPeriod= createLabelEntry(tr("Fundamental Period"),firstOutputLayout); //styleSheet
-    outputMaxFrame->setLayout(outputMaxLayout);
-    outputMaxFrame->setLineWidth(1);
-    outputMaxFrame->setFrameShape(QFrame::Box);
-    outputMaxFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    outputMaxFrame->setLayout(firstOutputLayout); //this does not set properly???????
+//    outputMaxFrame->setLayout(outputMaxLayout);
+//    outputMaxFrame->setLineWidth(1);
+//    outputMaxFrame->setFrameShape(QFrame::Box);
+//    outputMaxFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+//    outputMaxFrame->setLayout(firstOutputLayout); //this does not set properly???????
     //outputLayout->addWidget(outputMaxFrame);
 
     //
