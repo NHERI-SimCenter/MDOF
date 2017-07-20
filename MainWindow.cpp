@@ -246,7 +246,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(manager, SIGNAL(finished(QNetworkReply*)),
             this, SLOT(replyFinished(QNetworkReply*)));
 
-    manager->get(QNetworkRequest(QUrl("http://opensees.berkeley.edu")));
+    manager->get(QNetworkRequest(QUrl("http://opensees.berkeley.edu/OpenSees/developer/mdofUse.php")));
 }
 
 MainWindow::~MainWindow()
@@ -858,7 +858,7 @@ void MainWindow::on_runButton_clicked()
         this->doAnalysis();
     }
 
-    currentStep = 0;
+    //currentStep = 0;
     do { //while (currentStep < numSteps && stopRun == false){
 
         slider->setSliderPosition(currentStep);
@@ -1245,6 +1245,93 @@ bool MainWindow::saveFile(const QString &fileName)
     return true;
 }
 
+void MainWindow::copyright()
+{
+    QString textCopyright = "\
+            Copyright (c) 2017-2018, The Regents of the University of California (Regents).\
+            All rights reserved.\
+            <p>\
+            Redistribution and use in source and binary forms, with or without \
+            modification, are permitted provided that the following conditions are met:\
+            <p>\
+            1. Redistributions of source code must retain the above copyright notice, this\
+               list of conditions and the following disclaimer.\
+            2. Redistributions in binary form must reproduce the above copyright notice,\
+               this list of conditions and the following disclaimer in the documentation\
+               and/or other materials provided with the distribution.\
+            <p>\
+            THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\
+            ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\
+            WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\
+            DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR\
+            ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\
+            (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\
+            LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\
+            ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\
+            (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\
+            SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\
+            <p>\
+            The views and conclusions contained in the software and documentation are those\
+            of the authors and should not be interpreted as representing official policies,\
+            either expressed or implied, of the FreeBSD Project.\
+            <p>\
+            REGENTS SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO, \
+            THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.\
+            THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS \
+            PROVIDED \"AS IS\". REGENTS HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,\
+            UPDATES, ENHANCEMENTS, OR MODIFICATIONS.\
+            <p>\
+            ------------------------------------------------------------------------------------\
+            <p>\
+            This makes use of the QT packages (unmodified): core, gui, widgets and network\
+            <p>\
+            QT is copyright \"The Qt Company Ltd&quot; and licensed under the GNU Lesser General \
+            Public License (version 3) which references the GNU General Public License (version 3)\
+            <p>\
+            These Licenses can be found at: &lt;http://www.gnu.org/licenses/&gt;";
+
+
+   QMessageBox msgBox;
+   QSpacerItem *theSpacer = new QSpacerItem(500, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+   msgBox.setText(textCopyright);
+   QGridLayout *layout = (QGridLayout*)msgBox.layout();
+   layout->addItem(theSpacer, layout->rowCount(),0,1,layout->columnCount());
+   msgBox.exec();
+
+}
+
+
+void MainWindow::version()
+{
+   QMessageBox::about(this, tr("Version"),
+            tr("Version 0.1 Beta Release "));
+}
+
+void MainWindow::about()
+{
+    QString textAbout = "\
+   This is the Multiple Degree of Freedom (MDOF) tool\
+   It presents a shear spring model of a multi-story building\
+   All units are in sec, kips, inches.\
+   <p>\
+   This tool is in beta release mode\
+   Any suggestions or bugs should be submitted to \
+   &lthttps://github.com/NHERI-SimCenter/MDOF/issues&gt\
+   ";
+
+   QMessageBox msgBox;
+   QSpacerItem *theSpacer = new QSpacerItem(500, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+   msgBox.setText(textAbout);
+   QGridLayout *layout = (QGridLayout*)msgBox.layout();
+   layout->addItem(theSpacer, layout->rowCount(),0,1,layout->columnCount());
+   msgBox.exec();
+}
+
+void MainWindow::submitFeedback()
+{
+   QDesktopServices::openUrl(QUrl("https://github.com/NHERI-SimCenter/MDOF/issues", QUrl::TolerantMode));
+}
+
 void MainWindow::loadFile(const QString &fileName)
 {
     //
@@ -1379,6 +1466,7 @@ void MainWindow::loadFile(const QString &fileName)
 
 
 void MainWindow::createActions() {
+
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
 
     //const QIcon openIcon = QIcon::fromTheme("document-open", QIcon(":/images/open.png"));
@@ -1392,6 +1480,7 @@ void MainWindow::createActions() {
     connect(newAction, &QAction::triggered, this, &MainWindow::newFile);
     fileMenu->addAction(newAction);
     //fileToolBar->addAction(newAction);
+
 
     QAction *openAction = new QAction(tr("&Open"), this);
     openAction->setShortcuts(QKeySequence::Open);
@@ -1432,6 +1521,18 @@ void MainWindow::createActions() {
     nodeResponseDock->close();
 
     viewMenu->addAction(nodeResponseDock->toggleViewAction());
+
+   QMenu *helpMenu = menuBar()->addMenu(tr("&About"));
+   QAction *infoAct = helpMenu->addAction(tr("&Information"), this, &MainWindow::about);
+   QAction *submitAct = helpMenu->addAction(tr("&Provide Feedback"), this, &MainWindow::submitFeedback);
+    //aboutAct->setStatusTip(tr("Show the application's About box"));
+   QAction *aboutAct = helpMenu->addAction(tr("&Version"), this, &MainWindow::version);
+    //aboutAct->setStatusTip(tr("Show the application's About box"));
+
+
+   QAction *copyrightAct = helpMenu->addAction(tr("&Copyright"), this, &MainWindow::copyright);
+    //aboutAct->setStatusTip(tr("Show the application's About box"));
+
 }
 
 void MainWindow::viewNodeResponse(){

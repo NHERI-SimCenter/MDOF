@@ -44,6 +44,9 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+    // Setting the Application version
+    a.setApplicationVersion(APP_VERSION);
+
     //surveySplashScreen splash;
     //splash.exec();
 

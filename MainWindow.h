@@ -142,6 +142,11 @@ private slots:
     bool save();
     bool saveAs();
 
+    void about();
+    void submitFeedback();
+    void version();
+    void copyright();
+
     void viewNodeResponse();
     void viewStoryResponse();
 
