@@ -35,3 +35,11 @@ SimpleSpreadsheetWidget.h \
 
 FORMS    += MainWindow.ui \
     surveysplashscreen.ui
+
+DISTFILES += \
+    style.qss
+
+RESOURCES += \
+    images.qrc \
+    style.qss \
+    mdof.gif

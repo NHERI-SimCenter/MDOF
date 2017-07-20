@@ -158,8 +158,10 @@ private:
 private:
 
     // private functions for setup, and for loading and saving current run info
+    void createHeaderBox(); //maxStyles
     void createInputPanel();
     void createOutputPanel();
+    void createFooterBox(); //maxStyles
     void createActions();
     void setCurrentFile(const QString &fileName);
     bool saveFile(const QString &fileName);
@@ -167,6 +169,9 @@ private:
 
 
     QHBoxLayout *mainLayout;
+    QVBoxLayout *largeLayout; //maxStyles
+    QHBoxLayout *headerLayout; //maxStyles
+    QHBoxLayout *footerLayout; //maxStyles
 
     QVBoxLayout *outputLayout;
     QVBoxLayout *inputLayout;
