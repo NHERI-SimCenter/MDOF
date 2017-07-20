@@ -439,7 +439,7 @@ void MainWindow::on_inFloors_editingFinished()
     QString textFloors =  inFloors->text();
     int numFloorsText = textFloors.toInt();
     if (numFloorsText != numFloors) {
-        this->setBasicModel(numFloorsText, buildingW, buildingH, storyK, dampingRatio, 386.4);
+        this->setBasicModel(numFloorsText, buildingW, buildingH, storyK, dampingRatio, g);
     }
 }
 
@@ -448,15 +448,18 @@ void MainWindow::on_inWeight_editingFinished()
     QString textW =  inWeight->text();
     double textToDoubleW = textW.toDouble();
     if (textToDoubleW != buildingW) {
+        /*
         // set values
         double floorW = textToDoubleW/(numFloors);
         for (int i=0; i<numFloors; i++) {
             weights[i] = floorW;
         }
+        */
         buildingW = textToDoubleW;
+        this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
         //inHeight->setFocus();
 
-        this->reset();
+        //this->reset();
     }
 }
 
@@ -467,15 +470,20 @@ void MainWindow::on_inHeight_editingFinished()
     if (textToDoubleH != buildingH) {
         // set values
         buildingH = textToDoubleH;
+       // buildingW = textToDoubleW;
+        this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
+        /*
         double deltaH = buildingH/numFloors;
         floorHeights[0] = 0;
         for (int i=0; i<numFloors; i++) {
             storyHeights[i] = deltaH;
             floorHeights[i+1] = deltaH + floorHeights[i];
         }
+        //   inK->setFocus();
+        this->reset();
+        */
     }
-    //   inK->setFocus();
-    this->reset();
+
 }
 
 
@@ -483,10 +491,16 @@ void MainWindow::on_inK_editingFinished()
 {
     QString text =  inK->text();
     double textToDouble = text.toDouble();
-    for (int i=0; i<numFloors; i++)
-        k[i] = textToDouble;
+    if (textToDouble != storyK) {
+        storyK = textToDouble;
+        this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
+        /*
+       for (int i=0; i<numFloors; i++)
+          k[i] = textToDouble;
     //  inDamping->setFocus();
-    this->reset();
+      this->reset();
+      */
+    }
 }
 
 void MainWindow::on_inDamping_editingFinished()
@@ -499,6 +513,16 @@ void MainWindow::on_inDamping_editingFinished()
         dampRatios[i]=dampingRatio;
     }
     this->reset();
+}
+
+void MainWindow::on_inGravity_editingFinished()
+{
+    QString text =  inGravity->text();
+    double textToDouble = text.toDouble();
+     if (textToDouble != g) {
+      g = textToDouble;
+      this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
+     }
 }
 
 void MainWindow::on_inFloorWeight_editingFinished()
@@ -522,14 +546,7 @@ void MainWindow::on_inFloorWeight_editingFinished()
 
 
 
-void MainWindow::on_inGravity_editingFinished()
-{
-    QString text =  inGravity->text();
-    double textToDouble = text.toDouble();
-    g = textToDouble;
 
-    this->reset();
-}
 
 void MainWindow::on_inStoryHeight_editingFinished()
 {
