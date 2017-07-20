@@ -1579,12 +1579,12 @@ void MainWindow::createFooterBox() {
     nsfLogo->setMask(newPixmap.mask());
     nsfLogo->show();
 
-    QLabel *simLogo = new QLabel();
-    QPixmap pixmap1("/Users/TylerDurden/Projects/sim/mdof_fork/simcenter_cut.png");
-    QPixmap simPixmap = pixmap1.scaled(QSize(40,40),  Qt::KeepAspectRatio);
-    simLogo->setPixmap(simPixmap);
-    simLogo->setMask(simPixmap.mask());
-    simLogo->show();
+//    QLabel *simLogo = new QLabel();
+//    QPixmap pixmap1("/Users/TylerDurden/Projects/sim/mdof_fork/simcenter_cut.png");
+//    QPixmap simPixmap = pixmap1.scaled(QSize(40,40),  Qt::KeepAspectRatio);
+//    simLogo->setPixmap(simPixmap);
+//    simLogo->setMask(simPixmap.mask());
+//    simLogo->show();
 
     QLabel *nsfText = new QLabel();
     nsfText->setObjectName(QString::fromUtf8("nsfText"));
@@ -1594,7 +1594,7 @@ void MainWindow::createFooterBox() {
     footerLayout->setAlignment(Qt::AlignCenter); //can this be done in CSS???
     footerLayout->addWidget(nsfLogo);
     footerLayout->addWidget(nsfText);
-    footerLayout->addWidget(simLogo);
+    //footerLayout->addWidget(simLogo);
 
     footer->setLayout(footerLayout);
 
