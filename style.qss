@@ -17,7 +17,7 @@ QPushButton:pressed {
 }
 
 QComboBox {
-    bborder: 1px solid gray;
+    border: 1px solid gray;
     border-radius: 3px;
     background-color: #E0E0E0;
     padding: 1px 18px 1px 3px;

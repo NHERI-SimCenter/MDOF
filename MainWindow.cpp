@@ -862,7 +862,6 @@ MainWindow::setFloorResponse(int floor)
 }
 
 void MainWindow::reset() {
-   qDebug() << "RESET ";
 
     analysisFailed = false;
     needAnalysis = true;
@@ -1097,10 +1096,7 @@ void MainWindow::on_theSpreadsheet_cellClicked(int row, int column)
 
 void MainWindow::replyFinished(QNetworkReply *pReply)
 {
-    qDebug() << "INTERNET HIT";
-
-    //QByteArray data=pReply->readAll();
-    //QString str(data);
+  return;
 }
 
 
@@ -1392,21 +1388,22 @@ void MainWindow::copyright()
 void MainWindow::version()
 {
    QMessageBox::about(this, tr("Version"),
-            tr("Version 0.1 Beta Release "));
+            tr("Version 0.0.1 Beta Release "));
 }
 
 void MainWindow::about()
 {
    QString textAbout = "\
    This is the Multiple Degree of Freedom (MDOF) tool.\
-   It presents a shear spring model of a multi-story building.<p>\
+   It presents a nonlinesr shear spring model of a multi-story building. Individual properties for floors\
+   and stories can be edited by selecting an area around the foors or stories of interest.<p>\
    All units are in sec, kips, inches.\
    <p>\
    All analysis is doing using a uniform acceleration approach, i.e. M*A + C*V + K*U = -M*Ag. Additional\
    motions can be added by user. The units for these additional motions must be in g. An\
    example is provided in\
    <p>\
-   This tool is in beta release mode\
+   This tool is in beta release mode. It does not stop the user from inputting bad values.\
    ";
 
    QMessageBox msgBox;
