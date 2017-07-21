@@ -255,6 +255,7 @@ private:
     bool   needAnalysis;
     bool  analysisFailed;
     double **dispResponses;
+    double **forceResponses;
     double maxDisp;
     int    currentStep;
     bool   stopRun;

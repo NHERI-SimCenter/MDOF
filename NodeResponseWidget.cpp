@@ -27,6 +27,14 @@ NodeResponseWidget::NodeResponseWidget(MainWindow *mainWindow, QWidget *parent)
 
     thePlot=new QCustomPlot();
     thePlot->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+
+    QRect rec = QApplication::desktop()->screenGeometry();
+
+    int height = 0.2*rec.height();
+    int width = 0.5*rec.width();
+
+    thePlot->setMinimumWidth(width);
+    thePlot->setMinimumHeight(height);
     mainLayout->addWidget(thePlot);
 
     this->setLayout(mainLayout);

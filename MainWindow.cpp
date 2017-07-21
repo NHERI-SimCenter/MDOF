@@ -205,8 +205,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QRect rec = QApplication::desktop()->screenGeometry();
 
-    int height = 0.6*rec.height();
-    int width = 0.6*rec.width();
+    int height = 0.7*rec.height();
+    int width = 0.7*rec.width();
 
     this->resize(width, height);
 
@@ -235,15 +235,17 @@ MainWindow::MainWindow(QWidget *parent) :
     QString elCentroString("elCentro");
     EarthquakeRecord *elCentro = new EarthquakeRecord(elCentroString, 1560, 0.02, elCentroData);
     records.insert(std::make_pair(QString("elCentro"), elCentro));
-
+    inMotion->addItem(elCentroString);
     // create blank motion
+    /*
     Vector *blankData = new Vector(100);
     QString blankString("Blank");
     EarthquakeRecord *blank = new EarthquakeRecord(blankString, 100, 0.02, blankData);
     records.insert(std::make_pair(blankString, blank));
+     inMotion->addItem(tr("Blank"));
+    */
 
-    inMotion->addItem(elCentroString);
-    inMotion->addItem(tr("Blank"));
+
 
     // create a basic model with defaults
     this->setBasicModel(5, 5*100, 5*144, 31.54, .05, 386.4);
@@ -466,6 +468,8 @@ void MainWindow::on_inWeight_editingFinished()
 void MainWindow::on_inHeight_editingFinished()
 {
     QString textH =  inHeight->text();
+    if (textH.isNull())
+        return;
     double textToDoubleH = textH.toDouble();
     if (textToDoubleH != buildingH) {
         // set values
@@ -490,6 +494,9 @@ void MainWindow::on_inHeight_editingFinished()
 void MainWindow::on_inK_editingFinished()
 {
     QString text =  inK->text();
+    if (text.isNull())
+        return;
+
     double textToDouble = text.toDouble();
     if (textToDouble != storyK) {
         storyK = textToDouble;
@@ -506,6 +513,9 @@ void MainWindow::on_inK_editingFinished()
 void MainWindow::on_inDamping_editingFinished()
 {
     QString text =  inDamping->text();
+    if (text.isNull())
+        return;
+
     double textToDouble = text.toDouble();
     dampingRatio = textToDouble;
     //    inGravity->setFocus();
@@ -531,6 +541,9 @@ void MainWindow::on_inFloorWeight_editingFinished()
         return;
 
     QString text =  inFloorWeight->text();
+    if (text.isNull())
+        return;
+
     double textToDouble = text.toDouble();
     for (int i=fMinSelected; i<=fMaxSelected; i++)
         weights[i] = textToDouble;
@@ -554,6 +567,9 @@ void MainWindow::on_inStoryHeight_editingFinished()
         return;
 
     QString text =  inStoryHeight->text();
+    if (text.isNull())
+        return;
+
     double newStoryHeight = text.toDouble();
     double currentStoryHeight = 0;
     double *newFloorHeights = new double[numFloors+1];
@@ -579,7 +595,7 @@ void MainWindow::on_inStoryHeight_editingFinished()
     floorHeights = newFloorHeights;
 
     // move focus, update graphic and set analysis flag
-    inStoryK->setFocus();
+  //  inStoryK->setFocus();
     this->reset();
 }
 
@@ -589,11 +605,14 @@ void MainWindow::on_inStoryK_editingFinished()
         return;
 
     QString text =  inStoryK->text();
+    if (text.isNull())
+        return;
+
     double textToDouble = text.toDouble();
     for (int i=sMinSelected; i<=sMaxSelected; i++)
         k[i] = textToDouble;
 
-    inStoryFy->setFocus();
+    //inStoryFy->setFocus();
     this->reset();
 }
 
@@ -603,11 +622,14 @@ void MainWindow::on_inStoryFy_editingFinished()
         return;
 
     QString text =  inStoryFy->text();
+    if (text.isNull())
+        return;
+
     double textToDouble = text.toDouble();
     for (int i=sMinSelected; i<=sMaxSelected; i++)
         fy[i] = textToDouble;
 
-    inStoryB->setFocus();
+    //inStoryB->setFocus();
     this->reset();
 }
 
@@ -617,11 +639,14 @@ void MainWindow::on_inStoryB_editingFinished()
         return;
 
     QString text =  inStoryB->text();
+    if (text.isNull())
+        return;
+
     double textToDouble = text.toDouble();
     for (int i=sMinSelected; i<=sMaxSelected; i++)
         b[i] = textToDouble;
 
-    inStoryHeight->setFocus();
+    //inStoryHeight->setFocus();
     this->reset();
 }
 
@@ -750,23 +775,20 @@ void MainWindow::doAnalysis()
 
 
         double T1 = 2*3.14159/sqrt(theEig(0));
-        //qDebug() << T1;
-        //inPeriod->setText(QString::number(T1));
 
-
-
-        //
-        //analyze & get results
         //
         maxDisp = 0;
         for (int i=0; i<=numSteps; i++) { // <= due to adding 0 at start
             int ok = theAnalysis.analyze(1, dt);
             if (ok != 0) {
+                needAnalysis = false;
+                analysisFailed = true;
+                for (int k=i; k<numSteps; k++) {
+                    for (int j=0; j<numFloors+1; j++)
+                        dispResponses[j][i] = 0;
+                }
                 QMessageBox::warning(this, tr("Application"),
                                      tr("Transient Analysis Failed"));
-                needAnalysis = false;
-
-                                    // .arg(QDir::toNativeSeparators(fileName), file.errorString()));
                 break;
             }
             for (int j=0; j<numFloors+1; j++) {
@@ -774,9 +796,7 @@ void MainWindow::doAnalysis()
                 dispResponses[j][i] = nodeDisp;
                 if (fabs(nodeDisp) > maxDisp)
                     maxDisp = fabs(nodeDisp);
-            }
-            if (ok != 0)
-                break;
+            }        
         }
 
         // clean up memory
@@ -1347,14 +1367,16 @@ void MainWindow::version()
 
 void MainWindow::about()
 {
-    QString textAbout = "\
-   This is the Multiple Degree of Freedom (MDOF) tool\
-   It presents a shear spring model of a multi-story building\
+   QString textAbout = "\
+   This is the Multiple Degree of Freedom (MDOF) tool.\
+   It presents a shear spring model of a multi-story building.<p>\
    All units are in sec, kips, inches.\
    <p>\
+   All analysis is doing using a uniform acceleration approach, i.e. M*A + C*V + K*U = -M*Ag. Additional\
+   motions can be added by user. The units for these additional motions must be in g. An\
+   example is provided in\
+   <p>\
    This tool is in beta release mode\
-   Any suggestions or bugs should be submitted to \
-   &lthttps://github.com/NHERI-SimCenter/MDOF/issues&gt\
    ";
 
    QMessageBox msgBox;
@@ -1927,7 +1949,7 @@ void MainWindow::createOutputPanel() {
     myGL->setMinimumHeight(300);
     myGL->setMinimumWidth(250);
     myGL->setModel(this);
-    outputLayout->addWidget(myGL);
+    outputLayout->addWidget(myGL,1.0);
 
     // input acceleration plot
     earthquakePlot=new QCustomPlot();
