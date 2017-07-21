@@ -1949,5 +1949,7 @@ void MainWindow::createOutputPanel() {
     connect(slider, SIGNAL(sliderPressed()),  this, SLOT(on_slider_sliderPressed()));
     connect(slider, SIGNAL(sliderReleased()), this, SLOT(on_slider_sliderReleased()));
     connect(slider, SIGNAL(valueChanged(int)),this, SLOT(on_slider_valueChanged(int)));
+
+    outputLayout->addStretch();
 }
 
