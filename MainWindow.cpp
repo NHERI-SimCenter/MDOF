@@ -1867,7 +1867,7 @@ void MainWindow::createOutputPanel() {
 
 
     // frame for basic outputs,
-    QFrame *outputMaxFrame = new QFrame();
+    //QFrame *outputMaxFrame = new QFrame();
 
     // frame for max disp / current period
     QFrame *firstOutput = new QFrame(); //styleSheet
