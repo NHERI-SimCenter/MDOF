@@ -77,8 +77,8 @@ QGroupBox {
 
 
 QLabel#titleText {
-    color: #E0E0E0;
-    font-size: 19px;
+    font: bold 15 px;
+    font-weight: bold;
 }
 
 
