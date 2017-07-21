@@ -74,6 +74,7 @@ QGroupBox {
     height: 30px;
     border-radius: 5px;
     font-size: 18px;
+    font-weight: bold;
 }
 
 footerLayout {
@@ -102,7 +103,7 @@ QLabel#sectionTitle {
 }
 
 QLabel#propertiesTitle {
-    font-size: 12px;
+    font: bold 15 px;
     font-weight: bold;
 }
 
@@ -112,7 +113,7 @@ QLabel#vizTitle {
 }
 
 QLabel#outTitle {
-    font-size: 12px;
+    font: bold 15 px;
     font-weight: bold;
 }
 
