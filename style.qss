@@ -6,7 +6,7 @@ QPushButton {
     border-width: 1px;
     border-radius: 5px;
     border-color: #607D8B;
-    font: bold 12px;
+    font: bold 15 px;
     padding: 3px;
 }
 
@@ -73,8 +73,15 @@ QGroupBox {
     background-color: #B0BEC5;
     height: 30px;
     border-radius: 5px;
-    font-size: 18px;
 }
+
+
+QLabel#titleText {
+    font: bold 15 px;
+    font-weight: bold;
+}
+
+
 
 footerLayout {
     background-color: #B0BEC5;
@@ -85,8 +92,9 @@ footerLayout {
 
 QLabel#nsfText {
     color: #E0E0E0;
-    font-size: 12px;
+    font: bold 15 px;
 }
+
 
 /*
 * ======= <HEADER AND FOOTER> =======
@@ -102,7 +110,7 @@ QLabel#sectionTitle {
 }
 
 QLabel#propertiesTitle {
-    font-size: 12px;
+    font: bold 15 px;
     font-weight: bold;
 }
 
@@ -112,12 +120,12 @@ QLabel#vizTitle {
 }
 
 QLabel#outTitle {
-    font-size: 12px;
+    font: bold 15 px;
     font-weight: bold;
 }
 
 QLabel#inTitle {
-    font-size: 12px;
+    font: bold 15 px;
     font-weight: bold;
 }
 
