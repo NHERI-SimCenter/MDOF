@@ -73,15 +73,14 @@ QGroupBox {
     background-color: #B0BEC5;
     height: 30px;
     border-radius: 5px;
-    font-size: 18px;
-    font-weight: bold;
 }
 
-QGroupBox#header {
 
-    font-size: 22px;
-    font-weight: bold;
+QLabel#titleText {
+    color: #E0E0E0;
+    font-size: 19px;
 }
+
 
 
 footerLayout {
@@ -95,6 +94,7 @@ QLabel#nsfText {
     color: #E0E0E0;
     font: bold 15 px;
 }
+
 
 /*
 * ======= <HEADER AND FOOTER> =======

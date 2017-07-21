@@ -1557,13 +1557,32 @@ void MainWindow::createHeaderBox() {
     // Make the header layout
     // styleSheet
 
+//    headerLayout = new QHBoxLayout;
+
+//    QGroupBox *header =new QGroupBox(tr("Multiple Degrees of Freedom Application"));
+//    header->setObjectName(QString::fromUtf8("header"));
+//    headerLayout->addWidget(header);
+
+//    largeLayout->addLayout(headerLayout);
+
+
+    //
+    // Make the header layout
+    // styleSheet
+
+    QGroupBox *header =new QGroupBox();
+
+    QLabel *titleText = new QLabel();
+    titleText->setObjectName(QString::fromUtf8("titleText"));
+    titleText->setText(tr("Multiple Degrees of Freedom Application"));
+
     headerLayout = new QHBoxLayout;
+    headerLayout->setAlignment(Qt::AlignLeft); //can this be done in CSS???
+    headerLayout->addWidget(titleText);
 
-    QGroupBox *header =new QGroupBox(tr("Multiple Degrees of Freedom Application"));
-    header->setObjectName(QString::fromUtf8("header"));
-    headerLayout->addWidget(header);
+    header->setLayout(headerLayout);
 
-    largeLayout->addLayout(headerLayout);
+    largeLayout->addWidget(header);
 }
 
 void MainWindow::createFooterBox() {
