@@ -1560,6 +1560,7 @@ void MainWindow::createHeaderBox() {
     headerLayout = new QHBoxLayout;
 
     QGroupBox *header =new QGroupBox(tr("Multiple Degrees of Freedom Application"));
+    header->setObjectName(QString::fromUtf8("header"));
     headerLayout->addWidget(header);
 
     largeLayout->addLayout(headerLayout);

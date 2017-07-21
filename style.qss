@@ -77,6 +77,13 @@ QGroupBox {
     font-weight: bold;
 }
 
+QGroupBox#header {
+
+    font-size: 22px;
+    font-weight: bold;
+}
+
+
 footerLayout {
     background-color: #B0BEC5;
     height: 30px;
