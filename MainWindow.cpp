@@ -191,7 +191,7 @@ MainWindow::MainWindow(QWidget *parent) :
     createHeaderBox();
     createInputPanel();
     createOutputPanel();
-    //createFooterBox();
+    createFooterBox();
 
 
     // create a widget in which to show everything //ALSO SET TO LARGE LAYOUT
@@ -1587,12 +1587,32 @@ void MainWindow::createHeaderBox() {
     // Make the header layout
     // styleSheet
 
+//    headerLayout = new QHBoxLayout;
+
+//    QGroupBox *header =new QGroupBox(tr("Multiple Degrees of Freedom Application"));
+//    header->setObjectName(QString::fromUtf8("header"));
+//    headerLayout->addWidget(header);
+
+//    largeLayout->addLayout(headerLayout);
+
+
+    //
+    // Make the header layout
+    // styleSheet
+
+    QGroupBox *header =new QGroupBox();
+
+    QLabel *titleText = new QLabel();
+    titleText->setObjectName(QString::fromUtf8("titleText"));
+    titleText->setText(tr("Multiple Degrees of Freedom Application"));
+
     headerLayout = new QHBoxLayout;
+    headerLayout->setAlignment(Qt::AlignLeft); //can this be done in CSS???
+    headerLayout->addWidget(titleText);
 
-    QGroupBox *header =new QGroupBox(tr("Multiple Degrees of Freedom Application"));
-    headerLayout->addWidget(header);
+    header->setLayout(headerLayout);
 
-    largeLayout->addLayout(headerLayout);
+    largeLayout->addWidget(header);
 }
 
 void MainWindow::createFooterBox() {
@@ -1878,7 +1898,7 @@ void MainWindow::createOutputPanel() {
 
 
     // frame for basic outputs,
-    QFrame *outputMaxFrame = new QFrame();
+    //QFrame *outputMaxFrame = new QFrame();
 
     // frame for max disp / current period
     QFrame *firstOutput = new QFrame(); //styleSheet
@@ -1898,11 +1918,11 @@ void MainWindow::createOutputPanel() {
     vizTitle->setObjectName(QString::fromUtf8("vizTitle")); //styleSheet
     //maxDispLabel = createLabelEntry(tr("Max Disp"), firstOutputLayout); //styleSheet
     //currentPeriod= createLabelEntry(tr("Fundamental Period"),firstOutputLayout); //styleSheet
-    outputMaxFrame->setLayout(outputMaxLayout);
-    outputMaxFrame->setLineWidth(1);
-    outputMaxFrame->setFrameShape(QFrame::Box);
-    outputMaxFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    outputMaxFrame->setLayout(firstOutputLayout); //this does not set properly???????
+//    outputMaxFrame->setLayout(outputMaxLayout);
+//    outputMaxFrame->setLineWidth(1);
+//    outputMaxFrame->setFrameShape(QFrame::Box);
+//    outputMaxFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+//    outputMaxFrame->setLayout(firstOutputLayout); //this does not set properly???????
     //outputLayout->addWidget(outputMaxFrame);
 
     //
@@ -1960,5 +1980,7 @@ void MainWindow::createOutputPanel() {
     connect(slider, SIGNAL(sliderPressed()),  this, SLOT(on_slider_sliderPressed()));
     connect(slider, SIGNAL(sliderReleased()), this, SLOT(on_slider_sliderReleased()));
     connect(slider, SIGNAL(valueChanged(int)),this, SLOT(on_slider_valueChanged(int)));
+
+    outputLayout->addStretch();
 }
 
