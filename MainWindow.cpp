@@ -344,7 +344,7 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
         // if invalid numFloor, return
         if (numF <= 0) {
             numF = 1;
-           // return;
+            // return;
         }
 
         // resize arrays
@@ -474,7 +474,7 @@ void MainWindow::on_inHeight_editingFinished()
     if (textToDoubleH != buildingH) {
         // set values
         buildingH = textToDoubleH;
-       // buildingW = textToDoubleW;
+        // buildingW = textToDoubleW;
         this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
         /*
         double deltaH = buildingH/numFloors;
@@ -517,22 +517,28 @@ void MainWindow::on_inDamping_editingFinished()
         return;
 
     double textToDouble = text.toDouble();
-    dampingRatio = textToDouble;
-    //    inGravity->setFocus();
-    for (int i=0; i<numFloors; i++) {
-        dampRatios[i]=dampingRatio;
+    if (dampingRatio != textToDouble) {
+        if (textToDouble < 0 || textToDouble > 1.0) {
+            inDamping->setText(QString::number(dampingRatio));
+            return;
+        }
+        dampingRatio = textToDouble;
+        //    inGravity->setFocus();
+        for (int i=0; i<numFloors; i++) {
+            dampRatios[i]=dampingRatio;
+        }
+        this->reset();
     }
-    this->reset();
 }
 
 void MainWindow::on_inGravity_editingFinished()
 {
     QString text =  inGravity->text();
     double textToDouble = text.toDouble();
-     if (textToDouble != g) {
-      g = textToDouble;
-      this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
-     }
+    if (textToDouble != g) {
+        g = textToDouble;
+        this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
+    }
 }
 
 void MainWindow::on_inFloorWeight_editingFinished()
@@ -555,9 +561,6 @@ void MainWindow::on_inFloorWeight_editingFinished()
     inWeight->setText(QString::number(buildingW));
     this->reset();
 }
-
-
-
 
 
 
@@ -591,12 +594,22 @@ void MainWindow::on_inStoryHeight_editingFinished()
     buildingH = newFloorHeights[numFloors];
     inHeight->setText(QString::number(buildingH));
 
+    bool needReset = false;
+    for (int i=0; i<=numFloors; i++) {
+        if (floorHeights[i] != newFloorHeights[i]){
+            needReset = true;
+            i=numFloors+1;
+        }
+    }
+
+
     delete [] floorHeights;
     floorHeights = newFloorHeights;
 
     // move focus, update graphic and set analysis flag
-  //  inStoryK->setFocus();
-    this->reset();
+    //  inStoryK->setFocus();
+    if (needReset == true)
+        this->reset();
 }
 
 void MainWindow::on_inStoryK_editingFinished()
@@ -609,11 +622,17 @@ void MainWindow::on_inStoryK_editingFinished()
         return;
 
     double textToDouble = text.toDouble();
-    for (int i=sMinSelected; i<=sMaxSelected; i++)
-        k[i] = textToDouble;
+    bool needReset = false;
+    for (int i=sMinSelected; i<=sMaxSelected; i++) {
+        if (k[i] != textToDouble) {
+            k[i] = textToDouble;
+            needReset = true;
+        }
+    }
 
     //inStoryFy->setFocus();
-    this->reset();
+    if (needReset == true)
+        this->reset();
 }
 
 void MainWindow::on_inStoryFy_editingFinished()
@@ -625,12 +644,17 @@ void MainWindow::on_inStoryFy_editingFinished()
     if (text.isNull())
         return;
 
+    bool needReset = false;
     double textToDouble = text.toDouble();
     for (int i=sMinSelected; i<=sMaxSelected; i++)
-        fy[i] = textToDouble;
+        if (fy[i] != textToDouble) {
+            fy[i] = textToDouble;
+            needReset = true;
+        }
 
     //inStoryB->setFocus();
-    this->reset();
+    if (needReset = true)
+        this->reset();
 }
 
 void MainWindow::on_inStoryB_editingFinished()
@@ -642,17 +666,22 @@ void MainWindow::on_inStoryB_editingFinished()
     if (text.isNull())
         return;
 
+    bool needReset = false;
     double textToDouble = text.toDouble();
     for (int i=sMinSelected; i<=sMaxSelected; i++)
-        b[i] = textToDouble;
+        if (b[i] != textToDouble) {
+            b[i] = textToDouble;
+            needReset = true;
+        }
 
     //inStoryHeight->setFocus();
-    this->reset();
+    if (needReset = true)
+        this->reset();
 }
 
 
 void MainWindow::doAnalysis()
-{
+{ 
     if (needAnalysis == true && analysisFailed == false) {
 
         // clear existinqDebugg model
@@ -744,9 +773,9 @@ void MainWindow::doAnalysis()
         int ok = theAnalysis.eigen(numFloors,true);
         const Vector &theEig = theDomain.getEigenvalues();
         if (ok == 0)
-          for (int i=0; i<numFloors; i++)
-            if (theEig(i) <= 0)
-                ok = -1;
+            for (int i=0; i<numFloors; i++)
+                if (theEig(i) <= 0)
+                    ok = -1;
 
         if (ok != 0) {
             needAnalysis = false;
@@ -796,7 +825,7 @@ void MainWindow::doAnalysis()
                 dispResponses[j][i] = nodeDisp;
                 if (fabs(nodeDisp) > maxDisp)
                     maxDisp = fabs(nodeDisp);
-            }        
+            }
         }
 
         // clean up memory
@@ -833,7 +862,8 @@ MainWindow::setFloorResponse(int floor)
 }
 
 void MainWindow::reset() {
-//qDebug() << "RESET";
+   qDebug() << "RESET ";
+
     analysisFailed = false;
     needAnalysis = true;
     myGL->update();
@@ -1572,7 +1602,7 @@ void MainWindow::createActions() {
     QMenu *viewMenu = menuBar()->addMenu(tr("&View"));
 
     theNodeResponse = new NodeResponseWidget(this);
-    QDockWidget *nodeResponseDock = new QDockWidget(tr("Node Response"), this);
+    QDockWidget *nodeResponseDock = new QDockWidget(tr("Floor Displacement History"), this);
     //dockO->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea |\
     Qt::TopDockWidgetArea);
     nodeResponseDock->setWidget(theNodeResponse);
@@ -1669,6 +1699,8 @@ void MainWindow::createFooterBox() {
     //footerLayout->addWidget(simLogo);
 
     footer->setLayout(footerLayout);
+    footer->setFixedHeight(50);
+    footer->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
     largeLayout->addWidget(footer);
 }
@@ -2003,6 +2035,6 @@ void MainWindow::createOutputPanel() {
     connect(slider, SIGNAL(sliderReleased()), this, SLOT(on_slider_sliderReleased()));
     connect(slider, SIGNAL(valueChanged(int)),this, SLOT(on_slider_valueChanged(int)));
 
-    outputLayout->addStretch();
+    //outputLayout->addStretch();
 }
 
