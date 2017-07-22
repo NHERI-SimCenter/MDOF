@@ -1394,14 +1394,22 @@ void MainWindow::version()
 void MainWindow::about()
 {
    QString textAbout = "\
-   This is the Multiple Degree of Freedom (MDOF) tool.\
-   It presents a nonlinesr shear spring model of a multi-story building. Individual properties for floors\
-   and stories can be edited by selecting an area around the foors or stories of interest.<p>\
+   This is the Multiple Degree of Freedom (MDOF) tool.  It allows the user to explore the effects of\
+   different building parameters and ground motions on the time history response of a building. <p> \
+   The building is represented by a shear building model: an idealization of a structure in which the mass \
+   is lumped at the floor levels and the beams are assumed infinitely stiff in flexure and axially inextensible,\
+   and the columns are axially inextensible.  The user inputs the floor weights and story properties (stiffness, \
+   yield strength, hardening ratio) of the stories, and a damping ratio for the structure. Individual floor and \
+   story values are possible by user selecting an an appropriate area in the graphic around area of interest.\
+   In addition nonlinear effects due to P-Delta and soft story mechanisms can be studied.\
+   <p>\
    All units are in sec, kips, inches.\
    <p>\
-   All analysis is doing using a uniform acceleration approach, i.e. M*A + C*V + K*U = -M*Ag. Additional\
-   motions can be added by user. The units for these additional motions must be in g. An\
-   example is provided in\
+  For this application the equations of motions are set up using the uniform excitation approach, \
+  i.e. MA + CV + KU = -MAg. These equations are solved using the Newmark constant acceleration method and \
+   Newton-Raphson solution algorithm. For reference material the user <p>\
+   Additional motions can be added by user. The units for these additional motions must be in g. An\
+   example is provided at https://github.com/NHERI-SimCenter/MDOF/blob/master/example/elCentro.json\
    <p>\
    This tool is in beta release mode. It does not stop the user from inputting bad values.\
    ";
