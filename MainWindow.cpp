@@ -17,7 +17,7 @@ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
 DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
 ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -54,7 +54,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //#include <../widgets/InputSheetBM/SimpleSpreadsheetWidget.h>
 #include <SimpleSpreadsheetWidget.h>
-#include <NodeResponseWidget.h>
+#include <ResponseWidget.h>
 
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
@@ -176,7 +176,8 @@ MainWindow::MainWindow(QWidget *parent) :
     numFloors(0), periods(0), buildingW(0), buildingH(1), storyK(0),
     weights(0), k(0), fy(0), b(0), dampRatios(0), floorHeights(0), storyHeights(0),
     dampingRatio(0.02), g(386.4), dt(0), gMotion(0),
-    includePDelta(true), needAnalysis(true), analysisFailed(false), eqData(0), dispResponses(0), maxDisp(1),
+    includePDelta(true), needAnalysis(true), analysisFailed(false), eqData(0),
+    dispResponses(0), storyForceResponses(0), storyDriftResponses(0), maxDisp(1),
     movingSlider(false), fMinSelected(-1),fMaxSelected(-1), sMinSelected(-1),sMaxSelected(-1),
     time(1561),excitationValues(1561), graph(0), groupTracer(0),floorSelected(-1),storySelected(-1)
 {
@@ -199,10 +200,6 @@ MainWindow::MainWindow(QWidget *parent) :
     widget->setLayout(largeLayout);
     this->setCentralWidget(widget);
 
-
-    //    resize(QDesktopWidget().availableGeometry(this).size() * 0.7);
-
-
     QRect rec = QApplication::desktop()->screenGeometry();
 
     int height = 0.7*rec.height();
@@ -216,7 +213,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QStringList elCentrolist = elCentroTextData.split(QRegExp("[\r\n\t ]+"), QString::SkipEmptyParts);
     Vector *elCentroData = new Vector(elCentrolist.size()+1);
-    // qDebug() << elCentrolist.size();
 
     (*elCentroData)(0) = 0;
     time[0]=0.;
@@ -230,26 +226,16 @@ MainWindow::MainWindow(QWidget *parent) :
         if (fabs(value) > maxValue)
             maxValue = fabs(value);
     }
+
     dt = 0.02;
     numSteps = 1560;
     QString elCentroString("elCentro");
     EarthquakeRecord *elCentro = new EarthquakeRecord(elCentroString, 1560, 0.02, elCentroData);
     records.insert(std::make_pair(QString("elCentro"), elCentro));
     inMotion->addItem(elCentroString);
-    // create blank motion
-    /*
-    Vector *blankData = new Vector(100);
-    QString blankString("Blank");
-    EarthquakeRecord *blank = new EarthquakeRecord(blankString, 100, 0.02, blankData);
-    records.insert(std::make_pair(blankString, blank));
-     inMotion->addItem(tr("Blank"));
-    */
-
-
 
     // create a basic model with defaults
     this->setBasicModel(5, 5*100, 5*144, 31.54, .05, 386.4);
-    //setBasicModel(4,4,4,4,.02,386.4);
 
     // access a web page which will increment the usage count for this tool
     manager = new QNetworkAccessManager(this);
@@ -344,7 +330,6 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
         // if invalid numFloor, return
         if (numF <= 0) {
             numF = 1;
-            // return;
         }
 
         // resize arrays
@@ -368,6 +353,16 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
                 delete [] dispResponses[j];
             delete [] dispResponses;
         }
+        if (storyForceResponses != 0) {
+            for (int j=0; j<numFloors; j++)
+                delete [] storyForceResponses[j];
+            delete [] storyForceResponses;
+        }
+        if (storyDriftResponses != 0) {
+            for (int j=0; j<numFloors; j++)
+                delete [] storyDriftResponses[j];
+            delete [] storyDriftResponses;
+        }
 
         weights = new double[numF];
         k = new double[numF];
@@ -378,11 +373,15 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
         dampRatios = new double[numF];
 
         dispResponses = new double *[numF+1];
+        storyForceResponses = new double *[numF];
+        storyDriftResponses = new double *[numF];
 
-        //for (int i=0; i<numF+1; i++) {}
-        //numSteps = 2000;
         for (int i=0; i<numF+1; i++) {
             dispResponses[i] = new double[numSteps+1]; // +1 as doing 0 at start
+	    if (i<numF) {
+	      storyForceResponses[i] = new double[numSteps+1]; 
+	      storyDriftResponses[i] = new double[numSteps+1]; 
+	    }
         }
     }
 
@@ -408,9 +407,6 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
 
     this->updatePeriod();
 
-    // update text boxes
-    //inPeriod->setText(QString::number(period));
-
     inWeight->setText(QString::number(buildingW));
     inK->setText(QString::number(storyK));
     inFloors->setText(QString::number(numF));
@@ -421,7 +417,9 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
 
     this->reset();
 
-    theNodeResponse->setFloor(numF);
+    theNodeResponse->setItem(numF);
+    //theForceDispResponse->setItem(1);
+    theForceTimeResponse->setItem(1);
 }
 
 
@@ -450,18 +448,9 @@ void MainWindow::on_inWeight_editingFinished()
     QString textW =  inWeight->text();
     double textToDoubleW = textW.toDouble();
     if (textToDoubleW != buildingW) {
-        /*
-        // set values
-        double floorW = textToDoubleW/(numFloors);
-        for (int i=0; i<numFloors; i++) {
-            weights[i] = floorW;
-        }
-        */
         buildingW = textToDoubleW;
         this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
         //inHeight->setFocus();
-
-        //this->reset();
     }
 }
 
@@ -472,20 +461,9 @@ void MainWindow::on_inHeight_editingFinished()
         return;
     double textToDoubleH = textH.toDouble();
     if (textToDoubleH != buildingH) {
-        // set values
         buildingH = textToDoubleH;
-        // buildingW = textToDoubleW;
         this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
-        /*
-        double deltaH = buildingH/numFloors;
-        floorHeights[0] = 0;
-        for (int i=0; i<numFloors; i++) {
-            storyHeights[i] = deltaH;
-            floorHeights[i+1] = deltaH + floorHeights[i];
-        }
         //   inK->setFocus();
-        this->reset();
-        */
     }
 
 }
@@ -501,12 +479,6 @@ void MainWindow::on_inK_editingFinished()
     if (textToDouble != storyK) {
         storyK = textToDouble;
         this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
-        /*
-       for (int i=0; i<numFloors; i++)
-          k[i] = textToDouble;
-    //  inDamping->setFocus();
-      this->reset();
-      */
     }
 }
 
@@ -710,6 +682,7 @@ void MainWindow::doAnalysis()
         Vector y(3); y(0) = 0.0; y(1) = 1.0; y(2) = 0.0;
 
         double axialLoad = 0;
+        ZeroLength **theElements = new ZeroLength *[numFloors];
         for (int i=numFloors;  i>0; i--) {
             UniaxialMaterial *theMat = new Steel01(i,fy[i-1],k[i-1],b[i-1]);
             //  ZeroLength *theEle = new ZeroLength(i+1, 1, i+1, i+2,
@@ -720,8 +693,9 @@ void MainWindow::doAnalysis()
                 PdivL = -axialLoad/storyHeights[i-1]; // negative for compression
             }
             ZeroLength *theEle = new ZeroLength(i, i, i+1, *theMat, PdivL);
-            delete theMat;
+            theElements[i-1] = theEle;
             theDomain.addElement(theEle);
+            delete theMat; // each ele makes it's own copy
         }
 
         //
@@ -735,6 +709,7 @@ void MainWindow::doAnalysis()
         //   static Vector load(1); load.Zero(); load(0) = 1;
         //   NodalLoad *theLoad = new NodalLoad(0, numFloors, load);
         //   theLoadPattern->addNodalLoad(theLoad);
+
         theDomain.addLoadPattern(theLoadPattern);
 
         //theDomain.Print(opserr);
@@ -742,9 +717,10 @@ void MainWindow::doAnalysis()
         // create the analysis
         //
 
+
         AnalysisModel     *theModel = new AnalysisModel();
-        CTestNormDispIncr *theTest = new CTestNormDispIncr(1.0e-3, 20, 0);
-        EquiSolnAlgo      *theSolnAlgo = new NewtonRaphson(INITIAL_TANGENT);
+        CTestNormDispIncr *theTest = new CTestNormDispIncr(1.0e-10, 20, 0);
+        EquiSolnAlgo      *theSolnAlgo = new NewtonRaphson();//INITIAL_TANGENT);
         TransientIntegrator  *theIntegrator = new Newmark(0.5, 0.25);
         //ConstraintHandler *theHandler = new TransformationConstraintHandler();
         ConstraintHandler *theHandler = new PlainHandler();
@@ -783,10 +759,16 @@ void MainWindow::doAnalysis()
             for (int i=0; i<numSteps; i++) {
                 for (int j=0; j<numFloors+1; j++) {
                     dispResponses[j][i] = 0;
+                    if (j < numFloors) {
+                        storyForceResponses[j][i]=0;
+                        storyDriftResponses[j][i]=0;
+                    }
                 }
             }
             maxDispLabel->setText(QString().setNum(0.0,'f',2));
             currentPeriod->setText(QString(tr("undefined")));
+            delete [] theNodes;
+            delete [] theElements;
 
             QMessageBox::warning(this, tr("Application"),
                                  tr("Eigenvalue Analysis Failed.<p> Possible Causes: Negstive Mass or Negative stiffness.<p> "
@@ -795,17 +777,13 @@ void MainWindow::doAnalysis()
             return;
         }
 
-
         Vector dampValues(numFloors);
         for (int i=0; i<numFloors; i++) {
             dampValues(i)=dampRatios[i];
         }
         theDomain.setModalDampingFactors(&dampValues);
-
-
         double T1 = 2*3.14159/sqrt(theEig(0));
 
-        //
         maxDisp = 0;
         for (int i=0; i<=numSteps; i++) { // <= due to adding 0 at start
             int ok = theAnalysis.analyze(1, dt);
@@ -813,8 +791,14 @@ void MainWindow::doAnalysis()
                 needAnalysis = false;
                 analysisFailed = true;
                 for (int k=i; k<numSteps; k++) {
-                    for (int j=0; j<numFloors+1; j++)
+                    for (int j=0; j<numFloors+1; j++) {
                         dispResponses[j][i] = 0;
+                        if (j < numFloors) {
+                            storyForceResponses[j][k]=0;
+                            storyDriftResponses[j][k]=0;
+                        }
+                    }
+
                 }
                 QMessageBox::warning(this, tr("Application"),
                                      tr("Transient Analysis Failed"));
@@ -825,14 +809,22 @@ void MainWindow::doAnalysis()
                 dispResponses[j][i] = nodeDisp;
                 if (fabs(nodeDisp) > maxDisp)
                     maxDisp = fabs(nodeDisp);
+
+                if (j < numFloors) {
+
+                    storyForceResponses[j][i]= theElements[j]->getForce();
+                    storyDriftResponses[j][i] = theElements[j]->getDrift();
+                }
             }
         }
 
         // clean up memory
         delete [] theNodes;
+        delete [] theElements;
+
+        // reset values, i.e. slider position, current displayed step...
         maxDispLabel->setText(QString().setNum(maxDisp,'f',2));
         currentPeriod->setText(QString().setNum(T1,'f',2));
-        // reset values, i.e. slider position, current displayed step, and display properties
         needAnalysis = false;
         currentStep = 0;
         //  groupTracer->setGraphKey(0);
@@ -840,24 +832,46 @@ void MainWindow::doAnalysis()
         myGL->update();
 
         analysisFailed = false;
-        int nodeResponseFloor = theNodeResponse->getFloor();
+        int nodeResponseFloor = theNodeResponse->getItem();
+        int storyForceTime = theForceTimeResponse->getItem() -1;
+        //int storyForceDrift = theForceDispResponse->getItem() -1;
+
         nodeResponseValues.resize(numSteps);
+        storyForceValues.resize(numSteps);
+        storyDriftValues.resize(numSteps);
+
 
         for (int i = 0; i < numSteps; ++i) {
             nodeResponseValues[i]=dispResponses[nodeResponseFloor][i];
+            storyForceValues[i]=storyForceResponses[storyForceTime][i];
+            storyDriftValues[i]=storyDriftResponses[storyForceTime][i];
+           // qDebug() << i*dt << " " << storyForceResponses[storyForceTime][i] << " " << storyDriftResponses[storyForceTime][i];
         }
         theNodeResponse->setData(nodeResponseValues,time,numSteps,dt);
+        theForceTimeResponse->setData(storyForceValues,time,numSteps,dt);
+       // theForceDispResponse->setData(storyForceValues,storyDriftValues,numSteps);
+       // qDebug() << storyForceValues;
     }
 }
 
 void
-MainWindow::setFloorResponse(int floor)
+MainWindow::setResponse(int floor, int mainItem)
 {
-    if (floor > 0 && floor <= numFloors) {
-        for (int i = 0; i < numSteps; ++i) {
-            nodeResponseValues[i]=dispResponses[floor][i];
+    if (mainItem == 0) {
+        if (floor > 0 && floor <= numFloors) {
+            for (int i = 0; i < numSteps; ++i) {
+                nodeResponseValues[i]=dispResponses[floor][i];
+            }
+            theNodeResponse->setData(nodeResponseValues,time,numSteps,dt);
         }
-        theNodeResponse->setData(nodeResponseValues,time,numSteps,dt);
+    } else if (mainItem == 1) {
+        if (floor > 0 && floor <= numFloors) {
+            for (int i = 0; i < numSteps; ++i) {
+                storyForceValues[i]=storyForceResponses[floor-1][i];
+            }
+            theForceTimeResponse->setData(storyForceValues,time,numSteps,dt);
+
+        }
     }
 }
 
@@ -1407,7 +1421,7 @@ void MainWindow::about()
    <p>\
   For this application the equations of motions are set up using the uniform excitation approach, \
   i.e. MA + CV + KU = -MAg. These equations are solved using the Newmark constant acceleration method and \
-   Newton-Raphson solution algorithm. For reference material the user <p>\
+   Newton-Raphson solution algorithm.  <p>\
    Additional motions can be added by user. The units for these additional motions must be in g. An\
    example is provided at https://github.com/NHERI-SimCenter/MDOF/blob/master/example/elCentro.json\
    <p>\
@@ -1548,7 +1562,9 @@ void MainWindow::loadFile(const QString &fileName)
 
     this->reset();
     this->on_inMotionSelection_currentTextChanged(theValue.toString());
-    theNodeResponse->setFloor(numFloors);
+    theNodeResponse->setItem(numFloors);
+    //theForceDispResponse->setItem(1);
+    theForceTimeResponse->setItem(1);
 
     // close file
     file.close();
@@ -1606,16 +1622,31 @@ void MainWindow::createActions() {
 
     QMenu *viewMenu = menuBar()->addMenu(tr("&View"));
 
-    theNodeResponse = new NodeResponseWidget(this);
+    theNodeResponse = new ResponseWidget(this, 0);
     QDockWidget *nodeResponseDock = new QDockWidget(tr("Floor Displacement History"), this);
-    //dockO->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea |\
-    Qt::TopDockWidgetArea);
     nodeResponseDock->setWidget(theNodeResponse);
     nodeResponseDock->setAllowedAreas(Qt::NoDockWidgetArea);
     nodeResponseDock->setFloating(true);
     nodeResponseDock->close();
-
     viewMenu->addAction(nodeResponseDock->toggleViewAction());
+
+    theForceTimeResponse = new ResponseWidget(this, 1);
+    QDockWidget *forceTimeResponseDock = new QDockWidget(tr("Story Force History"), this);
+    forceTimeResponseDock->setWidget(theForceTimeResponse);
+    forceTimeResponseDock->setAllowedAreas(Qt::NoDockWidgetArea);
+    forceTimeResponseDock->setFloating(true);
+    forceTimeResponseDock->close();
+    viewMenu->addAction(forceTimeResponseDock->toggleViewAction());
+
+    /*
+    theForceDispResponse = new ResponseWidget(this, 0);
+    QDockWidget *forceDriftResponseDock = new QDockWidget(tr("Story Force Drift"), this);
+    forceDriftResponseDock->setWidget(theForceDispResponse);
+    forceDriftResponseDock->setAllowedAreas(Qt::NoDockWidgetArea);
+    forceDriftResponseDock->setFloating(true);
+    forceDriftResponseDock->close();
+    viewMenu->addAction(forceDriftResponseDock->toggleViewAction());
+*/
 
    QMenu *helpMenu = menuBar()->addMenu(tr("&About"));
    QAction *infoAct = helpMenu->addAction(tr("&Information"), this, &MainWindow::about);

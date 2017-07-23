@@ -446,3 +446,15 @@ ZeroLength::setParameter(const char **argv, int argc, Parameter &param)
   return result;
 }
 
+double
+ZeroLength::getForce() {
+
+    double force = theMaterial->getStress();// + PdivL*theMaterial->getStrain();
+
+    return force;
+}
+
+double
+ZeroLength::getDrift(){
+    return theMaterial->getStrain();
+}

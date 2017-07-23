@@ -22,7 +22,7 @@ SOURCES += main.cpp\
     qcustomplot.cpp \
     EarthquakeRecord.cpp \
         SimpleSpreadsheetWidget.cpp \
-    NodeResponseWidget.cpp \
+    ResponseWidget.cpp \
     surveysplashscreen.cpp
 
 HEADERS  += MainWindow.h \
@@ -30,7 +30,7 @@ HEADERS  += MainWindow.h \
     qcustomplot.h \
     EarthquakeRecord.h \
 SimpleSpreadsheetWidget.h \
-    NodeResponseWidget.h \
+    ResponseWidget.h \
     surveysplashscreen.h
 
 FORMS    += MainWindow.ui \
