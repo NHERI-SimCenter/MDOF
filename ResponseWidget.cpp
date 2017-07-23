@@ -61,6 +61,9 @@ ResponseWidget::itemEditChanged() {
     int oldItem = theItem;
     QString textItems =  theItemEdit->text();
     theItem = textItems.toInt();
+    if (oldItem == theItem)
+        return;
+
     if (theItem <= 0 || theItem > main->getNumFloors()) {
         theItem=oldItem;
         theItemEdit->setText(QString::number(theItem));
@@ -95,9 +98,12 @@ ResponseWidget::setData(QVector<double> &data, QVector<double> time, int numStep
 void
 ResponseWidget::setData(QVector<double> &data, QVector<double> x, int numSteps) {
     thePlot->clearGraphs();
-    graph = thePlot->addGraph();
+    //thePlot->clearItems();
+   thePlot->clearPlottables();
+   curve = new QCPCurve(thePlot->xAxis, thePlot->yAxis);
+   curve->setData(x,data);
 
-    thePlot->graph(0)->setData(x, data, true);
+    //thePlot->graph(0)->setData(x, data, true);
 
     double minValue = 0;
     double maxValue = 0;
@@ -114,7 +120,6 @@ ResponseWidget::setData(QVector<double> &data, QVector<double> x, int numSteps) 
             xMinValue = xValue;
         if (xValue > xMaxValue)
             xMaxValue = xValue;
-        qDebug() << i*.02 << " " << value << " " << xValue;
     }
 
    //
@@ -124,5 +129,4 @@ ResponseWidget::setData(QVector<double> &data, QVector<double> x, int numSteps) 
     //thePlot->axisRect()->setAutoMargins(QCP::msNone);
    // thePlot->axisRect()->setMargins(QMargins(0,0,0,0));
     thePlot->replot();
-
 }

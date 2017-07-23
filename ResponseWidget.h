@@ -7,6 +7,7 @@
 class QCustomPlot;
 class QLineEdit;
 class QCPGraph;
+class QCPCurve;
 class QCPItemTracer;
 class MainWindow;
 
@@ -37,6 +38,7 @@ private:
 
     QCPGraph *graph;
     QCPItemTracer *groupTracer;
+    QCPCurve *curve;
 };
 
 #endif // NODERESPONSEWIDGET_H

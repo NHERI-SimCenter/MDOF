@@ -220,7 +220,7 @@ private:
     
     ResponseWidget *theNodeResponse;
     ResponseWidget *theForceTimeResponse;
-    //ResponseWidget *theForceDispResponse;
+    ResponseWidget *theForceDispResponse;
 
     Ui::MainWindow *ui;
 

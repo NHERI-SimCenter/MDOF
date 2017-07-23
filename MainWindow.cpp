@@ -418,7 +418,7 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
     this->reset();
 
     theNodeResponse->setItem(numF);
-    //theForceDispResponse->setItem(1);
+    theForceDispResponse->setItem(1);
     theForceTimeResponse->setItem(1);
 }
 
@@ -849,7 +849,7 @@ void MainWindow::doAnalysis()
         }
         theNodeResponse->setData(nodeResponseValues,time,numSteps,dt);
         theForceTimeResponse->setData(storyForceValues,time,numSteps,dt);
-       // theForceDispResponse->setData(storyForceValues,storyDriftValues,numSteps);
+        theForceDispResponse->setData(storyForceValues,storyDriftValues,numSteps);
        // qDebug() << storyForceValues;
     }
 }
@@ -864,13 +864,18 @@ MainWindow::setResponse(int floor, int mainItem)
             }
             theNodeResponse->setData(nodeResponseValues,time,numSteps,dt);
         }
-    } else if (mainItem == 1) {
+    } else if (mainItem == 1 || mainItem == 2) {
         if (floor > 0 && floor <= numFloors) {
             for (int i = 0; i < numSteps; ++i) {
                 storyForceValues[i]=storyForceResponses[floor-1][i];
+                storyDriftValues[i]=storyDriftResponses[floor-1][i];
             }
             theForceTimeResponse->setData(storyForceValues,time,numSteps,dt);
-
+            theForceDispResponse->setData(storyForceValues,storyDriftValues,numSteps);
+            if (mainItem == 1)
+                theForceDispResponse->setItem(floor);
+            else
+                theForceTimeResponse->setItem(floor);
         }
     }
 }
@@ -1563,7 +1568,7 @@ void MainWindow::loadFile(const QString &fileName)
     this->reset();
     this->on_inMotionSelection_currentTextChanged(theValue.toString());
     theNodeResponse->setItem(numFloors);
-    //theForceDispResponse->setItem(1);
+    theForceDispResponse->setItem(1);
     theForceTimeResponse->setItem(1);
 
     // close file
@@ -1638,15 +1643,15 @@ void MainWindow::createActions() {
     forceTimeResponseDock->close();
     viewMenu->addAction(forceTimeResponseDock->toggleViewAction());
 
-    /*
-    theForceDispResponse = new ResponseWidget(this, 0);
+
+    theForceDispResponse = new ResponseWidget(this, 2);
     QDockWidget *forceDriftResponseDock = new QDockWidget(tr("Story Force Drift"), this);
     forceDriftResponseDock->setWidget(theForceDispResponse);
     forceDriftResponseDock->setAllowedAreas(Qt::NoDockWidgetArea);
     forceDriftResponseDock->setFloating(true);
     forceDriftResponseDock->close();
     viewMenu->addAction(forceDriftResponseDock->toggleViewAction());
-*/
+
 
    QMenu *helpMenu = menuBar()->addMenu(tr("&About"));
    QAction *infoAct = helpMenu->addAction(tr("&Information"), this, &MainWindow::about);
