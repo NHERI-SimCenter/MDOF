@@ -1661,7 +1661,7 @@ void MainWindow::createActions() {
     //aboutAct->setStatusTip(tr("Show the application's About box"));
 
 
-   QAction *copyrightAct = helpMenu->addAction(tr("&Copyright"), this, &MainWindow::copyright);
+   QAction *copyrightAct = helpMenu->addAction(tr("&License"), this, &MainWindow::copyright);
     //aboutAct->setStatusTip(tr("Show the application's About box"));
 
 }
@@ -1740,7 +1740,7 @@ void MainWindow::createFooterBox() {
     //footerLayout->addWidget(simLogo);
 
     footer->setLayout(footerLayout);
-    footer->setFixedHeight(50);
+   // footer->setFixedHeight(50);
     footer->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
     largeLayout->addWidget(footer);
