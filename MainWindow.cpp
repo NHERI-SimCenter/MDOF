@@ -1205,10 +1205,11 @@ void MainWindow::open()
         loadFile(fileName);
 }
 
-void MainWindow::newFile()
+void MainWindow::resetFile()
 {
-    // clear old
-    //inputWidget->clear();
+
+    // reset to original
+    this->setBasicModel(5, 5*100, 5*144, 31.54, .05, 386.4);
 
     // set currentFile blank
     setCurrentFile(QString());
@@ -1598,10 +1599,10 @@ void MainWindow::createActions() {
 
     //QToolBar *fileToolBar = addToolBar(tr("File"));
 
-    QAction *newAction = new QAction(tr("&New"), this);
+    QAction *newAction = new QAction(tr("&Reset"), this);
     newAction->setShortcuts(QKeySequence::New);
     newAction->setStatusTip(tr("Create a new file"));
-    connect(newAction, &QAction::triggered, this, &MainWindow::newFile);
+    connect(newAction, &QAction::triggered, this, &MainWindow::resetFile);
     fileMenu->addAction(newAction);
     //fileToolBar->addAction(newAction);
 

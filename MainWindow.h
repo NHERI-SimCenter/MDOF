@@ -135,7 +135,7 @@ private slots:
 
     void on_pushButton_2_clicked();
 
-    void newFile();
+    void resetFile();
     void open();
     bool save();
     bool saveAs();
