@@ -1386,16 +1386,24 @@ void MainWindow::copyright()
             <p>\
             ------------------------------------------------------------------------------------\
             <p>\
-            This makes use of the QT packages (unmodified): core, gui, widgets and network\
+            This software makes use of the QT packages (unmodified): core, gui, widgets and network\
             <p>\
             QT is copyright \"The Qt Company Ltd&quot; and licensed under the GNU Lesser General \
             Public License (version 3) which references the GNU General Public License (version 3)\
             <p>\
-            These Licenses can be found at: &lt;http://www.gnu.org/licenses/&gt;";
+            These Licenses can be found at: &lt;http://www.gnu.org/licenses/&gt;\
+            <p>\
+            ------------------------------------------------------------------------------------\
+            <p>\
+             This software makes use of the OpenSees Software Framework. OpenSees is copyright \"The Regents of the University of \
+             California\". OpenSees is free open-source software licensced under a modified BSD license. The license can be\
+             found at http://opensees.berkeley.edu.\
+             <p>\
+             ";
 
 
    QMessageBox msgBox;
-   QSpacerItem *theSpacer = new QSpacerItem(500, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+   QSpacerItem *theSpacer = new QSpacerItem(700, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
    msgBox.setText(textCopyright);
    QGridLayout *layout = (QGridLayout*)msgBox.layout();
    layout->addItem(theSpacer, layout->rowCount(),0,1,layout->columnCount());
@@ -1627,7 +1635,14 @@ void MainWindow::createActions() {
 
     QMenu *viewMenu = menuBar()->addMenu(tr("&View"));
 
-    theNodeResponse = new ResponseWidget(this, 0);
+    QString tLabel("Time");
+    QString dLabel("Relative Displacement");
+    QString fLabel("Floor");
+    QString sLabel("Story");
+    QString forceLabel("Shear Force");
+    QString dispLabel("Displacement");
+
+    theNodeResponse = new ResponseWidget(this, 0, fLabel, tLabel, dLabel);
     QDockWidget *nodeResponseDock = new QDockWidget(tr("Floor Displacement History"), this);
     nodeResponseDock->setWidget(theNodeResponse);
     nodeResponseDock->setAllowedAreas(Qt::NoDockWidgetArea);
@@ -1635,7 +1650,7 @@ void MainWindow::createActions() {
     nodeResponseDock->close();
     viewMenu->addAction(nodeResponseDock->toggleViewAction());
 
-    theForceTimeResponse = new ResponseWidget(this, 1);
+    theForceTimeResponse = new ResponseWidget(this, 1, sLabel, tLabel, forceLabel);
     QDockWidget *forceTimeResponseDock = new QDockWidget(tr("Story Force History"), this);
     forceTimeResponseDock->setWidget(theForceTimeResponse);
     forceTimeResponseDock->setAllowedAreas(Qt::NoDockWidgetArea);
@@ -1644,8 +1659,8 @@ void MainWindow::createActions() {
     viewMenu->addAction(forceTimeResponseDock->toggleViewAction());
 
 
-    theForceDispResponse = new ResponseWidget(this, 2);
-    QDockWidget *forceDriftResponseDock = new QDockWidget(tr("Story Force Drift"), this);
+    theForceDispResponse = new ResponseWidget(this, 2, sLabel, dispLabel,forceLabel);
+    QDockWidget *forceDriftResponseDock = new QDockWidget(tr("Story Force-Displacement"), this);
     forceDriftResponseDock->setWidget(theForceDispResponse);
     forceDriftResponseDock->setAllowedAreas(Qt::NoDockWidgetArea);
     forceDriftResponseDock->setFloating(true);
@@ -1740,7 +1755,9 @@ void MainWindow::createFooterBox() {
     //footerLayout->addWidget(simLogo);
 
     footer->setLayout(footerLayout);
-   // footer->setFixedHeight(50);
+#ifdef _MacOSX
+   footer->setFixedHeight(50);
+#endif
     footer->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
     largeLayout->addWidget(footer);

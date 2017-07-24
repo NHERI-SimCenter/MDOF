@@ -15,7 +15,7 @@ class ResponseWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit ResponseWidget(MainWindow *main, int mainWindowItem, QWidget *parent = 0);
+    explicit ResponseWidget(MainWindow *main, int mainWindowItem, QString &label, QString &xAxis, QString &yAxis, QWidget *parent = 0);
     ~ResponseWidget();
 
     int getItem();
@@ -39,6 +39,7 @@ private:
     QCPGraph *graph;
     QCPItemTracer *groupTracer;
     QCPCurve *curve;
+
 };
 
 #endif // NODERESPONSEWIDGET_H

@@ -15,13 +15,18 @@ createTextEntry(QString text,
 
 
 
-ResponseWidget::ResponseWidget(MainWindow *mainWindow, int mainItem, QWidget *parent)
+ResponseWidget::ResponseWidget(MainWindow *mainWindow,
+                               int mainItem,
+                               QString &label,
+                               QString &xLabel,
+                               QString &yLabel,
+                               QWidget *parent)
     : QWidget(parent), theItem(0), mainWindowItem(mainItem), main(mainWindow)
 {
     // create a main layout
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
-    theItemEdit = createTextEntry(tr("Item"), mainLayout);
+    theItemEdit = createTextEntry(label, mainLayout);
     theItemEdit->setValidator(new QIntValidator);
     connect(theItemEdit, SIGNAL(editingFinished()), this, SLOT(itemEditChanged()));
 
@@ -36,6 +41,9 @@ ResponseWidget::ResponseWidget(MainWindow *mainWindow, int mainItem, QWidget *pa
     thePlot->setMinimumWidth(width);
     thePlot->setMinimumHeight(height);
     mainLayout->addWidget(thePlot);
+
+    thePlot->xAxis->setLabel(xLabel);
+    thePlot->yAxis->setLabel(yLabel);
 
     this->setLayout(mainLayout);
 }
@@ -77,7 +85,7 @@ ResponseWidget::setData(QVector<double> &data, QVector<double> time, int numStep
     thePlot->clearGraphs();
     graph = thePlot->addGraph();
     thePlot->graph(0)->setData(time, data);
-    thePlot->xAxis->setRange(0, numSteps*dt);
+
     double minValue = 0;
     double maxValue = 0;
     for (int i=0; i<numSteps; i++) {
@@ -88,6 +96,7 @@ ResponseWidget::setData(QVector<double> &data, QVector<double> time, int numStep
             maxValue = value;
     }
 
+    thePlot->xAxis->setRange(0, numSteps*dt);
     thePlot->yAxis->setRange(minValue, maxValue);
     //thePlot->axisRect()->setAutoMargins(QCP::msNone);
     thePlot->axisRect()->setMargins(QMargins(0,0,0,0));
