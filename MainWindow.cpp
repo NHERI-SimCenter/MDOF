@@ -271,7 +271,7 @@ MainWindow::~MainWindow()
 void MainWindow::draw(MyGlWidget *theGL)
 {
     if (needAnalysis == true) {
-         doAnalysis();
+        doAnalysis();
     }
     theGL->reset();
 
@@ -378,10 +378,10 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
 
         for (int i=0; i<numF+1; i++) {
             dispResponses[i] = new double[numSteps+1]; // +1 as doing 0 at start
-	    if (i<numF) {
-	      storyForceResponses[i] = new double[numSteps+1]; 
-	      storyDriftResponses[i] = new double[numSteps+1]; 
-	    }
+            if (i<numF) {
+                storyForceResponses[i] = new double[numSteps+1];
+                storyDriftResponses[i] = new double[numSteps+1];
+            }
         }
     }
 
@@ -440,6 +440,7 @@ void MainWindow::on_inFloors_editingFinished()
     int numFloorsText = textFloors.toInt();
     if (numFloorsText != numFloors) {
         this->setBasicModel(numFloorsText, buildingW, buildingH, storyK, dampingRatio, g);
+        this->setSelectionBoundary(-1.,-1.);
     }
 }
 
@@ -562,9 +563,7 @@ void MainWindow::on_inStoryHeight_editingFinished()
     for (int i=sMaxSelected+1; i<numFloors; i++)
         newFloorHeights[i+1] = newFloorHeights[i]+floorHeights[i+1]-floorHeights[i];
 
-    // delete old array and reset pointer
-    buildingH = newFloorHeights[numFloors];
-    inHeight->setText(QString::number(buildingH));
+
 
     bool needReset = false;
     for (int i=0; i<=numFloors; i++) {
@@ -580,8 +579,13 @@ void MainWindow::on_inStoryHeight_editingFinished()
 
     // move focus, update graphic and set analysis flag
     //  inStoryK->setFocus();
-    if (needReset == true)
+    if (needReset == true) {
+        // delete old array and reset pointer
         this->reset();
+        // delete old array and reset pointer
+        buildingH = newFloorHeights[numFloors];
+        inHeight->setText(QString::number(buildingH));
+    }
 }
 
 void MainWindow::on_inStoryK_editingFinished()
@@ -618,14 +622,14 @@ void MainWindow::on_inStoryFy_editingFinished()
 
     bool needReset = false;
     double textToDouble = text.toDouble();
-    for (int i=sMinSelected; i<=sMaxSelected; i++)
-        if (fy[i] != textToDouble) {
+    for (int i=sMinSelected; i<=sMaxSelected; i++) {
+        if (fabs(fy[i]-textToDouble) > 1e-12) {
             fy[i] = textToDouble;
             needReset = true;
         }
-
+    }
     //inStoryB->setFocus();
-    if (needReset = true)
+    if (needReset == true)
         this->reset();
 }
 
@@ -647,7 +651,7 @@ void MainWindow::on_inStoryB_editingFinished()
         }
 
     //inStoryHeight->setFocus();
-    if (needReset = true)
+    if (needReset == true)
         this->reset();
 }
 
@@ -817,7 +821,6 @@ void MainWindow::doAnalysis()
                 }
             }
         }
-
         // clean up memory
         delete [] theNodes;
         delete [] theElements;
@@ -828,7 +831,7 @@ void MainWindow::doAnalysis()
         needAnalysis = false;
         currentStep = 0;
         //  groupTracer->setGraphKey(0);
-        slider->setSliderPosition(0);
+        //      slider->setSliderPosition(0);
         myGL->update();
 
         analysisFailed = false;
@@ -840,17 +843,15 @@ void MainWindow::doAnalysis()
         storyForceValues.resize(numSteps);
         storyDriftValues.resize(numSteps);
 
-
         for (int i = 0; i < numSteps; ++i) {
             nodeResponseValues[i]=dispResponses[nodeResponseFloor][i];
             storyForceValues[i]=storyForceResponses[storyForceTime][i];
             storyDriftValues[i]=storyDriftResponses[storyForceTime][i];
-           // qDebug() << i*dt << " " << storyForceResponses[storyForceTime][i] << " " << storyDriftResponses[storyForceTime][i];
+            // qDebug() << i*dt << " " << storyForceResponses[storyForceTime][i] << " " << storyDriftResponses[storyForceTime][i];
         }
         theNodeResponse->setData(nodeResponseValues,time,numSteps,dt);
         theForceTimeResponse->setData(storyForceValues,time,numSteps,dt);
         theForceDispResponse->setData(storyForceValues,storyDriftValues,numSteps);
-       // qDebug() << storyForceValues;
     }
 }
 
@@ -1115,7 +1116,7 @@ void MainWindow::on_theSpreadsheet_cellClicked(int row, int column)
 
 void MainWindow::replyFinished(QNetworkReply *pReply)
 {
-  return;
+    return;
 }
 
 
@@ -1130,8 +1131,39 @@ void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
         dt =  theRecord->dt;
         eqData = theRecord->data;
         double maxValue = 0;
+
+        if (dispResponses != 0) {
+            for (int j=0; j<numFloors+1; j++)
+                delete [] dispResponses[j];
+            delete [] dispResponses;
+        }
+        if (storyForceResponses != 0) {
+            for (int j=0; j<numFloors; j++)
+                delete [] storyForceResponses[j];
+            delete [] storyForceResponses;
+        }
+        if (storyDriftResponses != 0) {
+            for (int j=0; j<numFloors; j++)
+                delete [] storyDriftResponses[j];
+            delete [] storyDriftResponses;
+        }
+
+        dispResponses = new double *[numFloors+1];
+        storyForceResponses = new double *[numFloors];
+        storyDriftResponses = new double *[numFloors];
+
+        for (int i=0; i<numFloors+1; i++) {
+            dispResponses[i] = new double[numSteps+1]; // +1 as doing 0 at start
+            if (i<numFloors) {
+                storyForceResponses[i] = new double[numSteps+1];
+                storyDriftResponses[i] = new double[numSteps+1];
+            }
+        }
+
+
         excitationValues.resize(numSteps);
         time.resize(numSteps);
+
         for (int i = 0; i < numSteps; ++i) {
             double value = (*eqData)[i];
             time[i]=i*dt;
@@ -1148,6 +1180,7 @@ void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
         earthquakePlot->yAxis->setRange(-maxValue, maxValue);
         earthquakePlot->axisRect()->setAutoMargins(QCP::msNone);
         earthquakePlot->axisRect()->setMargins(QMargins(0,0,0,0));
+        earthquakePlot->replot();
         /*
         if (groupTracer != 0)
             delete groupTracer;
@@ -1175,6 +1208,7 @@ void MainWindow::on_pushButton_2_clicked()
 
 bool MainWindow::save()
 {
+    qDebug() << "save";
     if (currentFile.isEmpty()) {
         return saveAs();
     } else {
@@ -1184,6 +1218,7 @@ bool MainWindow::save()
 
 bool MainWindow::saveAs()
 {
+    qDebug() << "saveAS";
     //
     // get filename
     //
@@ -1210,6 +1245,7 @@ void MainWindow::resetFile()
 
     // reset to original
     this->setBasicModel(5, 5*100, 5*144, 31.54, .05, 386.4);
+    this->setSelectionBoundary(-1.,-1.);
 
     // set currentFile blank
     setCurrentFile(QString());
@@ -1256,29 +1292,68 @@ void MainWindow::on_addMotion_clicked()
     QJsonObject jsonObject = doc.object();
 
     QJsonValue theValue = jsonObject["name"];
+    if (theValue.isNull()) {
+        QMessageBox::warning(this, tr("Application"),
+                             tr("Cannot find \"name\" attribute in file %1:\n%2.")
+                             .arg(QDir::toNativeSeparators(inputMotionName),
+                                  file.errorString()));
+        return;
+
+    }
     QString name =theValue.toString();
+
+
     theValue = jsonObject["numPoints"];
+    if (theValue.isNull()) {
+        QMessageBox::warning(this, tr("Application"),
+                             tr("Cannot find \"numPoints\" attribute in file %1:\n%2.")
+                             .arg(QDir::toNativeSeparators(inputMotionName),
+                                  file.errorString()));
+        return;
+    }
     int numPoints = theValue.toInt();
+
+
     theValue = jsonObject["dT"];
+    if (theValue.isNull()) {
+        QMessageBox::warning(this, tr("Application"),
+                             tr("Cannot find \"dT\" attribute in file %1:\n%2.")
+                             .arg(QDir::toNativeSeparators(inputMotionName),
+                                  file.errorString()));
+        return;
+    }
     double dT = theValue.toDouble();
+
     theValue = jsonObject["data"];
+    if (theValue.isNull()) {
+        QMessageBox::warning(this, tr("Application"),
+                             tr("Cannot find \"data\" attribute in file %1:\n%2.")
+                             .arg(QDir::toNativeSeparators(inputMotionName),
+                                  file.errorString()));
+        return;
+    }
     QJsonArray data = theValue.toArray();
 
-    // create blank motion
+    // create new vector & read in data
     Vector *theData = new Vector(numPoints);
-
     for (int i=0; i<numPoints; i++) {
         theValue = data.at(i);
         (*theData)[i] = theValue.toDouble();
     }
 
+    // create a record and add to records map
     EarthquakeRecord *theRecord = new EarthquakeRecord(name, numPoints, dT, theData);
     records.insert(std::make_pair(name, theRecord));
 
+    // add the motion to ComboBox, & set it current
     inMotion->addItem(name);
+    int index = inMotion->findText(name);
+    inMotion->setCurrentIndex(index);
 
     // close file
     file.close();
+    needAnalysis = true;
+    analysisFailed = false;
 }
 
 bool MainWindow::saveFile(const QString &fileName)
@@ -1336,7 +1411,22 @@ bool MainWindow::saveFile(const QString &fileName)
     json["storyHeights"]=heightsArray;
     json["dampRatios"]=dampArray;
 
-    //inputWidget->outputToJSON(json);
+    QJsonArray motionsArray;
+    int numMotions = inMotion->count();
+    std::map<QString, EarthquakeRecord *>::iterator iter;
+    for (int i=0; i<numMotions; i++) {
+        QString eqName = inMotion->itemText(i);
+        iter = records.find(eqName);
+        if (iter != records.end()) {
+            QJsonObject obj;
+            EarthquakeRecord *theRecord = iter->second ;
+            theRecord->outputToJSON(obj);
+            motionsArray.append(obj);
+        }
+    }
+
+    json["records"]=motionsArray;
+
     QJsonDocument doc(json);
     file.write(doc.toJson());
 
@@ -1357,20 +1447,20 @@ void MainWindow::copyright()
             <p>\
             Redistribution and use in source and binary forms, with or without \
             modification, are permitted provided that the following conditions are met:\
-            <p>\
-            1. Redistributions of source code must retain the above copyright notice, this\
-               list of conditions and the following disclaimer.\
-            2. Redistributions in binary form must reproduce the above copyright notice,\
-               this list of conditions and the following disclaimer in the documentation\
-               and/or other materials provided with the distribution.\
-            <p>\
-            THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\
-            ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\
-            WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\
-            DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR\
-            ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\
-            (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\
-            LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\
+        <p>\
+         1. Redistributions of source code must retain the above copyright notice, this\
+         list of conditions and the following disclaimer.\
+         2. Redistributions in binary form must reproduce the above copyright notice,\
+         this list of conditions and the following disclaimer in the documentation\
+         and/or other materials provided with the distribution.\
+         <p>\
+         THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\
+         ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\
+         WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\
+         DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR\
+         ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\
+         (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\
             ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\
             (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\
             SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\
@@ -1388,71 +1478,71 @@ void MainWindow::copyright()
             ------------------------------------------------------------------------------------\
             <p>\
             This software makes use of the QT packages (unmodified): core, gui, widgets and network\
-            <p>\
-            QT is copyright \"The Qt Company Ltd&quot; and licensed under the GNU Lesser General \
-            Public License (version 3) which references the GNU General Public License (version 3)\
-            <p>\
-            These Licenses can be found at: &lt;http://www.gnu.org/licenses/&gt;\
-            <p>\
-            ------------------------------------------------------------------------------------\
-            <p>\
-             This software makes use of the OpenSees Software Framework. OpenSees is copyright \"The Regents of the University of \
-             California\". OpenSees is free open-source software licensced under a modified BSD license. The license can be\
-             found at http://opensees.berkeley.edu.\
-             <p>\
-             ";
+                                                                     <p>\
+                                                                     QT is copyright \"The Qt Company Ltd&quot; and licensed under the GNU Lesser General \
+                                                                     Public License (version 3) which references the GNU General Public License (version 3)\
+      <p>\
+      These Licenses can be found at: &lt;http://www.gnu.org/licenses/&gt;\
+        <p>\
+         ------------------------------------------------------------------------------------\
+         <p>\
+         This software makes use of the OpenSees Software Framework. OpenSees is copyright \"The Regents of the University of \
+         California\". OpenSees is free open-source software licensced under a modified BSD license. The license can be\
+         found at http://opensees.berkeley.edu.\
+         <p>\
+         ";
 
 
-   QMessageBox msgBox;
-   QSpacerItem *theSpacer = new QSpacerItem(700, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-   msgBox.setText(textCopyright);
-   QGridLayout *layout = (QGridLayout*)msgBox.layout();
-   layout->addItem(theSpacer, layout->rowCount(),0,1,layout->columnCount());
-   msgBox.exec();
+         QMessageBox msgBox;
+    QSpacerItem *theSpacer = new QSpacerItem(700, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    msgBox.setText(textCopyright);
+    QGridLayout *layout = (QGridLayout*)msgBox.layout();
+    layout->addItem(theSpacer, layout->rowCount(),0,1,layout->columnCount());
+    msgBox.exec();
 
 }
 
 
 void MainWindow::version()
 {
-   QMessageBox::about(this, tr("Version"),
-            tr("Version 0.0.1 Beta Release "));
+    QMessageBox::about(this, tr("Version"),
+                       tr("Version 0.0.1 Beta Release "));
 }
 
 void MainWindow::about()
 {
-   QString textAbout = "\
-   This is the Multiple Degree of Freedom (MDOF) tool.  It allows the user to explore the effects of\
-   different building parameters and ground motions on the time history response of a building. <p> \
-   The building is represented by a shear building model: an idealization of a structure in which the mass \
-   is lumped at the floor levels and the beams are assumed infinitely stiff in flexure and axially inextensible,\
-   and the columns are axially inextensible.  The user inputs the floor weights and story properties (stiffness, \
-   yield strength, hardening ratio) of the stories, and a damping ratio for the structure. Individual floor and \
-   story values are possible by user selecting an an appropriate area in the graphic around area of interest.\
-   In addition nonlinear effects due to P-Delta and soft story mechanisms can be studied.\
-   <p>\
-   All units are in sec, kips, inches.\
-   <p>\
-  For this application the equations of motions are set up using the uniform excitation approach, \
-  i.e. MA + CV + KU = -MAg. These equations are solved using the Newmark constant acceleration method and \
-   Newton-Raphson solution algorithm.  <p>\
-   Additional motions can be added by user. The units for these additional motions must be in g. An\
-   example is provided at https://github.com/NHERI-SimCenter/MDOF/blob/master/example/elCentro.json\
-   <p>\
-   This tool is in beta release mode. It does not stop the user from inputting bad values.\
-   ";
+    QString textAbout = "\
+            This is the Multiple Degree of Freedom (MDOF) tool.  It allows the user to explore the effects of\
+            different building parameters and ground motions on the time history response of a building. <p> \
+            The building is represented by a shear building model: an idealization of a structure in which the mass \
+            is lumped at the floor levels and the beams are assumed infinitely stiff in flexure and axially inextensible,\
+            and the columns are axially inextensible.  The user inputs the floor weights and story properties (stiffness, \
+                                                                                                               yield strength, hardening ratio) of the stories, and a damping ratio for the structure. Individual floor and \
+            story values are possible by user selecting an an appropriate area in the graphic around area of interest.\
+            In addition nonlinear effects due to P-Delta and soft story mechanisms can be studied.\
+            <p>\
+            All units are in sec, kips, inches.\
+            <p>\
+            For this application the equations of motions are set up using the uniform excitation approach, \
+            i.e. MA + CV + KU = -MAg. These equations are solved using the Newmark constant acceleration method and \
+            Newton-Raphson solution algorithm.  <p>\
+            Additional motions can be added by user. The units for these additional motions must be in g. An\
+            example is provided at https://github.com/NHERI-SimCenter/MDOF/blob/master/example/elCentro.json\
+            <p>\
+            This tool is in beta release mode. It does not stop the user from inputting bad values.\
+            ";
 
-   QMessageBox msgBox;
-   QSpacerItem *theSpacer = new QSpacerItem(500, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-   msgBox.setText(textAbout);
-   QGridLayout *layout = (QGridLayout*)msgBox.layout();
-   layout->addItem(theSpacer, layout->rowCount(),0,1,layout->columnCount());
-   msgBox.exec();
+            QMessageBox msgBox;
+    QSpacerItem *theSpacer = new QSpacerItem(500, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    msgBox.setText(textAbout);
+    QGridLayout *layout = (QGridLayout*)msgBox.layout();
+    layout->addItem(theSpacer, layout->rowCount(),0,1,layout->columnCount());
+    msgBox.exec();
 }
 
 void MainWindow::submitFeedback()
 {
-   QDesktopServices::openUrl(QUrl("https://github.com/NHERI-SimCenter/MDOF/issues", QUrl::TolerantMode));
+    QDesktopServices::openUrl(QUrl("https://github.com/NHERI-SimCenter/MDOF/issues", QUrl::TolerantMode));
 }
 
 void MainWindow::loadFile(const QString &fileName)
@@ -1499,9 +1589,6 @@ void MainWindow::loadFile(const QString &fileName)
     dampingRatio=theValue.toDouble();
     inDamping->setText(QString::number(dampingRatio));
 
-    theValue = jsonObject["currentMotionIndex"];
-    inMotion->setCurrentIndex(theValue.toInt());
-    theValue = jsonObject["currentMotion"];
 
     if (weights != 0)
         delete [] weights;
@@ -1574,6 +1661,43 @@ void MainWindow::loadFile(const QString &fileName)
     }
 
 
+    //
+    // clear records and inMotion combo box
+    //
+
+    std::map<QString, EarthquakeRecord *>::iterator iter;
+
+    // delete the earthqkaes before clear as clear does not invoke destructor if pointers
+    for (iter = records.begin(); iter != records.end(); ++iter ) {
+        delete iter->second;
+    }
+
+    records.clear();
+    inMotion->clear();
+
+    theValue = jsonObject["records"];
+    theArray=theValue.toArray();
+
+    //
+    // now read records from file and populate records and comoboBox with new
+    //
+
+    for (int i=0; i<theArray.size(); i++) {
+        EarthquakeRecord *theRecord = new EarthquakeRecord();
+        QJsonObject theEarthquakeObj = theArray.at(i).toObject();
+        theRecord->inputFromJSON(theEarthquakeObj);
+        records.insert(std::make_pair(theRecord->name, theRecord));
+        inMotion->addItem(theRecord->name);
+    }
+
+    //
+    // set current record to what was saved in file
+    //
+
+    theValue = jsonObject["currentMotionIndex"];
+    inMotion->setCurrentIndex(theValue.toInt());
+    theValue = jsonObject["currentMotion"];
+
     this->reset();
     this->on_inMotionSelection_currentTextChanged(theValue.toString());
     theNodeResponse->setItem(numFloors);
@@ -1622,7 +1746,7 @@ void MainWindow::createActions() {
 
     QAction *saveAsAction = new QAction(tr("&Save As"), this);
     saveAction->setStatusTip(tr("Save the document with new filename to disk"));
-    connect(saveAction, &QAction::triggered, this, &MainWindow::save);
+    connect(saveAsAction, &QAction::triggered, this, &MainWindow::saveAs);
     fileMenu->addAction(saveAsAction);
 
     // strangely, this does not appear in menu (at least on a mac)!! ..
@@ -1669,15 +1793,15 @@ void MainWindow::createActions() {
     viewMenu->addAction(forceDriftResponseDock->toggleViewAction());
 
 
-   QMenu *helpMenu = menuBar()->addMenu(tr("&About"));
-   QAction *infoAct = helpMenu->addAction(tr("&Information"), this, &MainWindow::about);
-   QAction *submitAct = helpMenu->addAction(tr("&Provide Feedback"), this, &MainWindow::submitFeedback);
+    QMenu *helpMenu = menuBar()->addMenu(tr("&About"));
+    QAction *infoAct = helpMenu->addAction(tr("&Information"), this, &MainWindow::about);
+    QAction *submitAct = helpMenu->addAction(tr("&Provide Feedback"), this, &MainWindow::submitFeedback);
     //aboutAct->setStatusTip(tr("Show the application's About box"));
-   QAction *aboutAct = helpMenu->addAction(tr("&Version"), this, &MainWindow::version);
+    QAction *aboutAct = helpMenu->addAction(tr("&Version"), this, &MainWindow::version);
     //aboutAct->setStatusTip(tr("Show the application's About box"));
 
 
-   QAction *copyrightAct = helpMenu->addAction(tr("&License"), this, &MainWindow::copyright);
+    QAction *copyrightAct = helpMenu->addAction(tr("&License"), this, &MainWindow::copyright);
     //aboutAct->setStatusTip(tr("Show the application's About box"));
 
 }
@@ -1696,13 +1820,13 @@ void MainWindow::createHeaderBox() {
     // Make the header layout
     // styleSheet
 
-//    headerLayout = new QHBoxLayout;
+    //    headerLayout = new QHBoxLayout;
 
-//    QGroupBox *header =new QGroupBox(tr("Multiple Degrees of Freedom Application"));
-//    header->setObjectName(QString::fromUtf8("header"));
-//    headerLayout->addWidget(header);
+    //    QGroupBox *header =new QGroupBox(tr("Multiple Degrees of Freedom Application"));
+    //    header->setObjectName(QString::fromUtf8("header"));
+    //    headerLayout->addWidget(header);
 
-//    largeLayout->addLayout(headerLayout);
+    //    largeLayout->addLayout(headerLayout);
 
 
     //
@@ -1738,12 +1862,12 @@ void MainWindow::createFooterBox() {
     nsfLogo->setMask(newPixmap.mask());
     nsfLogo->show();
 
-//    QLabel *simLogo = new QLabel();
-//    QPixmap pixmap1("/Users/TylerDurden/Projects/sim/mdof_fork/simcenter_cut.png");
-//    QPixmap simPixmap = pixmap1.scaled(QSize(40,40),  Qt::KeepAspectRatio);
-//    simLogo->setPixmap(simPixmap);
-//    simLogo->setMask(simPixmap.mask());
-//    simLogo->show();
+    //    QLabel *simLogo = new QLabel();
+    //    QPixmap pixmap1("/Users/TylerDurden/Projects/sim/mdof_fork/simcenter_cut.png");
+    //    QPixmap simPixmap = pixmap1.scaled(QSize(40,40),  Qt::KeepAspectRatio);
+    //    simLogo->setPixmap(simPixmap);
+    //    simLogo->setMask(simPixmap.mask());
+    //    simLogo->show();
 
     QLabel *nsfText = new QLabel();
     nsfText->setObjectName(QString::fromUtf8("nsfText"));
@@ -1757,7 +1881,7 @@ void MainWindow::createFooterBox() {
 
     footer->setLayout(footerLayout);
 #ifdef _MacOSX
-   footer->setFixedHeight(50);
+    footer->setFixedHeight(50);
 #endif
     footer->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
@@ -1845,12 +1969,12 @@ void MainWindow::createInputPanel() {
     QFrame *mainProperties = new QFrame();
     mainProperties->setObjectName(QString::fromUtf8("mainProperties")); //styleSheet
     QVBoxLayout *mainPropertiesLayout = new QVBoxLayout();
-    inFloors = createTextEntry(tr("number Floors"), mainPropertiesLayout);
-    inWeight = createTextEntry(tr("building Weight"), mainPropertiesLayout);
-    inHeight = createTextEntry(tr("building Height"), mainPropertiesLayout);
-    inK = createTextEntry(tr("story Stiffness"), mainPropertiesLayout);
-    inDamping = createTextEntry(tr("damping Ratio"), mainPropertiesLayout);
-    inGravity =  createTextEntry(tr("gravity"), mainPropertiesLayout);
+    inFloors = createTextEntry(tr("Number Floors"), mainPropertiesLayout);
+    inWeight = createTextEntry(tr("Building Weight"), mainPropertiesLayout);
+    inHeight = createTextEntry(tr("Building Height"), mainPropertiesLayout);
+    inK = createTextEntry(tr("Story Stiffness"), mainPropertiesLayout);
+    inDamping = createTextEntry(tr("Damping Ratio"), mainPropertiesLayout);
+    inGravity =  createTextEntry(tr("Gravity"), mainPropertiesLayout);
     pDeltaBox = new QCheckBox(tr("Include PDelta"), 0);
     pDeltaBox->setCheckState(Qt::Checked);
 
@@ -2031,11 +2155,11 @@ void MainWindow::createOutputPanel() {
     vizTitle->setObjectName(QString::fromUtf8("vizTitle")); //styleSheet
     //maxDispLabel = createLabelEntry(tr("Max Disp"), firstOutputLayout); //styleSheet
     //currentPeriod= createLabelEntry(tr("Fundamental Period"),firstOutputLayout); //styleSheet
-//    outputMaxFrame->setLayout(outputMaxLayout);
-//    outputMaxFrame->setLineWidth(1);
-//    outputMaxFrame->setFrameShape(QFrame::Box);
-//    outputMaxFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-//    outputMaxFrame->setLayout(firstOutputLayout); //this does not set properly???????
+    //    outputMaxFrame->setLayout(outputMaxLayout);
+    //    outputMaxFrame->setLineWidth(1);
+    //    outputMaxFrame->setFrameShape(QFrame::Box);
+    //    outputMaxFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    //    outputMaxFrame->setLayout(firstOutputLayout); //this does not set properly???????
     //outputLayout->addWidget(outputMaxFrame);
 
     //
