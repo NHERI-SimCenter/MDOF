@@ -40,6 +40,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <Vector.h>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QDebug>
 
 EarthquakeRecord::EarthquakeRecord()
 {
@@ -54,13 +55,13 @@ EarthquakeRecord::EarthquakeRecord(QString fileName)
 EarthquakeRecord::EarthquakeRecord(QString theName, int numberSteps, double theDt, Vector *theData)
     :name(theName), numSteps(numberSteps), dt(theDt), data(0)
 {
-     data = new Vector(*theData);
+    data = theData;
 }
 
 EarthquakeRecord::~EarthquakeRecord()
 {
     if (data != 0)
-        delete [] data;
+        delete data;
 }
 
 void
@@ -72,6 +73,7 @@ EarthquakeRecord::outputToJSON(QJsonObject &jsonObj){
     for (int i=0; i<data->Size(); i++) {
         dataValues.append((*data)[i]);
     }
+    jsonObj["data"]=dataValues;
 }
 
 void
@@ -85,7 +87,8 @@ EarthquakeRecord::inputFromJSON(QJsonObject &jsonObj){
     if (data != 0)
         delete [] data;
     data = new Vector(numSteps);
-    theValue = jsonObj["name"];
+
+    theValue = jsonObj["data"];
     QJsonArray dataPoints = theValue.toArray();
     for (int i=0; i<numSteps; i++)
         (*data)[i] = dataPoints.at(i).toDouble();
