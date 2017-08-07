@@ -20,8 +20,8 @@ public:
 
     int getItem();
     void setItem(int);
-    void setData(QVector<double> &data, QVector<double> time, int numSteps, double dt);
-    void setData(QVector<double> &data, QVector<double> x, int numSteps);
+    void setData(QVector<double> &data, QVector<double> &time, int numSteps, double dt);
+    void setData(QVector<double> &data, QVector<double> &x, int numSteps);
 
 signals:
 

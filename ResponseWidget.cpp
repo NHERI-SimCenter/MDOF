@@ -81,9 +81,11 @@ ResponseWidget::itemEditChanged() {
 }
 
 void
-ResponseWidget::setData(QVector<double> &data, QVector<double> time, int numSteps, double dt) {
+ResponseWidget::setData(QVector<double> &data, QVector<double> &time, int numSteps, double dt) {
+
     thePlot->clearGraphs();
     graph = thePlot->addGraph();
+
     thePlot->graph(0)->setData(time, data);
 
     double minValue = 0;
@@ -102,14 +104,17 @@ ResponseWidget::setData(QVector<double> &data, QVector<double> time, int numStep
     thePlot->axisRect()->setMargins(QMargins(0,0,0,0));
     thePlot->replot();
 
+
 }
 
 void
-ResponseWidget::setData(QVector<double> &data, QVector<double> x, int numSteps) {
+ResponseWidget::setData(QVector<double> &data, QVector<double> &x, int numSteps) {
+
     thePlot->clearGraphs();
     //thePlot->clearItems();
    thePlot->clearPlottables();
    curve = new QCPCurve(thePlot->xAxis, thePlot->yAxis);
+
    curve->setData(x,data);
 
     //thePlot->graph(0)->setData(x, data, true);
@@ -138,4 +143,5 @@ ResponseWidget::setData(QVector<double> &data, QVector<double> x, int numSteps) 
     //thePlot->axisRect()->setAutoMargins(QCP::msNone);
    // thePlot->axisRect()->setMargins(QMargins(0,0,0,0));
     thePlot->replot();
+
 }
