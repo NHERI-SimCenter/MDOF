@@ -60,7 +60,6 @@ int main(int argc, char *argv[])
     if(file.open(QFile::ReadOnly)) {
        QString styleSheet = QLatin1String(file.readAll());
        a.setStyleSheet(styleSheet);
-
     }
 
     return a.exec();
