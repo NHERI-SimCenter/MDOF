@@ -18,23 +18,22 @@ DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 SOURCES += main.cpp\
         MainWindow.cpp \
-    MyGlWidget.cpp \
-    qcustomplot.cpp \
-    EarthquakeRecord.cpp \
+        MyGlWidget.cpp \
+        qcustomplot.cpp \
+        EarthquakeRecord.cpp \
         SimpleSpreadsheetWidget.cpp \
-    ResponseWidget.cpp \
-    surveysplashscreen.cpp
+        ResponseWidget.cpp 
+
 
 HEADERS  += MainWindow.h \
     MyGlWidget.h \
     qcustomplot.h \
     EarthquakeRecord.h \
-SimpleSpreadsheetWidget.h \
-    ResponseWidget.h \
-    surveysplashscreen.h
+    SimpleSpreadsheetWidget.h \
+    ResponseWidget.h 
 
-FORMS    += MainWindow.ui \
-    surveysplashscreen.ui
+
+FORMS    += MainWindow.ui 
 
 DISTFILES += \
     style.qss
