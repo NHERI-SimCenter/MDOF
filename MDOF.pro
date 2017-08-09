@@ -36,10 +36,7 @@ HEADERS  += MainWindow.h \
 
 FORMS    += MainWindow.ui 
 
-DISTFILES += \
-    style.qss
 
 RESOURCES += \
     images.qrc \
-    style.qss \
     mdof.gif
