@@ -12,6 +12,7 @@ TARGET = MDOF
 TEMPLATE = app
 
 include(OPS_includes.pro)
+include(../widgets/Common/Common.pri)
 
 VERSION=0.0.1
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"

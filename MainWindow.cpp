@@ -40,6 +40,10 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "ui_MainWindow.h"
 #include "EarthquakeRecord.h"
 
+#include <HeaderWidget.h>
+#include <FooterWidget.h>
+
+
 #include <QDebug>
 #include <QSlider>
 //#include <QtNetwork>
@@ -1815,28 +1819,11 @@ void MainWindow::viewStoryResponse(){
 }
 
 void MainWindow::createHeaderBox() {
-
-    //
-    // Make the header layout
-    // styleSheet
-
-    //    headerLayout = new QHBoxLayout;
-
-    //    QGroupBox *header =new QGroupBox(tr("Multiple Degrees of Freedom Application"));
-    //    header->setObjectName(QString::fromUtf8("header"));
-    //    headerLayout->addWidget(header);
-
-    //    largeLayout->addLayout(headerLayout);
-
-
-    //
-    // Make the header layout
-    // styleSheet
-
+    /*
     QGroupBox *header =new QGroupBox();
 
     QLabel *titleText = new QLabel();
-    titleText->setObjectName(QString::fromUtf8("titleText"));
+   // titleText->setObjectName(QString::fromUtf8("titleText"));
     titleText->setText(tr("Multiple Degrees of Freedom Application"));
 
     headerLayout = new QHBoxLayout;
@@ -1844,12 +1831,17 @@ void MainWindow::createHeaderBox() {
     headerLayout->addWidget(titleText);
 
     header->setLayout(headerLayout);
+    */
+
+    HeaderWidget *header = new HeaderWidget();
+    header->setHeadingText(tr("Multiple Degrees of Freedom Application"));
+
 
     largeLayout->addWidget(header);
 }
 
 void MainWindow::createFooterBox() {
-
+    /*
     //
     // Make the footer layout
     // styleSheet
@@ -1884,6 +1876,9 @@ void MainWindow::createFooterBox() {
     footer->setFixedHeight(50);
 #endif
     footer->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+*/
+
+    FooterWidget *footer = new FooterWidget();
 
     largeLayout->addWidget(footer);
 }
