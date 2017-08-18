@@ -23,7 +23,8 @@ SOURCES += main.cpp\
         qcustomplot.cpp \
         EarthquakeRecord.cpp \
         SimpleSpreadsheetWidget.cpp \
-        ResponseWidget.cpp 
+        ResponseWidget.cpp \ 
+    sectiontitle.cpp
 
 
 HEADERS  += MainWindow.h \
@@ -31,7 +32,8 @@ HEADERS  += MainWindow.h \
     qcustomplot.h \
     EarthquakeRecord.h \
     SimpleSpreadsheetWidget.h \
-    ResponseWidget.h 
+    ResponseWidget.h \ 
+    sectiontitle.h
 
 
 FORMS    += MainWindow.ui 
