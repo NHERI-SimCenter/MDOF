@@ -12,24 +12,31 @@ TARGET = MDOF
 TEMPLATE = app
 
 include(OPS_includes.pro)
+include(../widgets/Common/Common.pri)
 
+VERSION=0.0.1
+DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 SOURCES += main.cpp\
         MainWindow.cpp \
-    MyGlWidget.cpp \
-    qcustomplot.cpp \
-    EarthquakeRecord.cpp \
+        MyGlWidget.cpp \
+        qcustomplot.cpp \
+        EarthquakeRecord.cpp \
         SimpleSpreadsheetWidget.cpp \
-    NodeResponseWidget.cpp \
-    surveysplashscreen.cpp
+        ResponseWidget.cpp 
+
 
 HEADERS  += MainWindow.h \
     MyGlWidget.h \
     qcustomplot.h \
     EarthquakeRecord.h \
-SimpleSpreadsheetWidget.h \
-    NodeResponseWidget.h \
-    surveysplashscreen.h
+    SimpleSpreadsheetWidget.h \
+    ResponseWidget.h 
 
-FORMS    += MainWindow.ui \
-    surveysplashscreen.ui
+
+FORMS    += MainWindow.ui 
+
+
+RESOURCES += \
+    images.qrc \
+    mdof.gif

@@ -239,7 +239,7 @@ ZeroLength::getTangentStiff(void)
 
     stiff(0,0) =  K; stiff(0,1) = -K;
     stiff(1,0) = -K; stiff(1,1) =  K;
-    
+    // opserr << this->getTag() << " " << K << endln;
     return stiff;
 }
 
@@ -259,7 +259,7 @@ ZeroLength::getInitialStiff(void)
 
     stiff(0,0) =  K; stiff(0,1) = -K;
     stiff(1,0) = -K; stiff(1,1) =  K;
-      
+
     return stiff;
 }
     
@@ -446,3 +446,15 @@ ZeroLength::setParameter(const char **argv, int argc, Parameter &param)
   return result;
 }
 
+double
+ZeroLength::getForce() {
+
+    double force = theMaterial->getStress() + PdivL*theMaterial->getStrain();
+
+    return force;
+}
+
+double
+ZeroLength::getDrift(){
+    return theMaterial->getStrain();
+}

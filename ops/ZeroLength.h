@@ -103,6 +103,9 @@ class ZeroLength : public Element
     int setParameter(const char **argv, int argc, Parameter &param);
     
 
+    // methods specific to MDOF
+    double getForce();
+    double getDrift();
   protected:
     
   private:

@@ -38,17 +38,29 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "MainWindow.h"
 #include <QApplication>
-#include "surveysplashscreen.h"
+//#include "surveysplashscreen.h"
+
+#include "qfile.h"
+#include "qtextstream.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    // Setting the Application version
+    a.setApplicationVersion(APP_VERSION);
 
     //surveySplashScreen splash;
     //splash.exec();
 
     MainWindow w;
     w.show();
+
+    QFile file(":/styleCommon/style.qss");
+    if(file.open(QFile::ReadOnly)) {
+       QString styleSheet = QLatin1String(file.readAll());
+       a.setStyleSheet(styleSheet);
+    }
 
     return a.exec();
 }
