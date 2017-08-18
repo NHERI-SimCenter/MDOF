@@ -39,6 +39,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 #include "EarthquakeRecord.h"
+#include "sectiontitle.h"
 
 #include <HeaderWidget.h>
 #include <FooterWidget.h>
@@ -1891,18 +1892,10 @@ void MainWindow::createInputPanel() {
     // Create a section line + title + add
     // styleSheet
 
-    QFrame *line4 = new QFrame();
-    line4->setObjectName(QString::fromUtf8("line"));
-    line4->setGeometry(QRect(320, 150, 118, 3));
-    line4->setFrameShape(QFrame::HLine);
-    line4->setFrameShadow(QFrame::Sunken);
-
-    QLabel *inTitle = new QLabel(); //styleSheet
-    inTitle->setText(tr("Input Motion")); //styleSheet
-    inTitle->setObjectName(QString::fromUtf8("inTitle")); //styleSheet
+    SectionTitle *inTitle = new SectionTitle(this);
+    inTitle->setTitle(tr("Input Motion"));
 
     inputLayout->addWidget(inTitle);
-    inputLayout->addWidget(line4);
 
 
     //
