@@ -39,8 +39,6 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 // Written: fmckenna
 
-//#include "PropertiesWidget.h"
-
 #include <QMainWindow>
 #include <math.h>
 #include <map>
@@ -69,7 +67,7 @@ class QNetworkReply;
 class QFrame;
 
 class SimpleSpreadsheetWidget;
-class NodeResponseWidget;
+class ResponseWidget;
 
 namespace Ui {
 class MainWindow;
@@ -90,7 +88,7 @@ public:
     float getBuildingHeight() {return buildingH;};
     float getMaxDisp(){return maxDisp;};
     int getNumFloors(){return numFloors;};
-    void setFloorResponse(int floor);
+    void setResponse(int floor, int responseItem);
     float setSelectionBoundary(float y1, float y2);
 
 
@@ -137,7 +135,7 @@ private slots:
 
     void on_pushButton_2_clicked();
 
-    void newFile();
+    void resetFile();
     void open();
     bool save();
     bool saveAs();
@@ -154,27 +152,26 @@ private:
     void updatePeriod();
     void setBasicModel(int numFloors, double buildingW, double buildingH, double storyK, double zeta, double grav);
     void reset(void);
-    
-private:
 
-    // private functions for setup, and for loading and saving current run info
-    void createHeaderBox(); //maxStyles
+    // methods to create some of the main layouts
+    void createHeaderBox(); 
+    void createFooterBox(); 
     void createInputPanel();
     void createOutputPanel();
-    void createFooterBox(); //maxStyles
     void createActions();
+
+    // the main layouts created
+    QHBoxLayout *mainLayout;
+    QVBoxLayout *largeLayout;
+    QHBoxLayout *headerLayout;
+    QHBoxLayout *footerLayout;
+    QVBoxLayout *outputLayout;
+    QVBoxLayout *inputLayout;
+
+    // methods for loading and saving files given filename
     void setCurrentFile(const QString &fileName);
     bool saveFile(const QString &fileName);
     void loadFile(const QString &fileName);
-
-
-    QHBoxLayout *mainLayout;
-    QVBoxLayout *largeLayout; //maxStyles
-    QHBoxLayout *headerLayout; //maxStyles
-    QHBoxLayout *footerLayout; //maxStyles
-
-    QVBoxLayout *outputLayout;
-    QVBoxLayout *inputLayout;
 
     QComboBox *inMotion;
     QPushButton *addMotion;
@@ -221,14 +218,16 @@ private:
     QStringList headings;
     QList<int> dataTypes;
     
-
-    NodeResponseWidget *theNodeResponse;
+    ResponseWidget *theNodeResponse;
+    ResponseWidget *theForceTimeResponse;
+    ResponseWidget *theForceDispResponse;
 
     Ui::MainWindow *ui;
 
     //
     // following are the model properties
     //
+
     int    numFloors;
     double buildingW;
     double buildingH;
@@ -246,14 +245,18 @@ private:
 
     double g;
 
+    // properties related to currently selected ground motion
     double dt;
     int numSteps;
     double *gMotion;
     Vector *eqData;
 
     bool includePDelta;
-    bool   needAnalysis;
+    bool needAnalysis;
+    bool  analysisFailed;
     double **dispResponses;
+    double **storyForceResponses;
+    double **storyDriftResponses;
     double maxDisp;
     int    currentStep;
     bool   stopRun;
@@ -265,10 +268,12 @@ private:
 
     bool updatingPropertiesTable;
 
+    // for current display
     QVector<double> time;
     QVector<double> excitationValues;
     QVector<double> nodeResponseValues;
-    QVector<double> storyResponseValues;
+    QVector<double> storyForceValues;
+    QVector<double> storyDriftValues;
     QCPGraph *graph;
     QCPItemTracer *groupTracer;
 
