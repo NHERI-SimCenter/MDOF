@@ -417,7 +417,7 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
     inFloors->setText(QString::number(numF));
     inHeight->setText(QString::number(buildingH));
     inDamping->setText(QString::number(zeta));
-    inGravity->setText(QString::number(g));
+  //  inGravity->setText(QString::number(g));
     needAnalysis = true;
 
     this->reset();
@@ -425,6 +425,10 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
     theNodeResponse->setItem(numF);
     theForceDispResponse->setItem(1);
     theForceTimeResponse->setItem(1);
+
+    floorMassFrame->setVisible(false);
+    storyPropertiesFrame->setVisible(false);
+    spreadSheetFrame->setVisible(true);
 }
 
 
@@ -445,7 +449,13 @@ void MainWindow::on_inFloors_editingFinished()
     int numFloorsText = textFloors.toInt();
     if (numFloorsText != numFloors) {
         this->setBasicModel(numFloorsText, buildingW, buildingH, storyK, dampingRatio, g);
-        this->setSelectionBoundary(-1.,-1.);
+        floorSelected = -1;
+        storySelected = -1;
+        fMinSelected = -1;
+        fMaxSelected = -1;
+        sMinSelected = -1;
+        sMaxSelected = -1;
+       // this->setSelectionBoundary(-1.,-1.);
     }
 }
 
@@ -511,12 +521,14 @@ void MainWindow::on_inDamping_editingFinished()
 
 void MainWindow::on_inGravity_editingFinished()
 {
+    /*
     QString text =  inGravity->text();
     double textToDouble = text.toDouble();
     if (textToDouble != g) {
         g = textToDouble;
         this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
     }
+    */
 }
 
 void MainWindow::on_inFloorWeight_editingFinished()
@@ -1213,7 +1225,6 @@ void MainWindow::on_pushButton_2_clicked()
 
 bool MainWindow::save()
 {
-    qDebug() << "save";
     if (currentFile.isEmpty()) {
         return saveAs();
     } else {
@@ -1588,7 +1599,7 @@ void MainWindow::loadFile(const QString &fileName)
 
     theValue = jsonObject["G"];
     g=theValue.toDouble();
-    inGravity->setText(QString::number(g));
+    //inGravity->setText(QString::number(g));
 
     theValue = jsonObject["dampingRatio"];
     dampingRatio=theValue.toDouble();
@@ -1820,64 +1831,14 @@ void MainWindow::viewStoryResponse(){
 }
 
 void MainWindow::createHeaderBox() {
-    /*
-    QGroupBox *header =new QGroupBox();
-
-    QLabel *titleText = new QLabel();
-   // titleText->setObjectName(QString::fromUtf8("titleText"));
-    titleText->setText(tr("Multiple Degrees of Freedom Application"));
-
-    headerLayout = new QHBoxLayout;
-    headerLayout->setAlignment(Qt::AlignLeft); //can this be done in CSS???
-    headerLayout->addWidget(titleText);
-
-    header->setLayout(headerLayout);
-    */
 
     HeaderWidget *header = new HeaderWidget();
     header->setHeadingText(tr("Multiple Degrees of Freedom Application"));
-
 
     largeLayout->addWidget(header);
 }
 
 void MainWindow::createFooterBox() {
-    /*
-    //
-    // Make the footer layout
-    // styleSheet
-
-    QGroupBox *footer =new QGroupBox();
-    QLabel *nsfLogo = new QLabel();
-    QPixmap pixmap(":/mdof.gif");
-    QPixmap newPixmap = pixmap.scaled(QSize(40,40),  Qt::KeepAspectRatio);
-    nsfLogo->setPixmap(newPixmap);
-    nsfLogo->setMask(newPixmap.mask());
-    nsfLogo->show();
-
-    //    QLabel *simLogo = new QLabel();
-    //    QPixmap pixmap1("/Users/TylerDurden/Projects/sim/mdof_fork/simcenter_cut.png");
-    //    QPixmap simPixmap = pixmap1.scaled(QSize(40,40),  Qt::KeepAspectRatio);
-    //    simLogo->setPixmap(simPixmap);
-    //    simLogo->setMask(simPixmap.mask());
-    //    simLogo->show();
-
-    QLabel *nsfText = new QLabel();
-    nsfText->setObjectName(QString::fromUtf8("nsfText"));
-    nsfText->setText(tr("This work is based on material supported by the National Science Foundation under grant 1612843-2"));
-
-    footerLayout = new QHBoxLayout;
-    footerLayout->setAlignment(Qt::AlignCenter); //can this be done in CSS???
-    footerLayout->addWidget(nsfLogo);
-    footerLayout->addWidget(nsfText);
-    //footerLayout->addWidget(simLogo);
-
-    footer->setLayout(footerLayout);
-#ifdef _MacOSX
-    footer->setFixedHeight(50);
-#endif
-    footer->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-*/
 
     FooterWidget *footer = new FooterWidget();
 
@@ -1887,16 +1848,13 @@ void MainWindow::createFooterBox() {
 void MainWindow::createInputPanel() {
     inputLayout = new QVBoxLayout;
 
-
     //
     // Create a section line + title + add
     // styleSheet
 
     SectionTitle *inTitle = new SectionTitle(this);
     inTitle->setTitle(tr("Input Motion"));
-
     inputLayout->addWidget(inTitle);
-
 
     //
     // create the frame for the input motion selection
@@ -1938,17 +1896,9 @@ void MainWindow::createInputPanel() {
     // Create a section line 2
     // styleSheet
 
-    QFrame *line2 = new QFrame();
-    line2->setObjectName(QString::fromUtf8("line2"));
-    line2->setGeometry(QRect(320, 150, 118, 3));
-    line2->setFrameShape(QFrame::HLine);
-    line2->setFrameShadow(QFrame::Sunken);
-    QLabel *propertiesTitle = new QLabel();
-    propertiesTitle->setText(tr("Building Properties"));
-    propertiesTitle->setObjectName(QString::fromUtf8("propertiesTitle"));
-    inputLayout->addWidget(propertiesTitle);
-    inputLayout->addWidget(line2);
-
+    SectionTitle *inBuilding = new SectionTitle(this);
+    inBuilding->setTitle(tr("Buiding Properties"));
+    inputLayout->addWidget(inBuilding);
 
     //
     // create to hold major model inputs
@@ -1962,7 +1912,7 @@ void MainWindow::createInputPanel() {
     inHeight = createTextEntry(tr("Building Height"), mainPropertiesLayout);
     inK = createTextEntry(tr("Story Stiffness"), mainPropertiesLayout);
     inDamping = createTextEntry(tr("Damping Ratio"), mainPropertiesLayout);
-    inGravity =  createTextEntry(tr("Gravity"), mainPropertiesLayout);
+    //inGravity =  createTextEntry(tr("Gravity"), mainPropertiesLayout);
     pDeltaBox = new QCheckBox(tr("Include PDelta"), 0);
     pDeltaBox->setCheckState(Qt::Checked);
 
@@ -2060,7 +2010,7 @@ void MainWindow::createInputPanel() {
     inHeight->setValidator(new QDoubleValidator);
     inK->setValidator(new QDoubleValidator);
     inDamping->setValidator(new QDoubleValidator);
-    inGravity->setValidator(new QDoubleValidator);
+    //inGravity->setValidator(new QDoubleValidator);
     inFloorWeight->setValidator(new QDoubleValidator);
     inStoryB->setValidator(new QDoubleValidator);
     inStoryFy->setValidator(new QDoubleValidator);
@@ -2108,19 +2058,9 @@ void MainWindow::createOutputPanel() {
     // Create a section line + title + add
     // styleSheet
 
-    QFrame *line3 = new QFrame();
-    line3->setObjectName(QString::fromUtf8("line"));
-    line3->setGeometry(QRect(320, 150, 118, 3));
-    line3->setFrameShape(QFrame::HLine);
-    line3->setFrameShadow(QFrame::Sunken);
-
-    QLabel *outTitle = new QLabel(); //styleSheet
-    outTitle->setText(tr("Output")); //styleSheet
-    outTitle->setObjectName(QString::fromUtf8("outTitle")); //styleSheet
-
+    SectionTitle *outTitle = new SectionTitle(this);
+    outTitle->setTitle(tr("Output"));
     outputLayout->addWidget(outTitle);
-    outputLayout->addWidget(line3);
-
 
     // frame for basic outputs,
     //QFrame *outputMaxFrame = new QFrame();
@@ -2141,14 +2081,6 @@ void MainWindow::createOutputPanel() {
     QLabel *vizTitle = new QLabel(); //styleSheet
     vizTitle->setText(tr("Visualization Section Title")); //styleSheet
     vizTitle->setObjectName(QString::fromUtf8("vizTitle")); //styleSheet
-    //maxDispLabel = createLabelEntry(tr("Max Disp"), firstOutputLayout); //styleSheet
-    //currentPeriod= createLabelEntry(tr("Fundamental Period"),firstOutputLayout); //styleSheet
-    //    outputMaxFrame->setLayout(outputMaxLayout);
-    //    outputMaxFrame->setLineWidth(1);
-    //    outputMaxFrame->setFrameShape(QFrame::Box);
-    //    outputMaxFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    //    outputMaxFrame->setLayout(firstOutputLayout); //this does not set properly???????
-    //outputLayout->addWidget(outputMaxFrame);
 
     //
     // Create a section line

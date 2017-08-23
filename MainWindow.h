@@ -182,7 +182,7 @@ private:
     QLineEdit *inHeight;
     QLineEdit *inK;
     QLineEdit *inDamping;
-    QLineEdit *inGravity;
+   // QLineEdit *inGravity;
     QCheckBox *pDeltaBox;
 
     // specific inputs when many selected
