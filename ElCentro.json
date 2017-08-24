@@ -1,8 +1,7 @@
 {
-"info":"Data points from A.K.Chopra book Dynamics of Structures, 
-Theory and Applications to Earthquake Engineering, Pearsons, 2017"
+"info":"Data points from A.K.Chopra book Dynamics of Structures, Theory and Applications to Earthquake Engineering, Pearsons, 2017",
 "numPoints": 1560,
-"name": "elCentro",
+"name": "elCentro-Chopra",
 "dT": 0.02000,
 "data": [
      0.00000,
