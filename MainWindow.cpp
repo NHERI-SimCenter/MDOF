@@ -216,28 +216,31 @@ MainWindow::MainWindow(QWidget *parent) :
     // create 2 blank motions & make elCentro current
     //
 
-    QStringList elCentrolist = elCentroTextData.split(QRegExp("[\r\n\t ]+"), QString::SkipEmptyParts);
-    Vector *elCentroData = new Vector(elCentrolist.size()+1);
+    QFile file(":/images/ElCentro.json");
+    if(file.open(QFile::ReadOnly)) {
+       QString jsonText = QLatin1String(file.readAll());
+       QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonText.toUtf8());
+       QJsonObject jsonObj = jsonDoc.object();
+       EarthquakeRecord *elCentro = new EarthquakeRecord();
+       elCentro->inputFromJSON(jsonObj);
 
-    (*elCentroData)(0) = 0;
-    time[0]=0.;
-    excitationValues[0]=0.;
-    double maxValue = 0;
-    for (int i = 0; i < elCentrolist.size(); ++i) {
-        double value = elCentrolist.at(i).toDouble();
-        (*elCentroData)(i+1) = value;
-        time[i+1]=i*0.02;
-        excitationValues[i+1]=value;
-        if (fabs(value) > maxValue)
-            maxValue = fabs(value);
+       QString recordString("ElCentro");
+       records.insert(std::make_pair(QString("ElCentro"), elCentro));
+       inMotion->addItem(recordString);
     }
 
-    dt = 0.02;
-    numSteps = 1560;
-    QString elCentroString("elCentro");
-    EarthquakeRecord *elCentro = new EarthquakeRecord(elCentroString, 1560, 0.02, elCentroData);
-    records.insert(std::make_pair(QString("elCentro"), elCentro));
-    inMotion->addItem(elCentroString);
+    QFile fileR(":/images/Rinaldi.json");
+    if(fileR.open(QFile::ReadOnly)) {
+       QString jsonText = QLatin1String(fileR.readAll());
+       QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonText.toUtf8());
+       QJsonObject jsonObj = jsonDoc.object();
+       EarthquakeRecord *rinaldi = new EarthquakeRecord();
+       rinaldi->inputFromJSON(jsonObj);
+
+       QString recordString("Northridge-Rinaldi");
+       records.insert(std::make_pair(QString("Northridge-Rinaldi"), rinaldi));
+       inMotion->addItem(recordString);
+    }
 
     // create a basic model with defaults
     this->setBasicModel(5, 5*100, 5*144, 31.54, .05, 386.4);
@@ -1197,8 +1200,15 @@ void MainWindow::on_inMotionSelection_currentTextChanged(const QString &arg1)
         earthquakePlot->yAxis->setRange(-maxValue, maxValue);
         earthquakePlot->axisRect()->setAutoMargins(QCP::msNone);
         earthquakePlot->axisRect()->setMargins(QMargins(0,0,0,0));
+
+
+        QString textText("pga: "); textText.append(QString::number(maxValue,'g',3)); textText.append(tr("g"));
+        earthquakeText->setText(textText);
+
         earthquakePlot->replot();
-        /*
+
+
+      /*
         if (groupTracer != 0)
             delete groupTracer;
         groupTracer = new QCPItemTracer(earthquakePlot);
@@ -2111,6 +2121,11 @@ void MainWindow::createOutputPanel() {
     earthquakePlot->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
     earthquakePlot->setMinimumHeight(100);
     earthquakePlot->setMaximumHeight(100);
+
+    earthquakeText = new QCPItemText(earthquakePlot);
+    earthquakeText->position->setType(QCPItemPosition::ptAxisRectRatio);
+    earthquakeText->position->setCoords(0.9,0.1);
+
     outputLayout->addWidget(earthquakePlot);
 
     // slider for manual movement

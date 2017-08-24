@@ -60,6 +60,7 @@ class MyGlWidget;
 class Vector;
 class EarthquakeRecord;
 class QCPGraph;
+class QCPItemText;
 class QCPItemTracer;
 class EarthquakeRecord;
 class QNetworkAccessManager;
@@ -206,6 +207,8 @@ private:
 
     // output panel widgets
     QCustomPlot *earthquakePlot;
+    QCPItemText *earthquakeText;
+
     QSlider *slider;
     MyGlWidget *myGL;
     QComboBox *periods;
