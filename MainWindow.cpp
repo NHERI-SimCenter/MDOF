@@ -1971,7 +1971,7 @@ void MainWindow::createInputPanel() {
     spreadSheetFrame->setFrameShape(QFrame::Box);
     //theSpreadsheet->setS
 
-    inputLayout->addWidget(spreadSheetFrame);
+    inputLayout->addWidget(spreadSheetFrame,1);
     spreadSheetFrame->setVisible(false);
 
     inputLayout->addStretch();
