@@ -187,6 +187,8 @@ MainWindow::MainWindow(QWidget *parent) :
     time(1561),excitationValues(1561), graph(0), groupTracer(0),floorSelected(-1),storySelected(-1)
 {
 
+    scaleFactor = 1.0;
+
     createActions();
 
     // create a main layout
@@ -320,7 +322,6 @@ void MainWindow::draw(MyGlWidget *theGL)
     groupTracer->setGraphKey(currentStep*dt);
     groupTracer->updatePosition();
     //earthquakePlot->replot();
-
 */
 }
 
@@ -468,7 +469,15 @@ void MainWindow::on_inWeight_editingFinished()
     double textToDoubleW = textW.toDouble();
     if (textToDoubleW != buildingW) {
         buildingW = textToDoubleW;
-        this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
+        double floorW = buildingW/(numFloors);
+
+        for (int i=0; i<numFloors; i++) {
+            weights[i] = floorW;
+        }
+         this->updatePeriod();
+        needAnalysis = true;
+        this->reset();
+
         //inHeight->setFocus();
     }
 }
@@ -481,10 +490,17 @@ void MainWindow::on_inHeight_editingFinished()
     double textToDoubleH = textH.toDouble();
     if (textToDoubleH != buildingH) {
         buildingH = textToDoubleH;
-        this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
-        //   inK->setFocus();
-    }
 
+        for (int i=0; i<numFloors; i++) {
+            floorHeights[i] = i*buildingH/(1.*numFloors);
+            storyHeights[i] = buildingH/(1.*numFloors);
+        }
+        floorHeights[numFloors] = buildingH;
+
+        this->updatePeriod();
+        needAnalysis = true;
+        this->reset();
+    }
 }
 
 
@@ -497,7 +513,15 @@ void MainWindow::on_inK_editingFinished()
     double textToDouble = text.toDouble();
     if (textToDouble != storyK) {
         storyK = textToDouble;
-        this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
+
+        for (int i=0; i<numFloors; i++) {
+            k[i] = storyK;
+        }
+
+        this->updatePeriod();
+        needAnalysis = true;
+        this->reset();
+        //this->setBasicModel(numFloors, buildingW, buildingH, storyK, dampingRatio, g);
     }
 }
 
@@ -518,6 +542,19 @@ void MainWindow::on_inDamping_editingFinished()
         for (int i=0; i<numFloors; i++) {
             dampRatios[i]=dampingRatio;
         }
+        this->reset();
+    }
+}
+
+void MainWindow::on_scaleFactor_editingFinished()
+{
+    QString text =  inScaleFactor->text();
+    if (text.isNull())
+        return;
+
+    double textToDouble = text.toDouble();
+    if (scaleFactor != textToDouble) {
+        scaleFactor = textToDouble;
         this->reset();
     }
 }
@@ -680,6 +717,8 @@ void MainWindow::doAnalysis()
 { 
     if (needAnalysis == true && analysisFailed == false) {
 
+        qDebug() << "doANALYSIS";
+
         // clear existinqDebugg model
         theDomain.clearAll();
         OPS_clearAllUniaxialMaterial();
@@ -726,7 +765,7 @@ void MainWindow::doAnalysis()
         // create load pattern and add loads
         //
 
-        PathSeries *theSeries = new PathSeries(1, *eqData, dt, g);
+        PathSeries *theSeries = new PathSeries(1, *eqData, dt, g*scaleFactor);
         GroundMotion *theGroundMotion = new GroundMotion(0,0,theSeries);
         LoadPattern *theLoadPattern = new UniformExcitation(*theGroundMotion, 0, 1);
         //   theLoadPattern->setTimeSeries(theTimeSeries);
@@ -736,7 +775,6 @@ void MainWindow::doAnalysis()
 
         theDomain.addLoadPattern(theLoadPattern);
 
-        //theDomain.Print(opserr);
         //
         // create the analysis
         //
@@ -869,6 +907,19 @@ void MainWindow::doAnalysis()
             storyDriftValues[i]=storyDriftResponses[storyForceTime][i];
             // qDebug() << i*dt << " " << storyForceResponses[storyForceTime][i] << " " << storyDriftResponses[storyForceTime][i];
         }
+        /*
+        qDebug() << nodeResponseValues;
+        QString filename = "/Users/simcenter/DISP";
+        QFile fileout(filename);
+        if (fileout.open(QFile::ReadWrite | QFile::Text)){
+         QTextStream out(&fileout);
+         for (QVector<double>::iterator iter = nodeResponseValues.begin(); iter != nodeResponseValues.end(); iter++){
+             out << *iter << "\n";
+         }
+         fileout.close();
+        }
+*/
+
         theNodeResponse->setData(nodeResponseValues,time,numSteps,dt);
         theForceTimeResponse->setData(storyForceValues,time,numSteps,dt);
         theForceDispResponse->setData(storyForceValues,storyDriftValues,numSteps);
@@ -1244,7 +1295,6 @@ bool MainWindow::save()
 
 bool MainWindow::saveAs()
 {
-    qDebug() << "saveAS";
     //
     // get filename
     //
@@ -1882,6 +1932,7 @@ void MainWindow::createInputPanel() {
     inMotion = new QComboBox();
     inputMotionLayout->addWidget(entryLabel);
     inputMotionLayout->addWidget(inMotion);
+
     addMotion = new QPushButton("Add");
     inputMotionLayout->addWidget(addMotion);
     inputMotion->setLayout(inputMotionLayout);

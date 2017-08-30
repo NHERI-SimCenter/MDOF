@@ -117,6 +117,7 @@ private slots:
     // for earthquake motion combo box
     void on_inMotionSelection_currentTextChanged(const QString &arg1);
     void on_addMotion_clicked();
+    void on_scaleFactor_editingFinished();
 
      // for stop and start buttons
     void on_stopButton_clicked();
@@ -193,6 +194,8 @@ private:
     QLineEdit *inStoryB;
     QLineEdit *inStoryHeight;
 
+    QLineEdit *inScaleFactor;
+
     // buttons for running, stoppping & exiting
     QPushButton *runButton;
     QPushButton *stopButton;
@@ -253,6 +256,7 @@ private:
     int numSteps;
     double *gMotion;
     Vector *eqData;
+    double scaleFactor;
 
     bool includePDelta;
     bool needAnalysis;
