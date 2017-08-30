@@ -368,7 +368,9 @@ ZeroLength::displaySelf(Renderer &theViewer, int displayMode, float fact, const 
 void
 ZeroLength::Print(OPS_Stream &s, int flag)
 {
-  ;
+  s << "ZeroLength: " << this->getTag() << "\n nodes: " << this->connectedExternalNodes(0);
+  s << " " << connectedExternalNodes(1) << " ";
+  s << this->theMaterial->getTangent() << "\n";
 }
 
 Response*
