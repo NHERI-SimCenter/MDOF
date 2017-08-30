@@ -288,7 +288,7 @@ void MainWindow::draw(MyGlWidget *theGL)
     for (int i=0; i<numFloors; i++) {
         if (i == storySelected)
             theGL->drawLine(i+1+numFloors, dispResponses[i][currentStep],floorHeights[i],
-                            dispResponses[i+1][currentStep],floorHeights[i+1], 2, 0, 0, 0);
+                            dispResponses[i+1][currentStep],floorHeights[i+1], 2, 1, 0, 0);
         else if (i >= sMinSelected && i <= sMaxSelected)
             theGL->drawLine(i+1+numFloors, dispResponses[i][currentStep],floorHeights[i],
                             dispResponses[i+1][currentStep],floorHeights[i+1], 2, 1, 0, 0);
@@ -299,7 +299,7 @@ void MainWindow::draw(MyGlWidget *theGL)
     
     for (int i=0; i<=numFloors; i++) {
         if (i == floorSelected)
-            theGL->drawPoint(i, dispResponses[i][currentStep],floorHeights[i], 10, 0, 0, 0);
+            theGL->drawPoint(i, dispResponses[i][currentStep],floorHeights[i], 10, 1, 0, 0);
         else if (i >= fMinSelected && i <= fMaxSelected)
             theGL->drawPoint(i, dispResponses[i][currentStep],floorHeights[i], 10, 1, 0, 0);
         else
@@ -1120,6 +1120,11 @@ MainWindow::setSelectionBoundary(float y1, float y2)
         floorMassFrame->setVisible(false);
         storyPropertiesFrame->setVisible(false);
         spreadSheetFrame->setVisible(true);
+        fMinSelected = -1;
+        fMaxSelected = -1;
+        sMinSelected = -1;
+        sMaxSelected = -1;
+
 
     } else if (fMinSelected == fMaxSelected && fMinSelected != -1) {
 
