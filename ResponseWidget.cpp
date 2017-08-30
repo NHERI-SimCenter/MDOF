@@ -104,7 +104,6 @@ ResponseWidget::setData(QVector<double> &data, QVector<double> &time, int numSte
     thePlot->axisRect()->setMargins(QMargins(0,0,0,0));
     thePlot->replot();
 
-
 }
 
 void
@@ -143,5 +142,4 @@ ResponseWidget::setData(QVector<double> &data, QVector<double> &x, int numSteps)
     //thePlot->axisRect()->setAutoMargins(QCP::msNone);
    // thePlot->axisRect()->setMargins(QMargins(0,0,0,0));
     thePlot->replot();
-
 }
