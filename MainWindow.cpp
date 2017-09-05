@@ -1319,6 +1319,7 @@ void MainWindow::open()
     QString fileName = QFileDialog::getOpenFileName(this);
     if (!fileName.isEmpty())
         loadFile(fileName);
+    this->setCurrentFile(fileName);
 }
 
 void MainWindow::resetFile()
@@ -1405,10 +1406,10 @@ void MainWindow::on_addMotion_clicked()
     }
     double dT = theValue.toDouble();
 
-    theValue = jsonObject["data"];
+    theValue = jsonObject["accel_data"];
     if (theValue.isNull()) {
         QMessageBox::warning(this, tr("Application"),
-                             tr("Cannot find \"data\" attribute in file %1:\n%2.")
+                             tr("Cannot find \"accel_data\" attribute in file %1:\n%2.")
                              .arg(QDir::toNativeSeparators(inputMotionName),
                                   file.errorString()));
         return;
@@ -1587,7 +1588,7 @@ void MainWindow::copyright()
 void MainWindow::version()
 {
     QMessageBox::about(this, tr("Version"),
-                       tr("Version 0.0.1 Beta Release "));
+                       tr("Version 0.0.2 "));
 }
 
 void MainWindow::about()
@@ -1628,8 +1629,10 @@ void MainWindow::submitFeedback()
 
 void MainWindow::loadFile(const QString &fileName)
 {
+
     //
     // open files
+
     //
 
     QFile file(fileName);
@@ -1639,6 +1642,44 @@ void MainWindow::loadFile(const QString &fileName)
                              .arg(QDir::toNativeSeparators(fileName), file.errorString()));
         return;
     }
+
+  //
+  // clean up old
+  //
+  if (dispResponses != 0) {
+    for (int j=0; j<numFloors+1; j++)
+      delete [] dispResponses[j];
+    delete [] dispResponses;
+  }
+  if (storyForceResponses != 0) {
+    for (int j=0; j<numFloors; j++)
+      delete [] storyForceResponses[j];
+    delete [] storyForceResponses;
+  }
+  if (storyDriftResponses != 0) {
+    for (int j=0; j<numFloors; j++)
+      delete [] storyDriftResponses[j];
+    delete [] storyDriftResponses;
+        }
+  
+  dispResponses = 0;
+  storyForceResponses = 0;
+  storyDriftResponses = 0;
+
+    if (weights != 0)
+        delete [] weights;
+    if (k != 0)
+        delete [] k;
+    if (fy != 0)
+        delete [] fy;
+    if (b != 0)
+        delete [] b;
+    if (floorHeights != 0)
+        delete [] floorHeights;
+    if (storyHeights != 0)
+        delete [] storyHeights;
+    if (dampRatios != 0)
+        delete [] dampRatios;
 
     // place contents of file into json object
     QString val;
@@ -1669,22 +1710,6 @@ void MainWindow::loadFile(const QString &fileName)
     theValue = jsonObject["dampingRatio"];
     dampingRatio=theValue.toDouble();
     inDamping->setText(QString::number(dampingRatio));
-
-
-    if (weights != 0)
-        delete [] weights;
-    if (k != 0)
-        delete [] k;
-    if (fy != 0)
-        delete [] fy;
-    if (b != 0)
-        delete [] b;
-    if (floorHeights != 0)
-        delete [] floorHeights;
-    if (storyHeights != 0)
-        delete [] storyHeights;
-    if (dampRatios != 0)
-        delete [] dampRatios;
 
     weights = new double[numFloors];
     k = new double[numFloors];
