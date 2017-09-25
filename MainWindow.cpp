@@ -140,8 +140,8 @@ createTextEntry(QString text,
     if (unitText != 0) {
         QLabel *unitLabel = new QLabel();
         unitLabel->setText(*unitText);
-        unitLabel->setMinimumWidth(25);
-        unitLabel->setMaximumWidth(25);
+        unitLabel->setMinimumWidth(40);
+        unitLabel->setMaximumWidth(50);
         entryLayout->addWidget(unitLabel);
 
     }
@@ -173,8 +173,8 @@ createLabelEntry(QString text,
     entryLabel->setText(text);
 
     QLabel *res = new QLabel();
-    res->setMinimumWidth(25);
-    res->setMaximumWidth(100);
+    res->setMinimumWidth(minL);
+    res->setMaximumWidth(maxL);
 
     entryLayout->addWidget(entryLabel);
     entryLayout->addStretch();
@@ -183,8 +183,8 @@ createLabelEntry(QString text,
     if (unitText != 0) {
         QLabel *unitLabel = new QLabel();
         unitLabel->setText(*unitText);
-        unitLabel->setMinimumWidth(25);
-        unitLabel->setMaximumWidth(25);
+        unitLabel->setMinimumWidth(40);
+        unitLabel->setMaximumWidth(100);
         entryLayout->addWidget(unitLabel);
 
     }
