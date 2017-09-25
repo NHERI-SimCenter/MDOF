@@ -121,7 +121,8 @@ QLineEdit *
 createTextEntry(QString text,
                 QVBoxLayout *theLayout,
                 int minL=100,
-                int maxL=100)
+                int maxL=100,
+                QString *unitText =0)
 {
     QHBoxLayout *entryLayout = new QHBoxLayout();
     QLabel *entryLabel = new QLabel();
@@ -133,7 +134,17 @@ createTextEntry(QString text,
     res->setValidator(new QDoubleValidator);
 
     entryLayout->addWidget(entryLabel);
+    entryLayout->addStretch();
     entryLayout->addWidget(res);
+
+    if (unitText != 0) {
+        QLabel *unitLabel = new QLabel();
+        unitLabel->setText(*unitText);
+        unitLabel->setMinimumWidth(25);
+        unitLabel->setMaximumWidth(25);
+        entryLayout->addWidget(unitLabel);
+
+    }
 
     entryLayout->setSpacing(10);
     entryLayout->setMargin(0);
@@ -154,19 +165,29 @@ QLabel *
 createLabelEntry(QString text,
                  QVBoxLayout *theLayout,
                  int minL=100,
-                 int maxL=100)
+                 int maxL=100,
+                 QString *unitText = 0)
 {
     QHBoxLayout *entryLayout = new QHBoxLayout();
     QLabel *entryLabel = new QLabel();
     entryLabel->setText(text);
 
     QLabel *res = new QLabel();
-    res->setMinimumWidth(minL);
-    res->setMaximumWidth(maxL);
+    res->setMinimumWidth(25);
+    res->setMaximumWidth(100);
 
     entryLayout->addWidget(entryLabel);
+    entryLayout->addStretch();
     entryLayout->addWidget(res);
 
+    if (unitText != 0) {
+        QLabel *unitLabel = new QLabel();
+        unitLabel->setText(*unitText);
+        unitLabel->setMinimumWidth(25);
+        unitLabel->setMaximumWidth(25);
+        entryLayout->addWidget(unitLabel);
+
+    }
     entryLayout->setSpacing(10);
     entryLayout->setMargin(0);
 
@@ -253,7 +274,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(manager, SIGNAL(finished(QNetworkReply*)),
             this, SLOT(replyFinished(QNetworkReply*)));
 
-    manager->get(QNetworkRequest(QUrl("http://opensees.berkeley.edu/OpenSees/developer/mdof/mdofUse.php")));
+    manager->get(QNetworkRequest(QUrl("http://opensees.berkeley.edu/OpenSees/developer/mdof/use.php")));
+    manager->get(QNetworkRequest(QUrl("https://simcenter.designsafe-ci.org/multiple-degrees-freedom-analytics/")));
 }
 
 MainWindow::~MainWindow()
@@ -717,7 +739,7 @@ void MainWindow::doAnalysis()
 { 
     if (needAnalysis == true && analysisFailed == false) {
 
-        qDebug() << "doANALYSIS";
+      //        qDebug() << "doANALYSIS";
 
         // clear existinqDebugg model
         theDomain.clearAll();
@@ -1569,7 +1591,7 @@ void MainWindow::copyright()
          ------------------------------------------------------------------------------------\
          <p>\
          This software makes use of the OpenSees Software Framework. OpenSees is copyright \"The Regents of the University of \
-         California\". OpenSees is free open-source software licensced under a modified BSD license. The license can be\
+         California\". OpenSees is open-source software whose license can be\
          found at http://opensees.berkeley.edu.\
          <p>\
          ";
@@ -1588,7 +1610,7 @@ void MainWindow::copyright()
 void MainWindow::version()
 {
     QMessageBox::about(this, tr("Version"),
-                       tr("Version 0.0.2 "));
+                       tr("Version 1.0 "));
 }
 
 void MainWindow::about()
@@ -1611,7 +1633,9 @@ void MainWindow::about()
             Additional motions can be added by user. The units for these additional motions must be in g. An\
             example is provided at https://github.com/NHERI-SimCenter/MDOF/blob/master/example/elCentro.json\
             <p>\
-            This tool is in beta release mode. It does not stop the user from inputting bad values.\
+            This tool does not stop you the user from inputting values that will cause the analysis to fail. \
+            If the analysis fails, a warning message will appear and the tool will not revert back to a working \
+            set of parameters.\
             ";
 
             QMessageBox msgBox;
@@ -1624,8 +1648,11 @@ void MainWindow::about()
 
 void MainWindow::submitFeedback()
 {
-    QDesktopServices::openUrl(QUrl("https://github.com/NHERI-SimCenter/MDOF/issues", QUrl::TolerantMode));
-}
+   // QDesktopServices::openUrl(QUrl("https://github.com/NHERI-SimCenter/MDOF/issues", QUrl::TolerantMode));
+ QDesktopServices::openUrl(QUrl("https://www.designsafe-ci.org/help/new-ticket/", QUrl::TolerantMode));
+    }
+
+
 
 void MainWindow::loadFile(const QString &fileName)
 {
@@ -1899,8 +1926,8 @@ void MainWindow::createActions() {
     viewMenu->addAction(forceDriftResponseDock->toggleViewAction());
 
 
-    QMenu *helpMenu = menuBar()->addMenu(tr("&About"));
-    QAction *infoAct = helpMenu->addAction(tr("&Information"), this, &MainWindow::about);
+    QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
+    QAction *infoAct = helpMenu->addAction(tr("&About"), this, &MainWindow::about);
     QAction *submitAct = helpMenu->addAction(tr("&Provide Feedback"), this, &MainWindow::submitFeedback);
     //aboutAct->setStatusTip(tr("Show the application's About box"));
     QAction *aboutAct = helpMenu->addAction(tr("&Version"), this, &MainWindow::version);
@@ -1994,15 +2021,23 @@ void MainWindow::createInputPanel() {
     //
     // create to hold major model inputs
     //
+QString blank(tr("   "));
+QString kips(tr("k"  ));
+QString kipsInch(tr("k/in"));
+QString inch(tr("in  "));
+QString sec(tr("sec"));
+QString percent(tr("\%   "));
+
+
 
     QFrame *mainProperties = new QFrame();
     mainProperties->setObjectName(QString::fromUtf8("mainProperties")); //styleSheet
     QVBoxLayout *mainPropertiesLayout = new QVBoxLayout();
-    inFloors = createTextEntry(tr("Number Floors"), mainPropertiesLayout);
-    inWeight = createTextEntry(tr("Building Weight"), mainPropertiesLayout);
-    inHeight = createTextEntry(tr("Building Height"), mainPropertiesLayout);
-    inK = createTextEntry(tr("Story Stiffness"), mainPropertiesLayout);
-    inDamping = createTextEntry(tr("Damping Ratio"), mainPropertiesLayout);
+    inFloors = createTextEntry(tr("Number Floors"), mainPropertiesLayout, 100, 100, &blank);
+    inWeight = createTextEntry(tr("Building Weight"), mainPropertiesLayout, 100, 100, &kips);
+    inHeight = createTextEntry(tr("Building Height"), mainPropertiesLayout, 100, 100, &inch);
+    inK = createTextEntry(tr("Story Stiffness"), mainPropertiesLayout, 100, 100, &kipsInch);
+    inDamping = createTextEntry(tr("Damping Ratio"), mainPropertiesLayout, 100, 100, &percent);
     //inGravity =  createTextEntry(tr("Gravity"), mainPropertiesLayout);
     pDeltaBox = new QCheckBox(tr("Include PDelta"), 0);
     pDeltaBox->setCheckState(Qt::Checked);
@@ -2153,6 +2188,11 @@ void MainWindow::createOutputPanel() {
     outTitle->setTitle(tr("Output"));
     outputLayout->addWidget(outTitle);
 
+
+    QString inch(tr("in  "));
+    QString sec(tr("sec"));
+
+
     // frame for basic outputs,
     //QFrame *outputMaxFrame = new QFrame();
 
@@ -2160,8 +2200,8 @@ void MainWindow::createOutputPanel() {
     QFrame *firstOutput = new QFrame(); //styleSheet
     firstOutput->setObjectName(QString::fromUtf8("firstOutput"));
     QVBoxLayout *firstOutputLayout = new QVBoxLayout();
-    maxDispLabel = createLabelEntry(tr("Max Disp"), firstOutputLayout); //styleSheet
-    currentPeriod= createLabelEntry(tr("Fundamental Period"),firstOutputLayout); //styleSheet
+    maxDispLabel = createLabelEntry(tr("Max Disp"), firstOutputLayout, 100,100,&inch); //styleSheet
+    currentPeriod= createLabelEntry(tr("Fundamental Period"),firstOutputLayout, 100,100,&sec); //styleSheet
     firstOutput->setLayout(firstOutputLayout);
     firstOutput->setLineWidth(1);
     firstOutput->setFrameShape(QFrame::Box);
@@ -2217,8 +2257,8 @@ void MainWindow::createOutputPanel() {
     QFrame *outputDataFrame = new QFrame();
     outputDataFrame->setObjectName(QString::fromUtf8("outputDataFrame"));
     QVBoxLayout *outputDataLayout = new QVBoxLayout();
-    currentTime = createLabelEntry(tr("Current Time"), outputDataLayout);
-    currentDisp = createLabelEntry(tr("Current Roof Disp"), outputDataLayout);
+    currentTime = createLabelEntry(tr("Current Time"), outputDataLayout, 100,100, &sec);
+    currentDisp = createLabelEntry(tr("Current Roof Disp"), outputDataLayout, 100,100,  &inch);
     outputDataFrame->setLayout(outputDataLayout);
     outputDataFrame->setLineWidth(1);
     outputDataFrame->setFrameShape(QFrame::Box);

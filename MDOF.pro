@@ -14,7 +14,7 @@ TEMPLATE = app
 include(OPS_includes.pro)
 include(../widgets/Common/Common.pri)
 
-VERSION=0.0.2
+VERSION=1.0
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 SOURCES += main.cpp\

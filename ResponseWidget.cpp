@@ -11,7 +11,8 @@ extern QLineEdit *
 createTextEntry(QString text,
                 QVBoxLayout *theLayout,
                 int minL=100,
-                int maxL=100);
+                int maxL=100,
+        QString *unitText =0);
 
 
 
