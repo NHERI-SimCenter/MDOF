@@ -97,6 +97,12 @@ public:
 
 private slots:
     // main edits
+    void on_periodHarmonicChanged();
+    void on_magHarmonicChanged();
+    void on_dtHarmonicChanged();
+    void on_tFinalHarmonicChanged();
+    void on_motionTypeSelectionChanged(const QString& arg1);
+
     void on_includePDeltaChanged(int);
     void on_inFloors_editingFinished();
     void on_inWeight_editingFinished();
@@ -115,7 +121,7 @@ private slots:
     void on_inStoryB_editingFinished();
 
     // for earthquake motion combo box
-    void on_inMotionSelection_currentTextChanged(const QString &arg1);
+    void on_inEarthquakeMotionSelectionChanged(const QString &arg1);
     void on_addMotion_clicked();
     void on_scaleFactor_editingFinished();
 
@@ -153,6 +159,7 @@ private slots:
 private:
     void updatePeriod();
     void setBasicModel(int numFloors, double buildingW, double buildingH, double storyK, double zeta, double grav);
+    void setData(int numSteps, double dT, Vector *data);
     void reset(void);
 
     // methods to create some of the main layouts
@@ -161,6 +168,9 @@ private:
     void createInputPanel();
     void createOutputPanel();
     void createActions();
+
+    QFrame *eqMotionFrame;
+    QFrame *harmonicMotionFrame;
 
     // the main layouts created
     QHBoxLayout *mainLayout;
@@ -175,8 +185,15 @@ private:
     bool saveFile(const QString &fileName);
     void loadFile(const QString &fileName);
 
-    QComboBox *inMotion;
+    QComboBox *motionType;
+   // QComboBox *inputMotionType;
+    QComboBox *eqMotion;
     QPushButton *addMotion;
+
+    QLineEdit *periodHarmonic;
+    QLineEdit *magHarmonic;
+    QLineEdit *dtHarmonic;
+    QLineEdit *tFinalHarmonic;
 
     // global properties inputs when nothing slected
     QLineEdit *inFloors;
@@ -252,11 +269,25 @@ private:
     double g;
 
     // properties related to currently selected ground motion
+    int motionTypeValue;
+
     double dt;
     int numSteps;
     double *gMotion;
-    Vector *eqData;
+    Vector *motionData;
     double scaleFactor;
+
+    int numStepEarthquake;
+    double dtEarthquakeMotion;
+    Vector *eqData;
+
+    int numStepHarmonic;
+    double dtHarmonicMotion;
+    Vector *harmonicData;
+
+    double magHarmonicMotion;
+    double periodHarmonicMotion;
+    double tFinalHarmonicMotion;
 
     bool includePDelta;
     bool needAnalysis;
