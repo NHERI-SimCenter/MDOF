@@ -438,6 +438,7 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
 
     this->updatePeriod();
 
+    scaleFactorEQ->setText(QString::number(scaleFactor));
     inWeight->setText(QString::number(buildingW));
     inK->setText(QString::number(storyK));
     inFloors->setText(QString::number(numF));
@@ -663,13 +664,41 @@ void MainWindow::on_inDamping_editingFinished()
 
 void MainWindow::on_scaleFactor_editingFinished()
 {
-    QString text =  inScaleFactor->text();
+    QString text =  scaleFactorEQ->text();
     if (text.isNull())
         return;
 
     double textToDouble = text.toDouble();
     if (scaleFactor != textToDouble) {
         scaleFactor = textToDouble;
+        theCurrentRecord->setScaleFactor(scaleFactor);
+        needAnalysis=true;
+
+        double maxValue=0;
+        for (int i = 0; i < numSteps; ++i) {
+            double value = (*motionData)[i] * scaleFactor;
+            time[i]=i*dt;
+            excitationValues[i]=value;
+            if (fabs(value) > maxValue)
+                maxValue = fabs(value);
+        }
+
+        // reset earthquake plot
+        earthquakePlot->clearGraphs();
+        graph = earthquakePlot->addGraph();
+        earthquakePlot->graph(0)->setData(time, excitationValues);
+        earthquakePlot->xAxis->setRange(0, numSteps*dt);
+        earthquakePlot->yAxis->setRange(-maxValue, maxValue);
+        earthquakePlot->axisRect()->setAutoMargins(QCP::msNone);
+        earthquakePlot->axisRect()->setMargins(QMargins(0,0,0,0));
+
+
+        QString textText("pga: "); textText.append(QString::number(maxValue,'g',2)); textText.append(tr("g"));
+        earthquakeText->setText(textText);
+
+        earthquakePlot->replot();
+        earthquakePlot->update();
+
         this->reset();
     }
 }
@@ -949,8 +978,9 @@ void MainWindow::doAnalysis()
             delete [] theElements;
 
             QMessageBox::warning(this, tr("Application"),
-                                 tr("Eigenvalue Analysis Failed.<p> Possible Causes: Negstive Mass or Negative stiffness.<p> "
-                                    "Negative stiffness due to negative value entered or, if PDelta include, story stiffness - axial load divided by L is negtive."));
+                                 tr("Eigenvalue Analysis Failed.<p> Possible Causes: negstive mass, negative story stiffness, or "
+                                    "if PDelta is included, a story stiffness - axial load divided by L is negtive resulting "
+                                    "in non postive definite stiffness matrix"));
 
             return;
         }
@@ -1097,25 +1127,45 @@ void MainWindow::on_theSpreadsheet_cellChanged(int row, int column)
         bool ok;
         double textToDouble = text.toDouble(&ok);
         if (column == 0) {
+            if (weights[row] == textToDouble)
+                return;
+
             weights[row] = textToDouble;
             buildingW = 0;
             for (int i=0; i<numFloors; i++)
                 buildingW += weights[i];
             inWeight->setText(QString::number(buildingW));
         } else if (column  == 1) {
+            if (storyHeights[row] == textToDouble)
+                return;
+
             storyHeights[row] = textToDouble;
             for (int i=row; i<numFloors; i++)
                 floorHeights[i+1] = floorHeights[i]+storyHeights[i];
             buildingH = floorHeights[numFloors];
             inHeight->setText(QString::number(buildingH));
+
         } else if (column == 2) {
+            if (k[row] == textToDouble)
+                return;
+
             k[row] = textToDouble;
-        } else if (column == 3) {
+        } else if (column == 3) {         
+            if (fy[row] == textToDouble)
+                return;
+
             fy[row] = textToDouble;
         } else if (column == 4) {
+            if (b[row] == textToDouble)
+                return;
+
             b[row] = textToDouble;
-        } else
+        } else {
+            if (dampRatios[row] == textToDouble)
+                return;
+
             dampRatios[row] = textToDouble;
+        }
 
 
         needAnalysis = true;
@@ -1260,7 +1310,7 @@ MainWindow::setSelectionBoundary(float y1, float y2)
 
         floorMassFrame->setVisible(false);
         storyPropertiesFrame->setVisible(false);
-        spreadSheetFrame->setVisible(false);
+        spreadSheetFrame->setVisible(true);
         floorSelected=-1;
         storySelected=-1;
     }
@@ -1306,11 +1356,15 @@ void MainWindow::on_motionTypeSelectionChanged(const QString &arg1)
         motionTypeValue = 1;
         eqMotionFrame->setVisible(false);
         harmonicMotionFrame->setVisible(true);
+        scaleFactor=1.0;
         this->setData(numStepHarmonic, dtHarmonicMotion, harmonicData);
+
     } else {
         motionTypeValue = 0;
-        eqMotionFrame->setVisible(true);
         harmonicMotionFrame->setVisible(false);
+        eqMotionFrame->setVisible(true);
+        scaleFactor=(scaleFactorEQ->text()).toDouble();
+
          this->setData(numStepEarthquake, dtEarthquakeMotion, eqData);
     }
    // this->doAnalysis();
@@ -1361,7 +1415,7 @@ void MainWindow::setData(int nStep, double deltaT, Vector *data) {
     time.resize(numSteps);
 
     for (int i = 0; i < numSteps; ++i) {
-        double value = (*motionData)[i];
+        double value = (*motionData)[i] * scaleFactor;
         time[i]=i*dt;
         excitationValues[i]=value;
         if (fabs(value) > maxValue)
@@ -1378,7 +1432,7 @@ void MainWindow::setData(int nStep, double deltaT, Vector *data) {
     earthquakePlot->axisRect()->setMargins(QMargins(0,0,0,0));
 
 
-    QString textText("pga: "); textText.append(QString::number(maxValue,'g',3)); textText.append(tr("g"));
+    QString textText("pga: "); textText.append(QString::number(maxValue,'g',2)); textText.append(tr("g"));
     earthquakeText->setText(textText);
 
     earthquakePlot->replot();
@@ -1411,10 +1465,12 @@ void MainWindow::on_inEarthquakeMotionSelectionChanged(const QString &arg1)
     std::map<QString, EarthquakeRecord *>::iterator it;
     it = records.find(arg1);
     if (it != records.end()) {
-        EarthquakeRecord *theRecord = records.at(arg1);
-        numStepEarthquake =  theRecord->numSteps;
-        dtEarthquakeMotion =  theRecord->dt;
-        eqData = theRecord->data;
+        theCurrentRecord = records.at(arg1);
+        numStepEarthquake =  theCurrentRecord->numSteps;
+        dtEarthquakeMotion =  theCurrentRecord->dt;
+        eqData = theCurrentRecord->data;
+        scaleFactor=theCurrentRecord->getScaleFactor();
+        scaleFactorEQ->setText(QString::number(scaleFactor));
         this->setData(numStepEarthquake, dtEarthquakeMotion, eqData);
     }
 }
@@ -1604,6 +1660,13 @@ bool MainWindow::saveFile(const QString &fileName)
     json["currentMotion"]=eqMotion->currentText();
     json["currentMotionIndex"]=eqMotion->currentIndex();
 
+    json["periodHarmonic"]=periodHarmonicMotion;
+    json["magHarmonic"]=magHarmonicMotion;
+    json["tFinalHarmonic"]=tFinalHarmonicMotion;
+    json["dtHarmonic"]=dtHarmonicMotion;
+
+    json["motionType"]=motionType->currentIndex();
+
     QJsonArray weightsArray;
     QJsonArray kArray;
     QJsonArray fyArray;
@@ -1723,7 +1786,7 @@ void MainWindow::copyright()
 void MainWindow::version()
 {
     QMessageBox::about(this, tr("Version"),
-                       tr("Version 1.0 "));
+                       tr("Version 1.1 "));
 }
 
 void MainWindow::about()
@@ -1945,6 +2008,35 @@ void MainWindow::loadFile(const QString &fileName)
     eqMotion->setCurrentIndex(theValue.toInt());
     theValue = jsonObject["currentMotion"];
 
+
+    //
+    // read harmonic data
+    //
+
+    theValue = jsonObject["periodHarmonic"];
+    periodHarmonicMotion=theValue.toDouble();
+    periodHarmonic->setText(QString::number(periodHarmonicMotion));
+
+    theValue = jsonObject["magHarmonic"];
+    magHarmonicMotion=theValue.toDouble();
+    magHarmonic->setText(QString::number(magHarmonicMotion));
+
+    theValue = jsonObject["tFinalHarmonic"];
+    tFinalHarmonicMotion=theValue.toDouble();
+    tFinalHarmonic->setText(QString::number(tFinalHarmonicMotion));
+
+    theValue = jsonObject["dtHarmonic"];
+    dtHarmonicMotion=theValue.toDouble();
+    dtHarmonic->setText(QString::number(dtHarmonicMotion));
+
+
+   // json["motionType"]=motionType->currentIndex();
+    theValue = jsonObject["motionType"];
+    motionType->setCurrentIndex(theValue.toInt());
+    //dtHarmonicMotion=theValue.toDouble();
+    //dtHarmonic->setText(QString::number(dtHarmonicMotion));
+
+
     this->reset();
     this->on_inEarthquakeMotionSelectionChanged(theValue.toString());
     theNodeResponse->setItem(numFloors);
@@ -2118,7 +2210,9 @@ void MainWindow::createInputPanel() {
 
     eqMotionFrame = new QFrame(); //styleSheet
     eqMotionFrame->setObjectName(QString::fromUtf8("inputMotion")); //styleSheet
-    QHBoxLayout *inputMotionLayout = new QHBoxLayout();
+
+    QGridLayout *inputMotionLayout = new QGridLayout();
+    //QHBoxLayout *inputMotionLayout = new QHBoxLayout();
     QLabel *sectionTitle = new QLabel();
     sectionTitle->setText(tr("Input Motion Title"));
     sectionTitle->setObjectName(QString::fromUtf8("sectionTitle")); //styleSheet
@@ -2126,12 +2220,22 @@ void MainWindow::createInputPanel() {
     entryLabel->setText(tr("Input Motion"));
 
     eqMotion = new QComboBox();
-    inputMotionLayout->addWidget(entryLabel);
-    inputMotionLayout->addWidget(eqMotion);
+
+    QLabel *scaleLabel = new QLabel(tr("Scale Factor"));
+    scaleFactorEQ = new QLineEdit();
+    scaleFactorEQ->setMaximumWidth(100);
+
+    inputMotionLayout->addWidget(entryLabel,0,0);
+    inputMotionLayout->addWidget(eqMotion,0,1);
+    inputMotionLayout->addWidget(scaleLabel,0,3);
+    inputMotionLayout->addWidget(scaleFactorEQ,0,4);
+   // inputMotionLayout->addStretch();
+
 
     addMotion = new QPushButton("Add");
-    inputMotionLayout->addWidget(addMotion);
+    inputMotionLayout->addWidget(addMotion,1,4);
     eqMotionFrame->setLayout(inputMotionLayout);
+    inputMotionLayout->setColumnStretch(2,1);
     // inputMotion->setFrameStyle(QFrame::Raised);
     eqMotionFrame->setLineWidth(1);
     eqMotionFrame->setFrameShape(QFrame::Box);
@@ -2304,7 +2408,6 @@ void MainWindow::createInputPanel() {
     pushButtons->setLineWidth(1);
     pushButtons->setFrameShape(QFrame::Box);
 
-
     inputLayout->addWidget(pushButtons);
 
     mainLayout->addLayout(inputLayout);
@@ -2314,6 +2417,13 @@ void MainWindow::createInputPanel() {
     //
     // set validators for QlineEdits
     //
+
+    scaleFactorEQ->setValidator(new QDoubleValidator);
+
+    periodHarmonic->setValidator(new QDoubleValidator);
+    magHarmonic->setValidator(new QDoubleValidator);
+    dtHarmonic->setValidator(new QDoubleValidator);
+    tFinalHarmonic->setValidator(new QDoubleValidator);
 
     inFloors->setValidator(new QIntValidator);
     inWeight->setValidator(new QDoubleValidator);
@@ -2332,11 +2442,11 @@ void MainWindow::createInputPanel() {
     //
 
     connect(motionType, SIGNAL(currentIndexChanged(QString)), this, SLOT(on_motionTypeSelectionChanged(QString)));
+    connect(scaleFactorEQ,SIGNAL(editingFinished()),this,SLOT(on_scaleFactor_editingFinished()));
     connect(magHarmonic,SIGNAL(editingFinished()), this, SLOT(on_magHarmonicChanged()));
     connect(periodHarmonic,SIGNAL(editingFinished()), this, SLOT(on_periodHarmonicChanged()));
     connect(dtHarmonic,SIGNAL(editingFinished()), this, SLOT(on_dtHarmonicChanged()));
     connect(tFinalHarmonic,SIGNAL(editingFinished()), this, SLOT(on_tFinalHarmonicChanged()));
-
 
     connect(pDeltaBox, SIGNAL(stateChanged(int)), this, SLOT(on_includePDeltaChanged(int)));
     connect(addMotion,SIGNAL(clicked()), this, SLOT(on_addMotion_clicked()));

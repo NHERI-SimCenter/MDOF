@@ -45,6 +45,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 EarthquakeRecord::EarthquakeRecord()
 {
      data = 0;
+     scaleFactor = 1.0;
 }
 
 EarthquakeRecord::EarthquakeRecord(QString fileName)
@@ -64,11 +65,22 @@ EarthquakeRecord::~EarthquakeRecord()
         delete data;
 }
 
+double
+EarthquakeRecord::getScaleFactor(void){
+    return scaleFactor;
+}
+
+void
+EarthquakeRecord::setScaleFactor(double newFactor){
+    scaleFactor = newFactor;
+}
+
 void
 EarthquakeRecord::outputToJSON(QJsonObject &jsonObj){
     jsonObj["name"]=name;
     jsonObj["dT"]=dt;
     jsonObj["numPoints"]=numSteps;
+    jsonObj["scaleFactor"]=scaleFactor;
     QJsonArray dataValues;
     for (int i=0; i<data->Size(); i++) {
         dataValues.append((*data)[i]);
@@ -84,6 +96,9 @@ EarthquakeRecord::inputFromJSON(QJsonObject &jsonObj){
     dt=theValue.toDouble();
     theValue = jsonObj["numPoints"];
     numSteps=theValue.toInt();
+    theValue = jsonObj["scaleFactor"];
+    if (!theValue.isNull())
+        scaleFactor=theValue.toDouble();
 
     if (data != 0)
         delete [] data;

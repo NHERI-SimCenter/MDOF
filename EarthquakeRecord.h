@@ -51,6 +51,8 @@ public:
     EarthquakeRecord(QString name, int numSteps, double dt, Vector *data);
     ~EarthquakeRecord();
 
+    double getScaleFactor(void);
+    void setScaleFactor(double);
     void outputToJSON(QJsonObject &jsonObj);
     void inputFromJSON(QJsonObject &jsonObj);
 
@@ -59,6 +61,7 @@ public:
     int numSteps;
     double dt;
     Vector *data;
+    double scaleFactor;
 };
 
 #endif // EARTHQUAKERECORD_H

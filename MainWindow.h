@@ -189,6 +189,7 @@ private:
    // QComboBox *inputMotionType;
     QComboBox *eqMotion;
     QPushButton *addMotion;
+    QLineEdit *scaleFactorEQ;
 
     QLineEdit *periodHarmonic;
     QLineEdit *magHarmonic;
@@ -316,6 +317,7 @@ private:
     QCPItemTracer *groupTracer;
 
     std::map <QString, EarthquakeRecord *> records;
+    EarthquakeRecord *theCurrentRecord;
 
     QNetworkAccessManager *manager;
 
