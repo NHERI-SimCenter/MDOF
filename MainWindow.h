@@ -102,6 +102,7 @@ private slots:
     void on_dtHarmonicChanged();
     void on_tFinalHarmonicChanged();
     void on_motionTypeSelectionChanged(const QString& arg1);
+    void on_PeriodSelectionChanged(const QString &arg1);
 
     void on_includePDeltaChanged(int);
     void on_inFloors_editingFinished();
@@ -185,6 +186,7 @@ private:
     bool saveFile(const QString &fileName);
     void loadFile(const QString &fileName);
 
+    QComboBox *periodComboBox;
     QComboBox *motionType;
    // QComboBox *inputMotionType;
     QComboBox *eqMotion;
@@ -285,6 +287,7 @@ private:
     int numStepHarmonic;
     double dtHarmonicMotion;
     Vector *harmonicData;
+    Vector *eigValues;
 
     double magHarmonicMotion;
     double periodHarmonicMotion;

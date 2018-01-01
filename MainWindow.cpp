@@ -175,6 +175,7 @@ createLabelEntry(QString text,
     QLabel *res = new QLabel();
     res->setMinimumWidth(minL);
     res->setMaximumWidth(maxL);
+    res->setAlignment(Qt::AlignRight);
 
     entryLayout->addWidget(entryLabel);
     entryLayout->addStretch();
@@ -209,7 +210,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
 
     scaleFactor = 1.0;
-
+    eigValues = new Vector;
     createActions();
 
     // create a main layout
@@ -924,7 +925,6 @@ void MainWindow::doAnalysis()
         // create the analysis
         //
 
-
         AnalysisModel     *theModel = new AnalysisModel();
         CTestNormDispIncr *theTest = new CTestNormDispIncr(1.0e-10, 20, 0);
         EquiSolnAlgo      *theSolnAlgo = new NewtonRaphson();//INITIAL_TANGENT);
@@ -955,10 +955,26 @@ void MainWindow::doAnalysis()
 
         int ok = theAnalysis.eigen(numFloors,true);
         const Vector &theEig = theDomain.getEigenvalues();
+        if (eigValues->Size() != numFloors) {
+                eigValues->resize(numFloors);
+        }
+         *eigValues = theEig;
         if (ok == 0)
             for (int i=0; i<numFloors; i++)
                 if (theEig(i) <= 0)
                     ok = -1;
+
+        int numCombo = periodComboBox->count();
+
+        if (numCombo != numFloors) {
+            periodComboBox->clear();
+            QString t1 = QString("Fundamental Period");
+            periodComboBox->addItem(t1);
+            for (int i=1; i<numFloors; i++) {
+                QString t1 = QString("T") + QString::number(i+1);
+                periodComboBox->addItem(t1);
+            }
+        }
 
         if (ok != 0) {
             needAnalysis = false;
@@ -1031,7 +1047,16 @@ void MainWindow::doAnalysis()
 
         // reset values, i.e. slider position, current displayed step...
         maxDispLabel->setText(QString().setNum(maxDisp,'f',2));
-        currentPeriod->setText(QString().setNum(T1,'f',2));
+
+        int num = periodComboBox->currentIndex();
+        double eigenValue = (*eigValues)(num);
+        if (eigenValue <= 0) {
+            currentPeriod->setText(QString("undefined"));
+        } else {
+            double period = 2*3.14159/sqrt((eigenValue));
+            currentPeriod->setText(QString().setNum(period,'f',2));
+        }
+       // currentPeriod->setText(QString().setNum(T1,'f',2));
         needAnalysis = false;
         currentStep = 0;
         //  groupTracer->setGraphKey(0);
@@ -1349,6 +1374,18 @@ void MainWindow::replyFinished(QNetworkReply *pReply)
 {
     return;
 }
+
+void MainWindow::on_PeriodSelectionChanged(const QString &arg1) {
+    int num = periodComboBox->currentIndex();
+    double eigenValue = (*eigValues)(num);
+    if (eigenValue <= 0) {
+     currentPeriod->setText(QString("undefined"));
+    } else {
+    double period = 2*3.14159/sqrt((eigenValue));
+    currentPeriod->setText(QString().setNum(period,'f',2));
+    }
+}
+
 
 void MainWindow::on_motionTypeSelectionChanged(const QString &arg1)
 {
@@ -2503,7 +2540,36 @@ void MainWindow::createOutputPanel() {
     firstOutput->setObjectName(QString::fromUtf8("firstOutput"));
     QVBoxLayout *firstOutputLayout = new QVBoxLayout();
     maxDispLabel = createLabelEntry(tr("Max Disp"), firstOutputLayout, 100,100,&inch); //styleSheet
-    currentPeriod= createLabelEntry(tr("Fundamental Period"),firstOutputLayout, 100,100,&sec); //styleSheet
+ //   currentPeriod= createLabelEntry(tr("Fundamental Period"),firstOutputLayout, 100,100,&sec); //styleSheet
+
+    // create combobox for period selection
+    QHBoxLayout *periodLayout = new QHBoxLayout();
+    periodComboBox = new QComboBox();
+    QString t1("FundamentalPeriod");
+    periodComboBox->addItem(t1);
+
+    QLabel *res = new QLabel();
+    res->setMinimumWidth(100);
+    res->setMaximumWidth(100);
+    res->setAlignment(Qt::AlignRight);
+    currentPeriod=res;
+
+    periodLayout->addWidget(periodComboBox);
+    periodLayout->addStretch();
+    periodLayout->addWidget(currentPeriod);
+
+    QLabel *unitLabel = new QLabel();
+    unitLabel->setText(sec);
+    unitLabel->setMinimumWidth(40);
+    unitLabel->setMaximumWidth(100);
+    periodLayout->addWidget(unitLabel);
+
+
+    periodLayout->setSpacing(10);
+    periodLayout->setMargin(0);
+
+    firstOutputLayout->addLayout(periodLayout);
+
     firstOutput->setLayout(firstOutputLayout);
     firstOutput->setLineWidth(1);
     firstOutput->setFrameShape(QFrame::Box);
@@ -2572,6 +2638,7 @@ void MainWindow::createOutputPanel() {
     largeLayout->addLayout(mainLayout); //styleSheet
 
     // signal and slot connects for slider
+    connect(periodComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(on_PeriodSelectionChanged(QString)));
     connect(slider, SIGNAL(sliderPressed()),  this, SLOT(on_slider_sliderPressed()));
     connect(slider, SIGNAL(sliderReleased()), this, SLOT(on_slider_sliderReleased()));
     connect(slider, SIGNAL(valueChanged(int)),this, SLOT(on_slider_valueChanged(int)));
