@@ -39,3 +39,5 @@ moc*
 
 # QT
 *.pro.user
+qcustomplot.h
+qcustomplot.cpp
