@@ -1759,14 +1759,18 @@ bool MainWindow::saveFile(const QString &fileName)
 void MainWindow::copyright()
 {
     QString textCopyright = "\
-            Copyright (c) 2017-2018, The Regents of the University of California (Regents).\
-            All rights reserved.\
-            <p>\
-            Redistribution and use in source and binary forms, with or without \
-            modification, are permitted provided that the following conditions are met:\
+        <p>\
+        The source code is licensed under a BSD 2-Clause License:<p>\
+        \"Copyright (c) 2017-2018, The Regents of the University of California (Regents).\"\
+        All rights reserved.<p>\
+        <p>\
+        Redistribution and use in source and binary forms, with or without \
+        modification, are permitted provided that the following conditions are met:\
         <p>\
          1. Redistributions of source code must retain the above copyright notice, this\
          list of conditions and the following disclaimer.\
+         \
+         \
          2. Redistributions in binary form must reproduce the above copyright notice,\
          this list of conditions and the following disclaimer in the documentation\
          and/or other materials provided with the distribution.\
@@ -1777,7 +1781,7 @@ void MainWindow::copyright()
          DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR\
          ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\
          (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\
-    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\
+         LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\
             ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\
             (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\
             SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\
@@ -1794,20 +1798,27 @@ void MainWindow::copyright()
             <p>\
             ------------------------------------------------------------------------------------\
             <p>\
+            The compiled binary form of this application is licensed under a GPL Version 3 license.\
+            The licenses are as published by the Free Software Foundation and appearing in the LICENSE file\
+            included in the packaging of this application. \
+            <p>\
+            ------------------------------------------------------------------------------------\
+            <p>\
             This software makes use of the QT packages (unmodified): core, gui, widgets and network\
                                                                      <p>\
                                                                      QT is copyright \"The Qt Company Ltd&quot; and licensed under the GNU Lesser General \
                                                                      Public License (version 3) which references the GNU General Public License (version 3)\
       <p>\
-      These Licenses can be found at: &lt;http://www.gnu.org/licenses/&gt;\
-        <p>\
-         ------------------------------------------------------------------------------------\
-         <p>\
-         This software makes use of the OpenSees Software Framework. OpenSees is copyright \"The Regents of the University of \
-         California\". OpenSees is open-source software whose license can be\
-         found at http://opensees.berkeley.edu.\
-         <p>\
-         ";
+      The licenses are as published by the Free Software Foundation and appearing in the LICENSE file\
+      included in the packaging of this application. \
+      <p>\
+      ------------------------------------------------------------------------------------\
+      <p>\
+      This software makes use of the OpenSees Software Framework. OpenSees is copyright \"The Regents of the University of \
+      California\". OpenSees is open-source software whose license can be\
+      found at http://opensees.berkeley.edu.\
+      <p>\
+      ";
 
 
          QMessageBox msgBox;
