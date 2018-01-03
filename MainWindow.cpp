@@ -2401,11 +2401,10 @@ void MainWindow::createInputPanel() {
     theSpreadsheet = new SimpleSpreadsheetWidget(6, 4, headings, dataTypes,0);
     //theSpreadsheet = new QTableWidget();
     spreadsheetFrameLayout->addWidget(theSpreadsheet, 1.0);
-
+    spreadSheetFrame->setObjectName(QString::fromUtf8("inputMotion")); //styleSheet
     spreadSheetFrame->setLayout(spreadsheetFrameLayout);
     spreadSheetFrame->setLineWidth(1);
     spreadSheetFrame->setFrameShape(QFrame::Box);
-    //theSpreadsheet->setS
 
     inputLayout->addWidget(spreadSheetFrame,1);
     spreadSheetFrame->setVisible(false);
