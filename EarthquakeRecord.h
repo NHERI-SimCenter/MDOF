@@ -54,7 +54,7 @@ public:
     double getScaleFactor(void);
     void setScaleFactor(double);
     void outputToJSON(QJsonObject &jsonObj);
-    void inputFromJSON(QJsonObject &jsonObj);
+    int inputFromJSON(QJsonObject &jsonObj);
 
 
     QString name;

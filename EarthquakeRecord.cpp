@@ -41,6 +41,8 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QDebug>
+#include <QMessageBox>
+#include <QString>
 
 EarthquakeRecord::EarthquakeRecord()
 {
@@ -88,24 +90,50 @@ EarthquakeRecord::outputToJSON(QJsonObject &jsonObj){
     jsonObj["accel_data"]=dataValues;
 }
 
-void
+int
 EarthquakeRecord::inputFromJSON(QJsonObject &jsonObj){
+
     QJsonValue theValue = jsonObj["name"];
+    if (theValue.isNull() || theValue.isUndefined()) {
+        return -1;
+    }
     name=theValue.toString();
+
+    // get dT, return error if not there
     theValue = jsonObj["dT"];
+    if (theValue.isNull() || theValue.isUndefined()) {
+        return -1;
+    }
     dt=theValue.toDouble();
+
+
     theValue = jsonObj["numPoints"];
+    if (theValue.isNull() || theValue.isUndefined()) {
+        return -1;
+    }
     numSteps=theValue.toInt();
+
     theValue = jsonObj["scaleFactor"];
-    if (!theValue.isNull())
+    if (theValue.isUndefined())
+        theValue = 1.0;
+    else if (!theValue.isNull()) {
         scaleFactor=theValue.toDouble();
+    } else
+       scaleFactor = 1.0;
 
     if (data != 0)
         delete [] data;
+
     data = new Vector(numSteps);
 
     theValue = jsonObj["accel_data"];
+    if (theValue.isNull() || theValue.isUndefined()) {
+        return -1;
+    }
+
     QJsonArray dataPoints = theValue.toArray();
     for (int i=0; i<numSteps; i++)
         (*data)[i] = dataPoints.at(i).toDouble();
+
+    return 0;
 }

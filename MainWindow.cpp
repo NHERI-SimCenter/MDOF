@@ -1612,58 +1612,32 @@ void MainWindow::on_addMotion_clicked()
     }
     QString name =theValue.toString();
 
-
-    theValue = jsonObject["numPoints"];
-    if (theValue.isNull()) {
-        QMessageBox::warning(this, tr("Application"),
-                             tr("Cannot find \"numPoints\" attribute in file %1:\n%2.")
-                             .arg(QDir::toNativeSeparators(inputMotionName),
-                                  file.errorString()));
-        return;
-    }
-    int numPoints = theValue.toInt();
-
-
-    theValue = jsonObject["dT"];
-    if (theValue.isNull()) {
-        QMessageBox::warning(this, tr("Application"),
-                             tr("Cannot find \"dT\" attribute in file %1:\n%2.")
-                             .arg(QDir::toNativeSeparators(inputMotionName),
-                                  file.errorString()));
-        return;
-    }
-    double dT = theValue.toDouble();
-
-    theValue = jsonObject["accel_data"];
-    if (theValue.isNull()) {
-        QMessageBox::warning(this, tr("Application"),
-                             tr("Cannot find \"accel_data\" attribute in file %1:\n%2.")
-                             .arg(QDir::toNativeSeparators(inputMotionName),
-                                  file.errorString()));
-        return;
-    }
-    QJsonArray data = theValue.toArray();
-
-    // create new vector & read in data
-    Vector *theData = new Vector(numPoints);
-    for (int i=0; i<numPoints; i++) {
-        theValue = data.at(i);
-        (*theData)[i] = theValue.toDouble();
-    }
-
     // create a record and add to records map
-    EarthquakeRecord *theRecord = new EarthquakeRecord(name, numPoints, dT, theData);
-    records.insert(std::make_pair(name, theRecord));
+    EarthquakeRecord *theRecord = new EarthquakeRecord();
+    int ok = theRecord->inputFromJSON(jsonObject);
 
-    // add the motion to ComboBox, & set it current
-    eqMotion->addItem(name);
-    int index = eqMotion->findText(name);
-    eqMotion->setCurrentIndex(index);
+    if (ok == 0) {
+        // inser into records list
+        records.insert(std::make_pair(name, theRecord));
 
-    // close file
+        // add the motion to ComboBox, & set it current
+        eqMotion->addItem(name);
+        int index = eqMotion->findText(name);
+        eqMotion->setCurrentIndex(index);
+
+        needAnalysis = true;
+        analysisFailed = false;
+
+    } else {
+        QMessageBox::warning(this, tr("Application"),
+                             tr("Cannot find an attribute needed in file %1:\n%2.")
+                             .arg(QDir::toNativeSeparators(inputMotionName),
+                                  file.errorString()));
+    }
+
+    // close file & return
     file.close();
-    needAnalysis = true;
-    analysisFailed = false;
+    return;
 }
 
 bool MainWindow::saveFile(const QString &fileName)
