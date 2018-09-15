@@ -9,10 +9,11 @@
 
 extern QLineEdit *
 createTextEntry(QString text,
+                QString toolTip,
                 QVBoxLayout *theLayout,
                 int minL=100,
                 int maxL=100,
-        QString *unitText =0);
+                QString *unitText =0);
 
 
 
@@ -27,7 +28,7 @@ ResponseWidget::ResponseWidget(MainWindow *mainWindow,
     // create a main layout
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
-    theItemEdit = createTextEntry(label, mainLayout);
+    theItemEdit = createTextEntry(label, tr(""), mainLayout);
     theItemEdit->setValidator(new QIntValidator);
     connect(theItemEdit, SIGNAL(editingFinished()), this, SLOT(itemEditChanged()));
 

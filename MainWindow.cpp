@@ -119,6 +119,7 @@ Domain theDomain;
 
 QLineEdit *
 createTextEntry(QString text,
+                QString toolTip,
                 QVBoxLayout *theLayout,
                 int minL=100,
                 int maxL=100,
@@ -143,7 +144,10 @@ createTextEntry(QString text,
         unitLabel->setMinimumWidth(40);
         unitLabel->setMaximumWidth(50);
         entryLayout->addWidget(unitLabel);
+    }
 
+    if (!toolTip.isEmpty()) {
+        res->setToolTip(toolTip);
     }
 
     entryLayout->setSpacing(10);
@@ -276,7 +280,7 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(replyFinished(QNetworkReply*)));
 
     manager->get(QNetworkRequest(QUrl("http://opensees.berkeley.edu/OpenSees/developer/mdof/use.php")));
-    manager->get(QNetworkRequest(QUrl("https://simcenter.designsafe-ci.org/multiple-degrees-freedom-analytics/")));
+  //  manager->get(QNetworkRequest(QUrl("https://simcenter.designsafe-ci.org/multiple-degrees-freedom-analytics/")));
 }
 
 MainWindow::~MainWindow()
@@ -430,7 +434,7 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
         weights[i] = floorW;
         k[i] = K;
         fy[i] = 1.0e100;
-        b[i] = 0.;
+        b[i] = 0.01;
         floorHeights[i] = i*buildingH/(1.*numF);
         storyHeights[i] = buildingH/(1.*numF);
         dampRatios[i] = zeta;
@@ -1128,12 +1132,30 @@ void MainWindow::reset() {
     updatingPropertiesTable = true;
     theSpreadsheet->setHorizontalHeaderLabels(QString(" Weight ; Height ;    K    ;    Fy    ;    b    ;  zeta").split(";"));
     for (int i=0; i<numFloors; i++) {
-        theSpreadsheet->setItem(i,0,new QTableWidgetItem(QString().setNum(weights[i])));
-        theSpreadsheet->setItem(i,1,new QTableWidgetItem(QString().setNum(storyHeights[i])));
-        theSpreadsheet->setItem(i,2,new QTableWidgetItem(QString().setNum(k[i])));
-        theSpreadsheet->setItem(i,3,new QTableWidgetItem(QString().setNum(fy[i])));
-        theSpreadsheet->setItem(i,4,new QTableWidgetItem(QString().setNum(b[i])));
-        theSpreadsheet->setItem(i,5,new QTableWidgetItem(QString().setNum(dampRatios[i])));
+        QTableWidgetItem *item;
+        item = new QTableWidgetItem(QString().setNum(weights[i]));
+        item->setToolTip(QString("weight of floor " + QString::number(i+1)));
+        theSpreadsheet->setItem(i,0, item);
+
+        item = new QTableWidgetItem(QString().setNum(storyHeights[i]));
+        item->setToolTip(QString("height of story " + QString::number(i+1)));
+        theSpreadsheet->setItem(i,1,item);
+
+        item = new QTableWidgetItem(QString().setNum(k[i]));
+        item->setToolTip(QString("stiffness of story " + QString::number(i+1)));
+        theSpreadsheet->setItem(i,2,item);
+
+        item = new QTableWidgetItem(QString().setNum(fy[i]));
+        item->setToolTip(QString("yield strength of story " + QString::number(i+1)));
+        theSpreadsheet->setItem(i,3,item);
+
+        item = new QTableWidgetItem(QString().setNum(b[i]));
+        item->setToolTip(QString("hardening ratio of story " + QString::number(i+1)));
+        theSpreadsheet->setItem(i,4, item);
+
+        item = new QTableWidgetItem(QString().setNum(dampRatios[i]));
+        item->setToolTip(QString("damping ratio of mode " + QString::number(i+1)));
+        theSpreadsheet->setItem(i,5, item);
     }
     theSpreadsheet->resizeRowsToContents();
     theSpreadsheet->resizeColumnsToContents();
@@ -2160,8 +2182,6 @@ void MainWindow::createActions() {
     //aboutAct->setStatusTip(tr("Show the application's About box"));
     QAction *aboutAct = helpMenu->addAction(tr("&Version"), this, &MainWindow::version);
     //aboutAct->setStatusTip(tr("Show the application's About box"));
-
-
     QAction *copyrightAct = helpMenu->addAction(tr("&License"), this, &MainWindow::copyright);
     //aboutAct->setStatusTip(tr("Show the application's About box"));
 
@@ -2220,6 +2240,7 @@ void MainWindow::createInputPanel() {
     QString harmonicString("Harmonic Motion");
     motionType->addItem(eqString);
     motionType->addItem(harmonicString);
+    motionType->setToolTip("from drop down menu select the type of motion to use");
 
     inputLayout->addLayout(inputMotionType);
     motionTypeValue = 0;
@@ -2242,9 +2263,11 @@ void MainWindow::createInputPanel() {
     entryLabel->setText(tr("Input Motion"));
 
     eqMotion = new QComboBox();
+    eqMotion->setToolTip("from drop down select the earthquake motion to use");
 
     QLabel *scaleLabel = new QLabel(tr("Scale Factor"));
     scaleFactorEQ = new QLineEdit();
+    scaleFactorEQ->setToolTip("a scale factor by which the input motion will be multiplied");
     scaleFactorEQ->setMaximumWidth(100);
 
     inputMotionLayout->addWidget(entryLabel,0,0);
@@ -2255,6 +2278,7 @@ void MainWindow::createInputPanel() {
 
 
     addMotion = new QPushButton("Add");
+    addMotion->setToolTip("select if want to add other motions to drop down selection");
     inputMotionLayout->addWidget(addMotion,1,4);
     eqMotionFrame->setLayout(inputMotionLayout);
     inputMotionLayout->setColumnStretch(2,1);
@@ -2279,18 +2303,22 @@ void MainWindow::createInputPanel() {
     QLabel *periodLabel = new QLabel(tr("Period:"));
     QLabel *periodUnit = new QLabel(sec);
     periodHarmonic = new QLineEdit();
+    periodHarmonic->setToolTip("Period of Harmonic Motion");
 
     QLabel *magLabel = new QLabel(tr("PGA:"));
     QLabel *magUnit = new QLabel(g);
     magHarmonic = new QLineEdit();
+    magHarmonic->setToolTip("Magnitude of Harmonic motion");
 
     QLabel *dTLabel = new QLabel(tr("delta T"));
     dtHarmonic = new QLineEdit();
     QLabel *dTUnit = new QLabel(sec);
+    dtHarmonic->setToolTip("the time step to be used in the numerical evaluation of results");
 
     QLabel *tFinalLabel = new QLabel(tr("tFinal"));
     tFinalHarmonic = new QLineEdit();
     QLabel *tFinalUnit = new QLabel(sec);
+    tFinalHarmonic->setToolTip("the duration of the analysis");
 
     // add the widgets to the layout
     harmonicLayout->addWidget(periodLabel,0,0);
@@ -2343,14 +2371,15 @@ void MainWindow::createInputPanel() {
     QFrame *mainProperties = new QFrame();
     mainProperties->setObjectName(QString::fromUtf8("mainProperties")); //styleSheet
     QVBoxLayout *mainPropertiesLayout = new QVBoxLayout();
-    inFloors = createTextEntry(tr("Number Floors"), mainPropertiesLayout, 100, 100, &blank);
-    inWeight = createTextEntry(tr("Building Weight"), mainPropertiesLayout, 100, 100, &kips);
-    inHeight = createTextEntry(tr("Building Height"), mainPropertiesLayout, 100, 100, &inch);
-    inK = createTextEntry(tr("Story Stiffness"), mainPropertiesLayout, 100, 100, &kipsInch);
-    inDamping = createTextEntry(tr("Damping Ratio"), mainPropertiesLayout, 100, 100, &percent);
-    //inGravity =  createTextEntry(tr("Gravity"), mainPropertiesLayout);
+    inFloors = createTextEntry(tr("Number Floors"), tr("number of floors or stories in building"),mainPropertiesLayout, 100, 100, &blank);
+    inWeight = createTextEntry(tr("Building Weight"), tr("total building weight, each floor will have a weight given by weight/ number of floors"), mainPropertiesLayout, 100, 100, &kips);
+    inHeight = createTextEntry(tr("Building Height"), tr("total height of building in inches, each floor will have a height given by total height / number of floors"),mainPropertiesLayout, 100, 100, &inch);
+    inK = createTextEntry(tr("Story Stiffness"), tr("story stiffnesses, that force required to push the floor above 1 inch, assuming all other stories have infinite stiffness"),mainPropertiesLayout, 100, 100, &kipsInch);
+    inDamping = createTextEntry(tr("Damping Ratio"),tr("for each mode of vibraation a number that specifies how quickly the structure stops vibrating in that mode"), mainPropertiesLayout, 100, 100, &percent);
+    //inGravity =  createTextEntry(tr("Gravity"), tr(""), mainPropertiesLayout);
     pDeltaBox = new QCheckBox(tr("Include PDelta"), 0);
     pDeltaBox->setCheckState(Qt::Checked);
+    pDeltaBox->setToolTip("Include \"Large\" P Delta Effects if box is checked");
 
     mainPropertiesLayout->addWidget(pDeltaBox);
     mainProperties->setLayout(mainPropertiesLayout);
@@ -2368,7 +2397,7 @@ void MainWindow::createInputPanel() {
     floorMassFrame = new QFrame();
     floorMassFrame->setObjectName(QString::fromUtf8("floorMassFrame")); //styleSheet
     QVBoxLayout *floorMassFrameLayout = new QVBoxLayout();
-    inFloorWeight = createTextEntry(tr("Floor Weight"), floorMassFrameLayout);
+    inFloorWeight = createTextEntry(tr("Floor Weight"), tr("individual floor weight, will change total weight if edit"),floorMassFrameLayout);
     floorMassFrame->setLayout(floorMassFrameLayout);
     floorMassFrame->setLineWidth(1);
     floorMassFrame->setFrameShape(QFrame::Box);
@@ -2378,10 +2407,10 @@ void MainWindow::createInputPanel() {
     storyPropertiesFrame = new QFrame();
     storyPropertiesFrame->setObjectName(QString::fromUtf8("storyPropertiesFrame"));
     QVBoxLayout *storyPropertiesFrameLayout = new QVBoxLayout();
-    inStoryHeight = createTextEntry(tr("Story Height"), storyPropertiesFrameLayout);
-    inStoryK = createTextEntry(tr("Stiffness"), storyPropertiesFrameLayout);
-    inStoryFy = createTextEntry(tr("Yield Strength"), storyPropertiesFrameLayout);
-    inStoryB = createTextEntry(tr("Hardening Ratio"), storyPropertiesFrameLayout);
+    inStoryHeight = createTextEntry(tr("Story Height"), tr("for stories selected sets story height, effects overall height if edited"), storyPropertiesFrameLayout);
+    inStoryK = createTextEntry(tr("Stiffness"), tr("for stories selected force required to push each floor 1 inch assuming all other floors infinite stiffness"), storyPropertiesFrameLayout);
+    inStoryFy = createTextEntry(tr("Yield Strength"),tr("for stories selected force at which story yields, i.e. if aply more force floor will not return to original position assuming all other rigid"), storyPropertiesFrameLayout);
+    inStoryB = createTextEntry(tr("Hardening Ratio"), tr("for stories selected the hardening ratio defines ratio between original stiffness and current stiffness"), storyPropertiesFrameLayout);
     storyPropertiesFrame->setLayout(storyPropertiesFrameLayout);
     storyPropertiesFrame->setLineWidth(1);
     storyPropertiesFrame->setFrameShape(QFrame::Box);

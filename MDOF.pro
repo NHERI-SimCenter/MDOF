@@ -12,7 +12,7 @@ TARGET = MDOF
 TEMPLATE = app
 
 include(OPS_includes.pro)
-include(../SimCenterWidgets/Common/Common.pri)
+include(../SimCenterCommon/Common/Common.pri)
 
 VERSION=1.1.1
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
