@@ -2458,7 +2458,7 @@ void MainWindow::createInputPanel() {
     QFrame *pushButtons = new QFrame();
     pushButtons->setObjectName(QString::fromUtf8("pushButtons")); //styleSheet
     QHBoxLayout *pushButtonsLayout = new QHBoxLayout();
-    runButton = new QPushButton("Run");
+    runButton = new QPushButton("Play");
     pushButtonsLayout->addWidget(runButton);
     stopButton = new QPushButton("Stop");
     pushButtonsLayout->addWidget(stopButton);
