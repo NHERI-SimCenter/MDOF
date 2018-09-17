@@ -54,7 +54,7 @@ class QCustomPlot;
 class MyGlWidget;
 class QSlider;
 class QCheckBox;
-
+class QStackedWidget;
 
 class MyGlWidget;
 class Vector;
@@ -154,6 +154,8 @@ private slots:
     void version();
     void copyright();
 
+    void onOutputSelectionChanged(int index);
+
     void viewNodeResponse();
     void viewStoryResponse();
 
@@ -248,6 +250,10 @@ private:
     ResponseWidget *theForceTimeResponse;
     ResponseWidget *theForceDispResponse;
 
+    QWidget *graphicOutput;
+    QStackedWidget *theStackedWidget;
+    QComboBox *theOutputSelection;
+
     Ui::MainWindow *ui;
 
     //
@@ -325,6 +331,7 @@ private:
     QNetworkAccessManager *manager;
 
     QString currentFile;
+    bool settingUp;
 };
 
 #endif // MAINWINDOW_H
