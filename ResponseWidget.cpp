@@ -13,7 +13,8 @@ createTextEntry(QString text,
                 QVBoxLayout *theLayout,
                 int minL=100,
                 int maxL=100,
-                QString *unitText =0);
+                QString *unitText =0,
+                bool itemRight = true);
 
 
 
@@ -28,7 +29,7 @@ ResponseWidget::ResponseWidget(MainWindow *mainWindow,
     // create a main layout
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
-    theItemEdit = createTextEntry(label, tr(""), mainLayout);
+    theItemEdit = createTextEntry(label, tr(""), mainLayout, 100, 100, 0, false);
     theItemEdit->setValidator(new QIntValidator);
     connect(theItemEdit, SIGNAL(editingFinished()), this, SLOT(itemEditChanged()));
 

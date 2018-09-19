@@ -123,7 +123,8 @@ createTextEntry(QString text,
                 QVBoxLayout *theLayout,
                 int minL=100,
                 int maxL=100,
-                QString *unitText =0)
+                QString *unitText =0,
+                bool itemRight = true)
 {
     QHBoxLayout *entryLayout = new QHBoxLayout();
     QLabel *entryLabel = new QLabel();
@@ -135,8 +136,12 @@ createTextEntry(QString text,
     res->setValidator(new QDoubleValidator);
 
     entryLayout->addWidget(entryLabel);
-    entryLayout->addStretch();
+    if (itemRight == true)
+        entryLayout->addStretch();
+
     entryLayout->addWidget(res);
+    if (itemRight == false)
+        entryLayout->addStretch();
 
     if (unitText != 0) {
         QLabel *unitLabel = new QLabel();
@@ -242,7 +247,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //
     // create 2 blank motions & make elCentro current
     //
-qDebug() << "ADDING MOTIONS";
+
 settingUp = true;
     QFile file(":/images/ElCentro.json");
     if(file.open(QFile::ReadOnly)) {
@@ -259,19 +264,18 @@ settingUp = true;
 
     QFile fileR(":/images/Rinaldi.json");
     if(fileR.open(QFile::ReadOnly)) {
-       QString jsonText = QLatin1String(fileR.readAll());
-       QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonText.toUtf8());
-       QJsonObject jsonObj = jsonDoc.object();
-       EarthquakeRecord *rinaldi = new EarthquakeRecord();
-       rinaldi->inputFromJSON(jsonObj);
+        QString jsonText = QLatin1String(fileR.readAll());
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonText.toUtf8());
+        QJsonObject jsonObj = jsonDoc.object();
+        EarthquakeRecord *rinaldi = new EarthquakeRecord();
+        rinaldi->inputFromJSON(jsonObj);
 
-       QString recordString("Northridge-Rinaldi");
-       records.insert(std::make_pair(QString("Northridge-Rinaldi"), rinaldi));
-       eqMotion->addItem(recordString);
+        QString recordString("Northridge-Rinaldi");
+        records.insert(std::make_pair(QString("Northridge-Rinaldi"), rinaldi));
+        eqMotion->addItem(recordString);
     }
-settingUp = false;
-qDebug() << "ADDING MOTIONS DONE";
-qDebug() << "SETTING BASIC";
+    settingUp = false;
+
     // create a basic model with defaults
     this->setBasicModel(5, 5*100, 5*144, 31.54, .05, 386.4);
 
@@ -282,7 +286,7 @@ qDebug() << "SETTING BASIC";
             this, SLOT(replyFinished(QNetworkReply*)));
 
     manager->get(QNetworkRequest(QUrl("http://opensees.berkeley.edu/OpenSees/developer/mdof/use.php")));
-  //  manager->get(QNetworkRequest(QUrl("https://simcenter.designsafe-ci.org/multiple-degrees-freedom-analytics/")));
+    //  manager->get(QNetworkRequest(QUrl("https://simcenter.designsafe-ci.org/multiple-degrees-freedom-analytics/")));
 }
 
 MainWindow::~MainWindow()
@@ -2179,7 +2183,7 @@ void MainWindow::createActions() {
 
 
     theForceDispResponse = new ResponseWidget(this, 2, sLabel, dispLabel,forceLabel);
-    QDockWidget *forceDriftResponseDock = new QDockWidget(tr("Story Force-Displacement"), this);
+    QDockWidget *forceDriftResponseDock = new QDockWidget(tr("Story Force Versus Displacement"), this);
     forceDriftResponseDock->setWidget(theForceDispResponse);
     forceDriftResponseDock->setAllowedAreas(Qt::NoDockWidgetArea);
     forceDriftResponseDock->setFloating(true);
@@ -2645,8 +2649,8 @@ void MainWindow::createOutputPanel() {
     myGL->setMinimumHeight(300);
     myGL->setMinimumWidth(250);
     myGL->setModel(this);
-   // outputLayout->addWidget(myGL,1.0);
-   displacementLayout->addWidget(myGL,1.0);
+    // outputLayout->addWidget(myGL,1.0);
+    displacementLayout->addWidget(myGL,1.0);
 
     // input acceleration plot
     earthquakePlot=new QCustomPlot();
@@ -2664,7 +2668,8 @@ void MainWindow::createOutputPanel() {
     // slider for manual movement
     slider=new QSlider(Qt::Horizontal);
     //
-    displacementLayout->addWidget(slider);
+
+    //displacementLayout->addWidget(slider);
 
     // output frame to show current time
     QFrame *outputDataFrame = new QFrame();
@@ -2676,8 +2681,8 @@ void MainWindow::createOutputPanel() {
     outputDataFrame->setLineWidth(1);
     outputDataFrame->setFrameShape(QFrame::Box);
     outputDataFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-   // outputLayout->addWidget(outputDataFrame);
-   displacementLayout->addWidget(outputDataFrame);
+
+    // displacementLayout->addWidget(outputDataFrame);
 
     displacementLayout->setMargin(0);
 
@@ -2700,8 +2705,9 @@ void MainWindow::createOutputPanel() {
      theStackedWidget->insertWidget(2, theForceTimeResponse);
      theStackedWidget->insertWidget(3, theForceDispResponse);
 
-
     outputLayout->addWidget(theStackedWidget);
+    outputLayout->addWidget(slider);
+    outputLayout->addWidget(outputDataFrame);
     outputLayout->addWidget(earthquakePlot);
 
     // add layout to mainLayout and to largeLayout
