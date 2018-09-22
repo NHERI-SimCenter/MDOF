@@ -86,6 +86,16 @@ ResponseWidget::itemEditChanged() {
 void
 ResponseWidget::setData(QVector<double> &data, QVector<double> &time, int numSteps, double dt) {
 
+    if (time.size() != data.size()) {
+        qDebug() << "ResponseWidget - setData vectors of differing sizes";
+        return;
+    }
+
+    if (time.size() != numSteps) {
+        qDebug() << "ResponseWidget - setData vector and step size do not agree";
+        return;
+    }
+
     thePlot->clearGraphs();
     graph = thePlot->addGraph();
 

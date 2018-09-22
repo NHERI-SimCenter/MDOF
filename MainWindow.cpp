@@ -218,6 +218,10 @@ MainWindow::MainWindow(QWidget *parent) :
     time(1561),excitationValues(1561), graph(0), groupTracer(0),floorSelected(-1),storySelected(-1)
 {
 
+    aData = 0;
+    aMotion = 0;
+   // analysisMotionData = new Vector();
+
     scaleFactor = 1.0;
     eigValues = new Vector;
     createActions();
@@ -367,7 +371,6 @@ void MainWindow::updatePeriod()
 
 void MainWindow::setBasicModel(int numF, double W, double H, double K, double zeta, double grav)
 {
-    qDebug() << "MAinWindow - set BasicModel " << numF << " " << numFloors;
     if (numFloors != numF) {
         // if invalid numFloor, return
         if (numF <= 0) {
@@ -467,7 +470,7 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
     tFinalHarmonic->setText(QString::number(tFinalHarmonicMotion));
     needAnalysis = true;
 
-    numStepHarmonic = tFinalHarmonicMotion/dtHarmonicMotion+1;
+    numStepHarmonic = tFinalHarmonicMotion/dtHarmonicMotion;
     harmonicData = new Vector(numStepHarmonic);
     for (int i=0; i<numStepHarmonic; i++)
         (*harmonicData)(i) = magHarmonicMotion*sin(2*3.14159*i*dtHarmonicMotion/periodHarmonicMotion);
@@ -541,7 +544,7 @@ MainWindow::on_dtHarmonicChanged()
         needAnalysis = true;
         if (harmonicData != 0)
             delete harmonicData;
-        numStepHarmonic = tFinalHarmonicMotion/dtHarmonicMotion+1;
+        numStepHarmonic = tFinalHarmonicMotion/dtHarmonicMotion;
         harmonicData = new Vector(numStepHarmonic);
         for (int i=0; i<numStepHarmonic; i++)
             (*harmonicData)(i) = magHarmonicMotion*sin(2*3.14159*i*dtHarmonicMotion/periodHarmonicMotion);
@@ -561,7 +564,7 @@ MainWindow::on_tFinalHarmonicChanged()
         tFinalHarmonicMotion = newDouble;
         if (harmonicData != 0)
             delete harmonicData;
-        numStepHarmonic = tFinalHarmonicMotion/dtHarmonicMotion+1;
+        numStepHarmonic = tFinalHarmonicMotion/dtHarmonicMotion;
         harmonicData = new Vector(numStepHarmonic);
         for (int i=0; i<numStepHarmonic; i++)
             (*harmonicData)(i) = magHarmonicMotion*sin(2*3.14159*i*dtHarmonicMotion/periodHarmonicMotion);
@@ -862,9 +865,8 @@ void MainWindow::on_inStoryB_editingFinished()
 void MainWindow::doAnalysis()
 { 
     if (needAnalysis == true && analysisFailed == false) {
-        qDebug() << "DO ANALYSIS";
 
-      //        qDebug() << "doANALYSIS";
+        qDebug() << "DO ANALYSIS";
 
         // clear existinqDebugg model
         theDomain.clearAll();
@@ -1055,9 +1057,6 @@ void MainWindow::doAnalysis()
         // clean up memory
         delete [] theNodes;
         delete [] theElements;
-
-        // reset values, i.e. slider position, current displayed step...
-        qDebug() << "SETTING MAX DISP";
 
         maxDispLabel->setText(QString().setNum(maxDisp,'f',2));
 
@@ -1420,11 +1419,14 @@ void MainWindow::on_PeriodSelectionChanged(const QString &arg1) {
 
 void MainWindow::on_motionTypeSelectionChanged(const QString &arg1)
 {
+    qDebug() << "IN_MOTION_SELECTION";
+
     if (arg1 == QString(tr("Harmonic Motion"))) {
         motionTypeValue = 1;
         eqMotionFrame->setVisible(false);
         harmonicMotionFrame->setVisible(true);
         scaleFactor=1.0;
+        qDebug() << "CALLING SET DATA";
         this->setData(numStepHarmonic, dtHarmonicMotion, harmonicData);
 
     } else {
@@ -1432,7 +1434,7 @@ void MainWindow::on_motionTypeSelectionChanged(const QString &arg1)
         harmonicMotionFrame->setVisible(false);
         eqMotionFrame->setVisible(true);
         scaleFactor=(scaleFactorEQ->text()).toDouble();
-
+         qDebug() << "CALLING SET DATA";
          this->setData(numStepEarthquake, dtEarthquakeMotion, eqData);
     }
    // this->doAnalysis();
@@ -1441,25 +1443,105 @@ void MainWindow::on_motionTypeSelectionChanged(const QString &arg1)
     return;
 }
 
+void MainWindow::onAnalysisDurationEditingChanged() {
 
-void MainWindow::setData(int nStep, double deltaT, Vector *data) {
+
+    double newDuration = analysisDuration->text().toDouble();
+
+    // test if valid
+
+    if ((newDuration <= 0) || dt == 0) {
+        if (dt == 0.0) {
+            qDebug() << "dt = 0 in analysisDurationChanged";
+            return;
+        }
+        analysisDuration->setText(QString::number(theAnalysisDuration));
+
+    } else if (newDuration != theAnalysisDuration) {
+
+        //
+        // if not same as existing, create a new motion, use the original motion
+        //
+
+         int aStep = newDuration/dt;
+
+
+         if (aMotion != 0) {
+             delete [] aMotion;
+         }
+         if (aData != 0) {
+             delete aData;
+         }
+         aMotion = new double[aStep];
+         aData = new Vector(aMotion, aStep);
+         for (int i=0; i<aStep; i++) {
+             if (i < origMotionNumSteps)
+                 aMotion[i] = (*origMotion)[i];
+             else
+                 aMotion[i] = 0.0;
+         }
+         this->setData(aStep, dt, aData, false);
+
+        this->doAnalysis();
+    }
+}
+
+void MainWindow::setData(int nStep, double deltaT, Vector *data, bool settingOriginal) {
+
+    if (nStep == 0) {
+      qDebug() << "numStep = 0 in setData";
+      return;
+    }
+
+    if (deltaT <= 0.0) {
+        qDebug() << "deltaT = 0 in setData";
+        return;
+
+    }
+
+    if (data == 0) {
+        qDebug() << "data = 0 in setData";
+        return;
+    }
+    //
+    // set new data
+    //
 
     numSteps = nStep;
     dt = deltaT;
     motionData = data;
 
+    if (settingOriginal == true) {
+        origMotion = data;
+        origMotionNumSteps = numSteps;
+    }
+
+    //
+    // change UI
+    //
+
+    // duration
+    if (settingOriginal == true) {
+        theAnalysisDuration = dt*numSteps;
+        analysisDuration->setText(QString::number(theAnalysisDuration));
+    }
+
     double maxValue = 0;
+
+    // response data for ResponseWidgets
 
     if (dispResponses != 0) {
         for (int j=0; j<numFloors+1; j++)
             delete [] dispResponses[j];
         delete [] dispResponses;
     }
+
     if (storyForceResponses != 0) {
         for (int j=0; j<numFloors; j++)
             delete [] storyForceResponses[j];
         delete [] storyForceResponses;
     }
+
     if (storyDriftResponses != 0) {
         for (int j=0; j<numFloors; j++)
             delete [] storyDriftResponses[j];
@@ -1478,7 +1560,7 @@ void MainWindow::setData(int nStep, double deltaT, Vector *data) {
         }
     }
 
-
+    // motion plot
     excitationValues.resize(numSteps);
     time.resize(numSteps);
 
@@ -1507,7 +1589,7 @@ void MainWindow::setData(int nStep, double deltaT, Vector *data) {
     earthquakePlot->update();
 
 
-  /*
+   /*
     if (groupTracer != 0)
         delete groupTracer;
     groupTracer = new QCPItemTracer(earthquakePlot);
@@ -1518,14 +1600,11 @@ void MainWindow::setData(int nStep, double deltaT, Vector *data) {
     groupTracer->setPen(QPen(Qt::red));
     groupTracer->setBrush(Qt::red);
     groupTracer->setSize(7);
-*/
+    */
     // reset slider range
     slider->setRange(0, numSteps);
 
     needAnalysis = true;
-  //  this->reset();
-  //  myGL->update();
-    qDebug() << "SET DATA";
 }
 
 
@@ -1881,15 +1960,13 @@ void MainWindow::about()
 
 void MainWindow::submitFeedback()
 {
-   // QDesktopServices::openUrl(QUrl("https://github.com/NHERI-SimCenter/MDOF/issues", QUrl::TolerantMode));
- QDesktopServices::openUrl(QUrl("https://www.designsafe-ci.org/help/new-ticket/", QUrl::TolerantMode));
-    }
+    // QDesktopServices::openUrl(QUrl("https://github.com/NHERI-SimCenter/MDOF/issues", QUrl::TolerantMode));
+    QDesktopServices::openUrl(QUrl("https://www.designsafe-ci.org/help/new-ticket/", QUrl::TolerantMode));
+}
 
 
 
-void MainWindow::loadFile(const QString &fileName)
-{
-
+void MainWindow::loadFile(const QString &fileName) {
     //
     // open files
 
@@ -2330,7 +2407,7 @@ void MainWindow::createInputPanel() {
     QLabel *dTUnit = new QLabel(sec);
     dtHarmonic->setToolTip("the time step to be used in the numerical evaluation of results");
 
-    QLabel *tFinalLabel = new QLabel(tr("tFinal"));
+    QLabel *tFinalLabel = new QLabel(tr("Duration"));
     tFinalHarmonic = new QLineEdit();
     QLabel *tFinalUnit = new QLabel(sec);
     tFinalHarmonic->setToolTip("the duration of the analysis");
@@ -2360,6 +2437,15 @@ void MainWindow::createInputPanel() {
     harmonicMotionFrame->setFrameShape(QFrame::Box);
 
     inputLayout->addWidget(harmonicMotionFrame);
+
+    QFrame *durationF = new QFrame();
+    durationF->setObjectName(QString::fromUtf8("mainProperties")); //styleSheet
+    QVBoxLayout *durationLayout = new QVBoxLayout();
+    analysisDuration = createTextEntry(tr("Analysis Duration"), tr("Duration of simulation"),durationLayout, 100, 100, &sec);
+    durationF->setLayout(durationLayout);
+
+    inputLayout->addWidget(durationF);
+
 
     //
     // Create a section line
@@ -2512,6 +2598,7 @@ void MainWindow::createInputPanel() {
     connect(periodHarmonic,SIGNAL(editingFinished()), this, SLOT(on_periodHarmonicChanged()));
     connect(dtHarmonic,SIGNAL(editingFinished()), this, SLOT(on_dtHarmonicChanged()));
     connect(tFinalHarmonic,SIGNAL(editingFinished()), this, SLOT(on_tFinalHarmonicChanged()));
+    connect(analysisDuration,SIGNAL(editingFinished()),this,SLOT(onAnalysisDurationEditingChanged()));
 
     connect(pDeltaBox, SIGNAL(stateChanged(int)), this, SLOT(on_includePDeltaChanged(int)));
     connect(addMotion,SIGNAL(clicked()), this, SLOT(on_addMotion_clicked()));

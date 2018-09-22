@@ -158,11 +158,12 @@ private slots:
 
     void viewNodeResponse();
     void viewStoryResponse();
+    void onAnalysisDurationEditingChanged();
 
 private:
     void updatePeriod();
     void setBasicModel(int numFloors, double buildingW, double buildingH, double storyK, double zeta, double grav);
-    void setData(int numSteps, double dT, Vector *data);
+    void setData(int numSteps, double dT, Vector *data, bool settingOriginalMotion = true);
     void reset(void);
 
     // methods to create some of the main layouts
@@ -199,6 +200,9 @@ private:
     QLineEdit *magHarmonic;
     QLineEdit *dtHarmonic;
     QLineEdit *tFinalHarmonic;
+
+    QLineEdit *analysisDuration;
+    double theAnalysisDuration;
 
     // global properties inputs when nothing slected
     QLineEdit *inFloors;
@@ -284,6 +288,14 @@ private:
     int numSteps;
     double *gMotion;
     Vector *motionData;
+
+    //Vector *analysisMotionData;
+    //int analysisNumSteps;
+    double *aMotion;
+    Vector *aData;
+    Vector *origMotion;
+    int origMotionNumSteps;
+
     double scaleFactor;
 
     int numStepEarthquake;
