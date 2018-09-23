@@ -218,6 +218,10 @@ MainWindow::MainWindow(QWidget *parent) :
     time(1561),excitationValues(1561), graph(0), groupTracer(0),floorSelected(-1),storySelected(-1)
 {
 
+    pulseData = 0;
+    harmonicData = 0;
+    eqData = 0;
+
     aData = 0;
     aMotion = 0;
    // analysisMotionData = new Vector();
@@ -252,18 +256,18 @@ MainWindow::MainWindow(QWidget *parent) :
     // create 2 blank motions & make elCentro current
     //
 
-settingUp = true;
+    settingUp = true;
     QFile file(":/images/ElCentro.json");
     if(file.open(QFile::ReadOnly)) {
-       QString jsonText = QLatin1String(file.readAll());
-       QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonText.toUtf8());
-       QJsonObject jsonObj = jsonDoc.object();
-       EarthquakeRecord *elCentro = new EarthquakeRecord();
-       elCentro->inputFromJSON(jsonObj);
+        QString jsonText = QLatin1String(file.readAll());
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonText.toUtf8());
+        QJsonObject jsonObj = jsonDoc.object();
+        EarthquakeRecord *elCentro = new EarthquakeRecord();
+        elCentro->inputFromJSON(jsonObj);
 
-       QString recordString("ElCentro");
-       records.insert(std::make_pair(QString("ElCentro"), elCentro));
-       eqMotion->addItem(recordString);
+        QString recordString("ElCentro");
+        records.insert(std::make_pair(QString("ElCentro"), elCentro));
+        eqMotion->addItem(recordString);
     }
 
     QFile fileR(":/images/Rinaldi.json");
@@ -353,13 +357,13 @@ void MainWindow::draw(MyGlWidget *theGL)
     theGL->drawBuffers();
 
     // update red dot on earthquake plot
-/*
+    /*
     groupTracer->setGraph(0);
     groupTracer->setGraph(graph);
     groupTracer->setGraphKey(currentStep*dt);
     groupTracer->updatePosition();
     //earthquakePlot->replot();
-*/
+     */
 }
 
 
@@ -464,16 +468,30 @@ void MainWindow::setBasicModel(int numF, double W, double H, double K, double ze
     dtHarmonicMotion = 0.02;
     tFinalHarmonicMotion = 10.0;
 
+    magPulseMotion = 1.0;
+    dtPulseMotion = 0.02;
+    tFinalPulseMotion = 10.0;
+
+
     periodHarmonic->setText(QString::number(periodHarmonicMotion));
     magHarmonic->setText(QString::number(magHarmonicMotion));
     dtHarmonic->setText(QString::number(dtHarmonicMotion));
     tFinalHarmonic->setText(QString::number(tFinalHarmonicMotion));
+
+    magPulse->setText(QString::number(magPulseMotion));
+    dtPulse->setText(QString::number(dtPulseMotion));
+    tFinalPulse->setText(QString::number(tFinalPulseMotion));
     needAnalysis = true;
 
     numStepHarmonic = tFinalHarmonicMotion/dtHarmonicMotion;
     harmonicData = new Vector(numStepHarmonic);
     for (int i=0; i<numStepHarmonic; i++)
         (*harmonicData)(i) = magHarmonicMotion*sin(2*3.14159*i*dtHarmonicMotion/periodHarmonicMotion);
+
+    numStepPulse = tFinalPulseMotion/dtPulseMotion;
+    pulseData = new Vector(numStepPulse);
+    for (int i=0; i<numStepPulse; i++)
+        (*pulseData)(i) = magPulseMotion;
 
     theNodeResponse->setItem(numF);
     theForceDispResponse->setItem(1);
@@ -554,7 +572,6 @@ MainWindow::on_dtHarmonicChanged()
  }
 }
 
-
 void
 MainWindow::on_tFinalHarmonicChanged()
 {
@@ -575,6 +592,70 @@ MainWindow::on_tFinalHarmonicChanged()
         this->reset();
  }
 }
+
+void
+MainWindow::on_magPulseChanged()
+{
+    QString newText =  magPulse->text();
+    double  newDouble = newText.toDouble();
+    if (newDouble != magPulseMotion) {
+        magPulseMotion = newDouble;
+
+        for (int i=0; i<numStepPulse; i++)
+            (*pulseData)(i) = magPulseMotion;
+
+        this->setData(numStepPulse, dtPulseMotion, pulseData);
+        needAnalysis = true;
+        this->reset();
+ }
+}
+
+
+void
+MainWindow::on_dtPulseChanged()
+{
+    QString newText =  dtPulse->text();
+    double  newDouble = newText.toDouble();
+    if (newDouble != dtPulseMotion) {
+        dtPulseMotion = newDouble;
+
+        needAnalysis = true;
+        if (pulseData != 0)
+            delete pulseData;
+        numStepPulse = tFinalPulseMotion/dtPulseMotion;
+        pulseData = new Vector(numStepPulse);
+        for (int i=0; i<numStepPulse; i++)
+            (*pulseData)(i) = magPulseMotion;
+
+        this->setData(numStepPulse, dtPulseMotion, pulseData);
+        this->reset();
+ }
+}
+
+
+void
+MainWindow::on_tFinalPulseChanged()
+{
+    QString newText =  tFinalPulse->text();
+    double  newDouble = newText.toDouble();
+    if (newDouble != tFinalPulseMotion) {
+        tFinalPulseMotion = newDouble;
+        if (pulseData != 0)
+            delete pulseData;
+        numStepPulse = tFinalPulseMotion/dtPulseMotion;
+        pulseData = new Vector(numStepPulse);
+        for (int i=0; i<numStepPulse; i++)
+            (*pulseData)(i) = magPulseMotion;
+
+        this->setData(numStepPulse, dtPulseMotion, pulseData);
+        analysisDuration->setText(QString::number(numStepPulse*dtPulseMotion*2));
+        this->onAnalysisDurationEditingChanged();
+
+        needAnalysis = true;
+        this->reset();
+ }
+}
+
 
 
 void MainWindow::on_inFloors_editingFinished()
@@ -1250,6 +1331,10 @@ void MainWindow::on_runButton_clicked()
     do { //while (currentStep < numSteps && stopRun == false){
 
         slider->setSliderPosition(currentStep);
+
+        currentTime->setText(QString().setNum(currentStep*dt,'f',2));
+        currentDisp->setText(QString().setNum(dispResponses[numFloors][currentStep],'f',2));
+
         myGL->repaint();
         QCoreApplication::processEvents();
 
@@ -1268,6 +1353,9 @@ void MainWindow::on_slider_valueChanged(int value)
             myGL->update();
         }
         currentStep = slider->value();
+
+        currentTime->setText(QString().setNum(currentStep*dt,'f',2));
+        currentDisp->setText(QString().setNum(dispResponses[numFloors][currentStep],'f',2));
 
         myGL->repaint();
     }
@@ -1419,23 +1507,34 @@ void MainWindow::on_PeriodSelectionChanged(const QString &arg1) {
 
 void MainWindow::on_motionTypeSelectionChanged(const QString &arg1)
 {
-    qDebug() << "IN_MOTION_SELECTION";
+    qDebug() << "IN_MOTION_SELECTION" << arg1;
 
     if (arg1 == QString(tr("Harmonic Motion"))) {
         motionTypeValue = 1;
         eqMotionFrame->setVisible(false);
         harmonicMotionFrame->setVisible(true);
+        pulseMotionFrame->setVisible(false);
         scaleFactor=1.0;
-        qDebug() << "CALLING SET DATA";
         this->setData(numStepHarmonic, dtHarmonicMotion, harmonicData);
 
+    } else if (arg1 == QString(tr("Pulse Motion"))) {
+
+        motionTypeValue = 2;
+        eqMotionFrame->setVisible(false);
+        harmonicMotionFrame->setVisible(false);
+        pulseMotionFrame->setVisible(true);
+        scaleFactor=1.0;
+        this->setData(numStepPulse, dtPulseMotion, pulseData);
+        analysisDuration->setText(QString::number(numStepPulse*dtPulseMotion*2));
+        this->onAnalysisDurationEditingChanged();
+
     } else {
+
         motionTypeValue = 0;
         harmonicMotionFrame->setVisible(false);
         eqMotionFrame->setVisible(true);
         scaleFactor=(scaleFactorEQ->text()).toDouble();
-         qDebug() << "CALLING SET DATA";
-         this->setData(numStepEarthquake, dtEarthquakeMotion, eqData);
+        this->setData(numStepEarthquake, dtEarthquakeMotion, eqData);
     }
    // this->doAnalysis();
     needAnalysis = true;
@@ -1577,7 +1676,7 @@ void MainWindow::setData(int nStep, double deltaT, Vector *data, bool settingOri
     graph = earthquakePlot->addGraph();
     earthquakePlot->graph(0)->setData(time, excitationValues);
     earthquakePlot->xAxis->setRange(0, numSteps*dt);
-    earthquakePlot->yAxis->setRange(-maxValue, maxValue);
+    earthquakePlot->yAxis->setRange(-maxValue*1.05, maxValue*1.05);
     earthquakePlot->axisRect()->setAutoMargins(QCP::msNone);
     earthquakePlot->axisRect()->setMargins(QMargins(0,0,0,0));
 
@@ -2330,8 +2429,10 @@ void MainWindow::createInputPanel() {
     inputMotionType->addWidget(motionType);
     QString eqString("Earthquake Motion");
     QString harmonicString("Harmonic Motion");
+    QString pulseString("Pulse Motion");
     motionType->addItem(eqString);
     motionType->addItem(harmonicString);
+    motionType->addItem(pulseString);
     motionType->setToolTip("from drop down menu select the type of motion to use");
 
     inputLayout->addLayout(inputMotionType);
@@ -2340,7 +2441,7 @@ void MainWindow::createInputPanel() {
     // JUST EARTHQUAKE inputLayout->addWidget(inTitle);
 
     //
-    // create the frame for the earthquake motion selection
+    // create the frame for Earthquake Motion
     //
 
     eqMotionFrame = new QFrame(); //styleSheet
@@ -2366,8 +2467,6 @@ void MainWindow::createInputPanel() {
     inputMotionLayout->addWidget(eqMotion,0,1);
     inputMotionLayout->addWidget(scaleLabel,0,3);
     inputMotionLayout->addWidget(scaleFactorEQ,0,4);
-   // inputMotionLayout->addStretch();
-
 
     addMotion = new QPushButton("Add");
     addMotion->setToolTip("select if want to add other motions to drop down selection");
@@ -2405,12 +2504,12 @@ void MainWindow::createInputPanel() {
     QLabel *dTLabel = new QLabel(tr("delta T"));
     dtHarmonic = new QLineEdit();
     QLabel *dTUnit = new QLabel(sec);
-    dtHarmonic->setToolTip("the time step to be used in the numerical evaluation of results");
+    dtHarmonic->setToolTip("The time step to be used in the numerical evaluation of results");
 
     QLabel *tFinalLabel = new QLabel(tr("Duration"));
     tFinalHarmonic = new QLineEdit();
     QLabel *tFinalUnit = new QLabel(sec);
-    tFinalHarmonic->setToolTip("the duration of the analysis");
+    tFinalHarmonic->setToolTip("The duration of the sine wave motion");
 
     // add the widgets to the layout
     harmonicLayout->addWidget(periodLabel,0,0);
@@ -2437,6 +2536,57 @@ void MainWindow::createInputPanel() {
     harmonicMotionFrame->setFrameShape(QFrame::Box);
 
     inputLayout->addWidget(harmonicMotionFrame);
+
+    //
+    // create the frame for the pulse motion
+    //
+
+    // frame to hold it with QGridLayout
+    pulseMotionFrame = new QFrame(); //style sheet
+    pulseMotionFrame->setObjectName(QString::fromUtf8("inputMotion")); //styleSheet
+
+    QGridLayout *pulseLayout = new QGridLayout();
+
+    QLabel *magLabel1 = new QLabel(tr("PGA:"));
+    QLabel *magUnit1 = new QLabel(g);
+    magPulse = new QLineEdit();
+    magPulse->setToolTip("Magnitude of Pulse motion");
+
+    QLabel *dTLabel1 = new QLabel(tr("delta T"));
+    dtPulse = new QLineEdit();
+    QLabel *dTUnit1 = new QLabel(sec);
+    dtPulse->setToolTip("The time step to be used in the numerical evaluation of results");
+
+    QLabel *tFinalLabel1 = new QLabel(tr("Duration"));
+    tFinalPulse = new QLineEdit();
+    QLabel *tFinalUnit1 = new QLabel(sec);
+    tFinalPulse->setToolTip("The duration of the Pulse ");
+
+    // add the widgets to the layout
+    pulseLayout->addWidget(magLabel1,0,0);
+    pulseLayout->addWidget(magPulse,0,1);
+    pulseLayout->addWidget(magUnit1,0,2);
+
+    pulseLayout->setColumnStretch(3,1);
+
+    pulseLayout->addWidget(dTLabel1,0,4);
+    pulseLayout->addWidget(dtPulse,0,5);
+    pulseLayout->addWidget(dTUnit1,0,6);
+
+    pulseLayout->addWidget(tFinalLabel1,1,4);
+    pulseLayout->addWidget(tFinalPulse,1,5);
+    pulseLayout->addWidget(tFinalUnit1,1,6);
+
+    pulseMotionFrame->setVisible(false);
+    pulseMotionFrame->setLayout(pulseLayout);
+    pulseMotionFrame->setLineWidth(1);
+    pulseMotionFrame->setFrameShape(QFrame::Box);    
+
+    inputLayout->addWidget(pulseMotionFrame);
+
+    //
+    // add a frame for analysis duration below motion selection
+    //
 
     QFrame *durationF = new QFrame();
     durationF->setObjectName(QString::fromUtf8("mainProperties")); //styleSheet
@@ -2576,6 +2726,10 @@ void MainWindow::createInputPanel() {
     dtHarmonic->setValidator(new QDoubleValidator);
     tFinalHarmonic->setValidator(new QDoubleValidator);
 
+    magPulse->setValidator(new QDoubleValidator);
+    dtPulse->setValidator(new QDoubleValidator);
+    tFinalPulse->setValidator(new QDoubleValidator);
+
     inFloors->setValidator(new QIntValidator);
     inWeight->setValidator(new QDoubleValidator);
     inHeight->setValidator(new QDoubleValidator);
@@ -2598,6 +2752,10 @@ void MainWindow::createInputPanel() {
     connect(periodHarmonic,SIGNAL(editingFinished()), this, SLOT(on_periodHarmonicChanged()));
     connect(dtHarmonic,SIGNAL(editingFinished()), this, SLOT(on_dtHarmonicChanged()));
     connect(tFinalHarmonic,SIGNAL(editingFinished()), this, SLOT(on_tFinalHarmonicChanged()));
+    connect(magPulse,SIGNAL(editingFinished()), this, SLOT(on_periodPulseChanged()));
+    connect(dtPulse,SIGNAL(editingFinished()), this, SLOT(on_dtPulseChanged()));
+    connect(tFinalPulse,SIGNAL(editingFinished()), this, SLOT(on_tFinalPulseChanged()));
+
     connect(analysisDuration,SIGNAL(editingFinished()),this,SLOT(onAnalysisDurationEditingChanged()));
 
     connect(pDeltaBox, SIGNAL(stateChanged(int)), this, SLOT(on_includePDeltaChanged(int)));
