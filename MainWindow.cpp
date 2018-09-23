@@ -1161,6 +1161,10 @@ void MainWindow::doAnalysis()
         int storyForceTime = theForceTimeResponse->getItem() -1;
         //int storyForceDrift = theForceDispResponse->getItem() -1;
 
+        //
+        // store the responses in vectors for plotting
+        //
+
         nodeResponseValues.resize(numSteps);
         storyForceValues.resize(numSteps);
         storyDriftValues.resize(numSteps);
@@ -1171,11 +1175,20 @@ void MainWindow::doAnalysis()
             storyDriftValues[i]=storyDriftResponses[storyForceTime][i];
         }
 
-        theNodeResponse->setData(nodeResponseValues,time,numSteps,dt);
-        theForceTimeResponse->setData(storyForceValues,time,numSteps,dt);
-        theForceDispResponse->setData(storyForceValues,storyDriftValues,numSteps);
+        //
+        // set plot data in the Response Widgets
+        //
+
+        theNodeResponse->setData(nodeResponseValues,time,numSteps,dt, nodeResponseFloor);
+        theForceTimeResponse->setData(storyForceValues,time,numSteps,dt, storyForceTime);
+        theForceDispResponse->setData(storyForceValues,storyDriftValues,numSteps, storyForceTime);
+
     }
 }
+
+//
+// this is a callback function response widgets call when data spin box changes
+//
 
 void
 MainWindow::setResponse(int floor, int mainItem)
@@ -1185,7 +1198,7 @@ MainWindow::setResponse(int floor, int mainItem)
             for (int i = 0; i < numSteps; ++i) {
                 nodeResponseValues[i]=dispResponses[floor][i];
             }
-            theNodeResponse->setData(nodeResponseValues,time,numSteps,dt);
+            theNodeResponse->setData(nodeResponseValues,time,numSteps,dt,-1);
         }
     } else if (mainItem == 1 || mainItem == 2) {
         if (floor > 0 && floor <= numFloors) {
@@ -1193,8 +1206,8 @@ MainWindow::setResponse(int floor, int mainItem)
                 storyForceValues[i]=storyForceResponses[floor-1][i];
                 storyDriftValues[i]=storyDriftResponses[floor-1][i];
             }
-            theForceTimeResponse->setData(storyForceValues,time,numSteps,dt);
-            theForceDispResponse->setData(storyForceValues,storyDriftValues,numSteps);
+            theForceTimeResponse->setData(storyForceValues,time,numSteps,dt, -1);
+            theForceDispResponse->setData(storyForceValues,storyDriftValues,numSteps, -1);
             if (mainItem == 1)
                 theForceDispResponse->setItem(floor);
             else
@@ -2752,7 +2765,7 @@ void MainWindow::createInputPanel() {
     connect(periodHarmonic,SIGNAL(editingFinished()), this, SLOT(on_periodHarmonicChanged()));
     connect(dtHarmonic,SIGNAL(editingFinished()), this, SLOT(on_dtHarmonicChanged()));
     connect(tFinalHarmonic,SIGNAL(editingFinished()), this, SLOT(on_tFinalHarmonicChanged()));
-    connect(magPulse,SIGNAL(editingFinished()), this, SLOT(on_periodPulseChanged()));
+    connect(magPulse,SIGNAL(editingFinished()), this, SLOT(on_magPulseChanged()));
     connect(dtPulse,SIGNAL(editingFinished()), this, SLOT(on_dtPulseChanged()));
     connect(tFinalPulse,SIGNAL(editingFinished()), this, SLOT(on_tFinalPulseChanged()));
 
