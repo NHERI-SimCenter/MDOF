@@ -2082,7 +2082,7 @@ void MainWindow::copyright()
 void MainWindow::version()
 {
     QMessageBox::about(this, tr("Version"),
-                       tr("Version 1.1.1 "));
+                       tr("Version 1.2.0 "));
 }
 
 void MainWindow::about()
@@ -2120,8 +2120,8 @@ void MainWindow::about()
 
 void MainWindow::submitFeedback()
 {
-    // QDesktopServices::openUrl(QUrl("https://github.com/NHERI-SimCenter/MDOF/issues", QUrl::TolerantMode));
-    QDesktopServices::openUrl(QUrl("https://www.designsafe-ci.org/help/new-ticket/", QUrl::TolerantMode));
+    QDesktopServices::openUrl(QUrl("https://github.com/NHERI-SimCenter/MDOF/issues", QUrl::TolerantMode));
+    //QDesktopServices::openUrl(QUrl("https://www.designsafe-ci.org/help/new-ticket/", QUrl::TolerantMode));
 }
 
 
