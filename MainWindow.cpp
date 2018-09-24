@@ -264,12 +264,15 @@ MainWindow::MainWindow(QWidget *parent) :
     widget->setLayout(largeLayout);
     this->setCentralWidget(widget);
 
-    QRect rec = QApplication::desktop()->screenGeometry();
+    //
+    // adjust size of application window to the available display
+    //
 
-    int height = 0.7*rec.height();
-    int width = 0.7*rec.width();
-
+    QRect rec = QGuiApplication::primaryScreen()->geometry();
+    int height = this->height()<int(0.85*rec.height())?int(0.8*rec.height()):this->height();
+    int width  = this->width()<int(0.85*rec.width())?int(0.8*rec.width()):this->width();
     this->resize(width, height);
+
 
     //
     // create 2 blank motions & make elCentro current
