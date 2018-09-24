@@ -85,6 +85,11 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <GroundMotion.h>
 #include <UniformExcitation.h>
 
+#include <QSettings>
+#include <QVariant>
+#include <QUuid>
+#include <QHostInfo>
+
 #include <Newmark.h>
 #include <RCM.h>
 #include <PlainNumberer.h>
@@ -218,6 +223,20 @@ MainWindow::MainWindow(QWidget *parent) :
     time(1561),excitationValues(1561), graph(0), groupTracer(0),floorSelected(-1),storySelected(-1)
 {
 
+    //
+    // user settings
+    //
+
+    QSettings settings("SimCenter", "uqFEM");
+    QVariant savedValue = settings.value("uuid");
+    QUuid uuid;
+    if (savedValue.isNull()) {
+        uuid = QUuid::createUuid();
+        settings.setValue("uuid",uuid);
+    } else
+        uuid =savedValue.toUuid();
+
+
     pulseData = 0;
     harmonicData = 0;
     eqData = 0;
@@ -294,6 +313,35 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(replyFinished(QNetworkReply*)));
 
     manager->get(QNetworkRequest(QUrl("http://opensees.berkeley.edu/OpenSees/developer/mdof/use.php")));
+
+    //
+    // google analytics
+    // ref: https://developers.google.com/analytics/devguides/collection/protocol/v1/reference
+    //
+
+    QNetworkRequest request;
+    QUrl host("http://www.google-analytics.com/collect");
+    request.setUrl(host);
+    request.setHeader(QNetworkRequest::ContentTypeHeader,
+                      "application/x-www-form-urlencoded");
+
+    // setup parameters of request
+    QString requestParams;
+    QString hostname = QHostInfo::localHostName() + "." + QHostInfo::localDomainName();
+    //QUuid uuid = QUuid::createUuid();
+    requestParams += "v=1"; // version of protocol
+    requestParams += "&tid=UA-126280657-1"; // Google Analytics account
+    requestParams += "&cid=" + uuid.toString(); // unique user identifier
+    requestParams += "&t=event";  // hit type = event others pageview, exception
+    requestParams += "&an=MDOF"; // app name
+    requestParams += "&av=1.0.1"; // app version
+    requestParams += "&ec=MDOF";   // event category
+    requestParams += "&ea=start"; // event action
+
+    // send post to google-analytics
+    manager->post(request, requestParams.toStdString().c_str());
+
+
     //  manager->get(QNetworkRequest(QUrl("https://simcenter.designsafe-ci.org/multiple-degrees-freedom-analytics/")));
 }
 
