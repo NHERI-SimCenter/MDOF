@@ -16,10 +16,18 @@ include(../SimCenterCommon/Common/Common.pri)
 
 win32 {
     RC_ICONS = icons/NHERI-MDOF-Icon.ico
-} else {
+} mac {
     mac {
     ICON = icons/NHERI-MDOF-Icon.icns
     }
+    } else {
+
+DEFINES += "_LINUX"
+
+LIBS += -llapack
+LIBS += -lblas
+LIBS += -lgfortran
+   
 }
 
 VERSION=1.1.1
