@@ -119,7 +119,7 @@ INCLUDEPATH += "./ops"
 
 unix {
 
-macx {
+} macx {
 
 DEFINES += "_MacOSX"
 
@@ -138,18 +138,17 @@ INCLUDEPATH += .include "./ops"
 
 DEFINES += "_LINUX"
 
-
+INCLUDEPATH += .include "./ops"
 INCLUDEPATH += "/apps/rappture/dev/include"
-INCLUDEPATH += ./include "./ops"
 
-LIBS += /home/fmk/lib/libLapack.a
-LIBS += /home/fmk/lib/libBlas.a
+#LIBS += /home/fmk/lib/libLapack.a
+#LIBS += /home/fmk/lib/libBlas.a
+
+LIBS += -llapack
+LIBS += -lblas
 LIBS += -lgfortran
-
-SRC += ./ops/Domain.cpp
-
 }
-}
+
 
 win32 {
 
